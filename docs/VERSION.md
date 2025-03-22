@@ -1,0 +1,67 @@
+# Pyon Versioning
+
+## Current Version: 0.1.0-alpha
+
+### Status
+Alpha (Mature)
+
+### Overview
+This version of Pyon represents significant progress in implementing key functionalities while acknowledging that the project is still in an experimental stage. \
+The primary focus remains on completing the core roadmap and ensuring stability before transitioning to Beta.
+
+### Key Features in 0.1.0-alpha
+
+- Comprehensive serialization and deserialization for a wide range of Python types, including:
+  - **Base Types**: `bool`, `float`, `int`, `str`, `None`.
+  - **Numeric Types**: `complex`, `decimal.Decimal`.
+  - **Collection Types**: `bytearray`, `bytes`, `frozenset`, `list`, `set`, `tuple`.
+    - From `collections`: `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple`.
+  - **Datetime Types**: `datetime.date`, `datetime.datetime`, `datetime.time`.
+  - **Mapping Types**: `class` (user-defined classes), `dataclasses.dataclass`, `dict`, `Enum`.
+  - **Specialized Types**: 
+    - `bitarray.bitarray`, `numpy.ndarray`, `pandas.DataFrame`, `pyon.File`, `uuid.UUID`.
+
+- Recursive encoding and decoding.
+- Robust encode/decode functionality with extensibility for future data types.
+- Automated test of the public api, ensuring functionality for all supported types.
+
+### Tasks for This Version
+For detailed tasks and progress tracking, see the [TASKS.md](TASKS.md) file.
+
+### Known Limitations
+- Only public api being tested.
+- Dicts accept only string keys.
+- Cyclical reference handling is not yet implemented.
+- Shared references are not optimized, potentially leading to redundant serialization.
+- Encryption and binary compression features are pending implementation.
+- Support for additional data types (e.g., tensors, graph structures) is planned but not yet available.
+
+### Next Steps
+The next version (0.1.1-alpha) will focus on:
+- Organizing tests.
+- Create tests for other modules of the project.
+
+The version (0.2.0-alpha) will focus on:
+- Dicts having any type of key.
+
+The version (0.3.0-alpha) will focus on:
+- Implementing cyclical reference detection and handling.
+- Adding initial support for shared reference optimization.
+
+---
+
+## Versioning Notes
+This project follows semantic versioning principles:
+- **MAJOR.MINOR.PATCH**
+- Pre-release versions are suffixed with `-alpha`, `-beta`, or `-rc`.
+
+For example:
+- `0.1.0-alpha`: Current alpha release.
+- `0.2.0-alpha`: Next planned alpha with new features.
+- `1.0.0-beta`: Initial beta release, signaling readiness for broader feedback.
+- `1.0.0`: First stable release.
+
+---
+
+## Feedback and Contribution
+This version is suitable for internal testing and experimentation. Feedback is welcome to shape the roadmap and future enhancements.

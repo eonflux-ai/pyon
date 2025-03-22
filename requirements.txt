@@ -1,0 +1,5 @@
+bitarray==3.0.0
+numpy==2.2.1
+pandas==2.2.3
+pytest==8.3.4
+python-magic-bin==0.4.14
