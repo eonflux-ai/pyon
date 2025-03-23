@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pyon-core",
-    version="0.1.0-alpha",
+    version="0.1.3-alpha",
     description="Python Object Notation: Extended JSON for complex Python types",
     author="Eduardo Rodrigues",
     author_email="ietsira@eonflux.ai",
