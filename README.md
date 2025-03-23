@@ -84,13 +84,13 @@ Pyon supports a broad array of Python types out-of-the-box:
 
 ## 4. Installation
 
-Pyon is planned to be released on PyPI. Once available, you can install it via:
+Pyon is released on PyPI. You can install it via:
 
 ```bash
 pip install pyon-core
 ```
 
-If the package is not yet on PyPI, you can install directly from the source:
+Alternatively, you can install directly from the source:
 
 ```bash
 pip install git+https://github.com/eonflux-ai/pyon.git
