@@ -40,6 +40,7 @@ class SupportedTypes(Enum):
     NONE = "none"
     SET = "set"
     STR = "str"
+    TYPE = "type"
     TIME = "time"
     TUPLE = "tuple"
     UUID = "uuid"

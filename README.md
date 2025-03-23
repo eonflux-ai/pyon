@@ -61,7 +61,7 @@ Pyon supports a broad array of Python types out-of-the-box:
 <br/>
 
 **1. Base Types**
-- `bool`, `float`, `int`, `str`, `None`
+- `bool`, `float`, `int`, `str`, `type`, `None`
 
 **2. Numeric Types**
 - `complex`, `decimal.Decimal`
@@ -252,7 +252,7 @@ Each submodule is responsible for specific categories of data types, ensuring ma
 
 | **Encoder**         | **Types**                                                                               |
 |---------------------|-----------------------------------------------------------------------------------------|
-| `base_types`        | `bool`, `float`, `int`, `str`, `None`                                                   |
+| `base_types`        | `bool`, `float`, `int`, `str`, `type`, `None`                                           |
 | `numeric_types`     | `complex`, `decimal.Decimal`                                                            |
 | `collection_types`  | `bytearray`, `bytes`, `frozenset`, `list`, `set`, `tuple`                               |
 |                     | `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple` (from collections)          |

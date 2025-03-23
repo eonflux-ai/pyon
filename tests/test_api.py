@@ -309,6 +309,16 @@ class TestPyonEncodeDecode:
 
     # ----------------------------------------------------------------------------------------- #
 
+    @pytest.mark.parametrize("value", [File, None, "invalid", 10, 3.14])
+
+    def test_type(self, value):
+        """ Test encoding and decoding for type. """
+
+        # 1. Default test...
+        self._test_default(value, type)
+
+    # ----------------------------------------------------------------------------------------- #
+
     @pytest.mark.parametrize("value", [(1, "two", 3.0), None, "invalid", 10, 3.14])
 
     def test_tuple(self, value):
@@ -442,7 +452,7 @@ class TestPyonEncodeDecode:
         """ Checks if a class is builtins """
 
         # 1. Checks...
-        return isinstance(clazz, type) and clazz in {int, float, bool, str}
+        return isinstance(clazz, type) and clazz in {int, float, bool, str, type}
 
     # ----------------------------------------------------------------------------------------- #
 
