@@ -100,15 +100,15 @@ def to_file(obj, file_path: str = "./data.pyon", verbose: bool = True):
 # --------------------------------------------------------------------------------------------- #
 
 
-def from_file(pyon_file_path):
+def from_file(file_path):
     """ Imports from pyon file. """
 
     # 1. ...
     pyon_str = None
-    if os.path.isfile(pyon_file_path):
+    if os.path.isfile(file_path):
 
         # 1.1. ...
-        with open(file=pyon_file_path, mode="r", encoding="utf-8") as file:
+        with open(file=file_path, mode="r", encoding="utf-8") as file:
             pyon_str = file.read()
 
     # 2. ...
