@@ -188,13 +188,16 @@ class MapEnc(BaseEncoder):
             serialized_dict = {}
             for key, val in vars(value).items() if hasattr(value, EConst.DICT) else value.items():
 
-                # 2.1 Defines private attributes as None...
-                if key.startswith("_"):
-                    serialized_dict[key] = None
+                # 2.1 Encodes Key...
+                enc_key = self._encode_as_str(key)
 
-                # 2.2 Encodes...
+                # 2.2 Defines private attributes as None...
+                if enc_key.startswith("_"):
+                    serialized_dict[enc_key] = None
+
+                # 2.3 Encodes...
                 else:
-                    serialized_dict[key] = self._encode(val)
+                    serialized_dict[enc_key] = self._encode_as_dict(val)
 
             # 1.2 ...
             encoded = {
@@ -221,7 +224,8 @@ class MapEnc(BaseEncoder):
 
                 # 2.1 Iterates to process...
                 for key, val in dict_items:
-                    decoded[key] = self._decode(val)
+                    dec_key = self._decode_from_str(key)
+                    decoded[dec_key] = self._decode_from_dict(val)
 
             # 1.2 If decoded and class was provided...
             cls = ut.get_class(value)

@@ -317,7 +317,7 @@ class ColEnc(BaseEncoder):
             output = {
                 EConst.TYPE: SupportedTypes.CHAINMAP.value,
                 EConst.DATA: [
-                    {k: self._encode(v) for k, v in m.items()}
+                    {k: self._encode_as_dict(v) for k, v in m.items()}
                     for m in value.maps
                 ]
             }
@@ -340,7 +340,7 @@ class ColEnc(BaseEncoder):
 
             # 1.1 Reconstructs...
             maps = [
-                {k: self._decode(v) for k, v in m.items()}
+                {k: self._decode_from_dict(v) for k, v in m.items()}
                 for m in value[EConst.DATA]
             ]
 
@@ -372,7 +372,7 @@ class ColEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.COUNTER.value,
-                EConst.DATA: {k: self._encode(v) for k, v in value.items()}
+                EConst.DATA: {k: self._encode_as_dict(v) for k, v in value.items()}
             }
 
         # 2. Logs if invalid...
@@ -392,7 +392,7 @@ class ColEnc(BaseEncoder):
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 Decodes...
-            decoded_data = {k: self._decode(v) for k, v in value[EConst.DATA].items()}
+            decoded_data = {k: self._decode_from_dict(v) for k, v in value[EConst.DATA].items()}
             output = Counter(decoded_data)
 
         # 2. If invalid...
@@ -421,7 +421,7 @@ class ColEnc(BaseEncoder):
             output = {
                 EConst.TYPE: SupportedTypes.DEFAULTDICT.value,
                 EConst.AUX1: ut.get_class_name(value.default_factory),
-                EConst.DATA: {k: self._encode(v) for k, v in value.items()}
+                EConst.DATA: {k: self._encode_as_dict(v) for k, v in value.items()}
             }
 
         # 2. Logs if invalid...
@@ -448,7 +448,7 @@ class ColEnc(BaseEncoder):
                 default_factory = ut.get_class({EConst.CLASS: value[EConst.AUX1]})
 
             # 1.3 Decodes...
-            decoded_data = {k: self._decode(v) for k, v in value[EConst.DATA].items()}
+            decoded_data = {k: self._decode_from_dict(v) for k, v in value[EConst.DATA].items()}
             output = defaultdict(default_factory, decoded_data)
 
         # 2. If invalid...
@@ -476,7 +476,7 @@ class ColEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.DEQUE.value,
-                EConst.DATA: [self._encode(item) for item in value]
+                EConst.DATA: [self._encode_as_dict(item) for item in value]
             }
 
         # 2. Logs if invalid...
@@ -496,7 +496,7 @@ class ColEnc(BaseEncoder):
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 Decodes...
-            output = deque([self._decode(item) for item in value[EConst.DATA]])
+            output = deque([self._decode_from_dict(item) for item in value[EConst.DATA]])
 
         # 2. If invalid...
         else:
@@ -523,7 +523,7 @@ class ColEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.FROZENSET.value,
-                EConst.DATA: [self._encode(item) for item in value]
+                EConst.DATA: [self._encode_as_dict(item) for item in value]
             }
 
         # 2. Logs if invalid...
@@ -543,7 +543,7 @@ class ColEnc(BaseEncoder):
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 Decodes...
-            output = frozenset([self._decode(item) for item in value[EConst.DATA]])
+            output = frozenset([self._decode_from_dict(item) for item in value[EConst.DATA]])
 
         # 2. If invalid...
         else:
@@ -570,7 +570,7 @@ class ColEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.LIST.value,
-                EConst.DATA: [self._encode(item) for item in value]
+                EConst.DATA: [self._encode_as_dict(item) for item in value]
             }
 
         # 2. Logs if invalid...
@@ -590,7 +590,7 @@ class ColEnc(BaseEncoder):
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 Decodes...
-            output = [self._decode(item) for item in value[EConst.DATA]]
+            output = [self._decode_from_dict(item) for item in value[EConst.DATA]]
 
         # 2. If invalid...
         else:
@@ -619,7 +619,7 @@ class ColEnc(BaseEncoder):
                 EConst.TYPE: SupportedTypes.NAMEDTUPLE.value,
                 EConst.CLASS: ut.get_class_name(value),
                 EConst.DATA: {
-                    field: self._encode(getattr(value, field))
+                    field: self._encode_as_dict(getattr(value, field))
                     for field in value._fields
                 },
             }
@@ -646,7 +646,7 @@ class ColEnc(BaseEncoder):
 
                 # 2.1 Decodes individual fields...
                 decoded_data = {
-                    key: self._decode(val) for key, val in value[EConst.DATA].items()
+                    key: self._decode_from_dict(val) for key, val in value[EConst.DATA].items()
                 }
 
                 # 2.2 Creates the namedtuple...
@@ -677,7 +677,7 @@ class ColEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.SET.value,
-                EConst.DATA: [self._encode(item) for item in value]
+                EConst.DATA: [self._encode_as_dict(item) for item in value]
             }
 
         # 2. Logs if invalid...
@@ -697,7 +697,7 @@ class ColEnc(BaseEncoder):
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 Decodes...
-            output = {self._decode(item) for item in value[EConst.DATA]}
+            output = {self._decode_from_dict(item) for item in value[EConst.DATA]}
 
         # 2. If invalid...
         else:
@@ -724,7 +724,7 @@ class ColEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.TUPLE.value,
-                EConst.DATA: [self._encode(item) for item in value]
+                EConst.DATA: [self._encode_as_dict(item) for item in value]
             }
 
         # 2. Logs if invalid...
@@ -744,7 +744,7 @@ class ColEnc(BaseEncoder):
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 Decodes...
-            output = tuple(self._decode(item) for item in value[EConst.DATA])
+            output = tuple(self._decode_from_dict(item) for item in value[EConst.DATA])
 
         # 2. If invalid...
         else:

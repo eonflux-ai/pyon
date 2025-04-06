@@ -1,11 +1,20 @@
 """ Pyon: Python Object Notation - Encoder """
 # --------------------------------------------------------------------------------------------- #
 
+import json
+import logging
+
+# --------------------------------------------------------------------------------------------- #
+
 from .encoders import BaseEnc, ColEnc, DateEnc, SpecEnc, NumEnc, MapEnc
 
 # --------------------------------------------------------------------------------------------- #
 
 from . import utils as ut
+
+# --------------------------------------------------------------------------------------------- #
+
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -30,7 +39,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode_dict(self, value):
         """ Encodes the Entity object """
 
         # 1. ...
@@ -66,7 +75,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode_dict(self, value):
         """ Decodes the value """
 
         # 1. ...
@@ -99,6 +108,52 @@ class PyonEncoder():
 
         # 3. ...
         return decoded
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def encode_str(self, obj):
+        """ Exports to pyon. """
+
+        # 1. ...
+        output = None
+        if obj is not None:
+
+            # 1.1 ...
+            encoded = self.encode_dict(obj)
+
+            # 1.2 ...
+            if encoded is not None:
+                output = json.dumps(encoded, ensure_ascii=False, indent=3)
+
+            # 1.3 ...
+            else:
+                logger.error("Object '%s' failed to be encoded.", type(obj).__name__)
+
+        # 2. ...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def decode_str(self, pyon_str: str):
+        """ Imports from pyon string. """
+
+        # 1. ...
+        output = None
+        if pyon_str is not None:
+
+            # 1.1 ...
+            dictionary = json.loads(pyon_str)
+            if dictionary is not None:
+
+                # 2.1 ...
+                output = self.decode_dict(dictionary)
+
+            # 1.2 ...
+            else:
+                logger.error("Input failed to be decoded.")
+
+        # 2. ...
+        return output
 
     # ----------------------------------------------------------------------------------------- #
 

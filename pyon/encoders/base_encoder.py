@@ -25,13 +25,23 @@ class BaseEncoder(ABC):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode(self, value):
-        return self.__encoder.encode(value)
+    def _encode_as_dict(self, value) -> dict:
+        return self.__encoder.encode_dict(value)
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode(self, value):
-        return self.__encoder.decode(value)
+    def _decode_from_dict(self, value: dict):
+        return self.__encoder.decode_dict(value)
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def _encode_as_str(self, value) -> str:
+        return self.__encoder.encode_str(value)
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def _decode_from_str(self, value: str):
+        return self.__encoder.decode_str(value)
 
     # ----------------------------------------------------------------------------------------- #
 

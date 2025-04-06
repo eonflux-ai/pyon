@@ -1,7 +1,6 @@
 """ Pyon: Python Object Notation - Public Interface """
 # --------------------------------------------------------------------------------------------- #
 
-import json
 import logging
 import os
 
@@ -25,15 +24,7 @@ def encode(obj):
 
         # 1.1 ...
         encoder = PyonEncoder()
-        encoded = encoder.encode(obj)
-
-        # 1.2 ...
-        if encoded is not None:
-            output = json.dumps(encoded, ensure_ascii=False, indent=3)
-
-        # 1.3 ...
-        else:
-            logger.error("Object '%s' failed to be encoded.", type(obj).__name__)
+        output = encoder.encode_str(obj)
 
     # 2. ...
     return output
@@ -50,16 +41,8 @@ def decode(pyon_str: str):
     if pyon_str is not None:
 
         # 1.1 ...
-        dictionary = json.loads(pyon_str)
-        if dictionary is not None:
-
-            # 2.1 ...
-            encoder = PyonEncoder()
-            output = encoder.decode(dictionary)
-
-        # 1.2 ...
-        else:
-            logger.error("Input failed to be decoded.")
+        encoder = PyonEncoder()
+        output = encoder.decode_str(pyon_str)
 
     # 2. ...
     return output
@@ -113,6 +96,16 @@ def from_file(file_path):
 
     # 2. ...
     return decode(pyon_str)
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def to_hash(obj):
+    """ Simple pyon hash for any type of object. """
+
+    # 1. ...
+    return hash(encode(obj))
 
 
 # --------------------------------------------------------------------------------------------- #
