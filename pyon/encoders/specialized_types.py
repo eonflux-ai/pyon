@@ -381,11 +381,13 @@ class SpecEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.DATAFRAME.value,
-                EConst.DATA: value.to_dict(orient="records"),
-                EConst.AUX1: list(value.columns),
-                EConst.AUX2: self.__pre_encode_index(value.index),
+                EConst.DATA: self._encode_as_dict(value.to_dict(orient="records")),
+                EConst.AUX1: self.__pre_encode(value.columns),
+                EConst.AUX2: self.__pre_encode(value.index),
                 EConst.AUX3: list(value.index.names),
                 EConst.AUX4: type(value.index).__name__,
+                EConst.AUX5: list(value.columns.names),
+                EConst.AUX6: type(value.columns).__name__,
             }
 
         # 2. Logs if invalid...
@@ -402,31 +404,106 @@ class SpecEnc(BaseEncoder):
 
         # 1. Checks input...
         output = None
+        if isinstance(value, dict) and (EConst.DATA in value):
+
+            # 1.1 Recreates the base DataFrame...
+            df = pandas.DataFrame(self._decode_from_dict(value[EConst.DATA]))
+
+            # 1.2 Decodes: columns and index...
+            df = self.__decode_columns(value, df)
+            df = self.__decode_index(value, df)
+
+            # 1.3 Output...
+            output = df
+
+        # 2. If invalid...
+        else:
+
+            # 1.1 Logs...
+            logger.error(
+                "Invalid dataframe input. Expected: dict with %s. Received: %s",
+                EConst.DATA,
+                type(value),
+            )
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __decode_columns(self, value: dict, df: pandas.DataFrame):
+        """ Decodes to a DataFrame. """
+
+        # 1. Checks input...
         if (
-            (value is not None)
-            and isinstance(value, dict)
-            and (EConst.DATA in value)
+            isinstance(value, dict)
+            and isinstance(df, pandas.DataFrame)
             and (EConst.AUX1 in value)
+            and (EConst.AUX5 in value)
+            and (EConst.AUX6 in value)
+        ):
+
+            # 1.1 Rebuilds columns...
+            columns_data = value[EConst.AUX1]
+            columns_names = value[EConst.AUX5]
+
+            # 1.2 Pre decodes...
+            columns_type = value[EConst.AUX6]
+            columns_elements = self.__pre_decode(columns_data, columns_type)
+
+            # 1.3 Multi Index...
+            if columns_type == "MultiIndex":
+                df.columns = pandas.MultiIndex.from_tuples(columns_elements, names=columns_names)
+
+            # 1.4 Other types...
+            else:
+                df.columns = pandas.Index(
+                    columns_elements,
+                    name=columns_names[0]
+                    if columns_names
+                    else None
+                )
+
+        # 2. If invalid...
+        else:
+
+            # 1.1 Logs...
+            logger.error(
+                "Invalid dataframe input. Expected: dict with %s, %s, %s. Received: %s",
+                EConst.AUX1,
+                EConst.AUX5,
+                EConst.AUX6,
+                type(value),
+            )
+
+        # 3. Returns...
+        return df
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __decode_index(self, value: dict, df: pandas.DataFrame):
+        """ Decodes to a DataFrame. """
+
+        # 1. Checks input...
+        if (
+            isinstance(value, dict)
+            and isinstance(df, pandas.DataFrame)
             and (EConst.AUX2 in value)
             and (EConst.AUX3 in value)
             and (EConst.AUX4 in value)
         ):
 
-            # 1.1 Recreates the base DataFrame...
-            df = pandas.DataFrame(value[EConst.DATA])
-            df = df.reindex(columns=value[EConst.AUX1])
-
-            # 1.2 Extracts the index data...
+            # 1.1 Extracts the index data...
             index_data = value[EConst.AUX2]
             index_names = value.get(EConst.AUX3)
             index_type = value.get(EConst.AUX4)
 
-            # 1.3 Validates the index type...
+            # 1.2 Validates the index type...
             if index_type in self._DF_INDEXES:
                 index_name = index_names[0] if index_names else None
 
                 # 2.1 Pre-decodes the index data...
-                index_data = self.__pre_decode_index(index_data, index_type)
+                index_data = self.__pre_decode(index_data, index_type)
 
                 # 2.2 Rebuilds the index: Multi Index...
                 if index_type == "MultiIndex":
@@ -456,10 +533,7 @@ class SpecEnc(BaseEncoder):
                 else:
                     df.index = pandas.Index(index_data, name=index_name)
 
-                # 2.9 Sets the output...
-                output = df
-
-            # 1.4 Invalid index type...
+            # 1.3 Invalid index type...
             else:
                 logger.error("Invalid index type: %s", index_type)
 
@@ -468,9 +542,7 @@ class SpecEnc(BaseEncoder):
 
             # 1.1 Logs...
             logger.error(
-                "Invalid dataframe input. Expected: dict with %s, %s, %s, %s, %s. Received: %s",
-                EConst.DATA,
-                EConst.AUX1,
+                "Invalid dataframe input. Expected: dict with %s, %s, %s. Received: %s",
                 EConst.AUX2,
                 EConst.AUX3,
                 EConst.AUX4,
@@ -478,7 +550,7 @@ class SpecEnc(BaseEncoder):
             )
 
         # 3. Returns...
-        return output
+        return df
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -509,7 +581,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __pre_encode_index(self, index):
+    def __pre_encode(self, index):
         """ Converts the index into a JSON-safe list structure for serialization. """
 
         # 1. Checks for MultiIndex...
@@ -534,7 +606,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __pre_decode_index(self, index_data, index_type):
+    def __pre_decode(self, index_data, index_type):
         """ Reconstructs index elements after decoding from JSON-safe format. """
 
         # 1. MultiIndex elements are tuples...

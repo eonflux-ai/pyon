@@ -372,13 +372,13 @@ class TestPyonEncodeDecode:
         "value",
         [
 
-            # 1.1 Standard Index...
+            # 1.1 Standard Index, Standard Columns...
             pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]}, index=["a", "b"]),
 
-            # 1.2 Range Index...
+            # 1.2 Range Index, Standard Columns...
             pd.DataFrame({"col1": [1, 2, 3]}, index=pd.RangeIndex(start=10, stop=13, step=1)),
 
-            # 1.3 Multi Index...
+            # 1.3 MultiIndex Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [1.0, 2.0, 3.0]},
                 index=pd.MultiIndex.from_tuples(
@@ -387,66 +387,86 @@ class TestPyonEncodeDecode:
                 )
             ),
 
-            # 1.4 Datetime Index...
+            # 1.4 Datetime Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [10, 20, 30]},
                 index=pd.date_range("2025-01-01", periods=3, freq="D")
             ),
 
-            # 1.5 Period Index...
+            # 1.5 Period Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [100, 200]},
                 index=pd.period_range("2024Q1", periods=2, freq="Q")
             ),
 
-            # 1.6 Timedelta Index...
+            # 1.6 Timedelta Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [5, 10]},
                 index=pd.to_timedelta(["1 days", "2 days"])
             ),
 
-            # 1.7 Categorical Index...
+            # 1.7 Categorical Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [42, 84]},
                 index=pd.CategoricalIndex(["cat", "dog"], name="animal")
             ),
 
-            # 1.8 Float64 Index...
+            # 1.8 Float64 Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [0.1, 0.2]},
                 index=pd.Index([0.1, 0.2], dtype="float64", name="float_id")
             ),
 
-            # 1.9 Int64 Index...
+            # 1.9 Int64 Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [10, 20]},
                 index=pd.Index([100, 200], dtype="int64", name="int_id")
             ),
 
-            # 1.10 UInt64 Index...
+            # 1.10 UInt64 Index, Standard Columns...
             pd.DataFrame(
                 {"col1": [1, 2]},
                 index=pd.Index([10, 20], dtype="uint64", name="uint_id")
             ),
 
-            # 2.1 None value...
-            None,
+            # 1.11 Standard Index, MultiIndex Columns...
+            pd.DataFrame(
+                [[22.5, 60, 24.1], [23.0, 55, 23.8]],
+                index=["row1", "row2"],
+                columns=pd.MultiIndex.from_tuples(
+                    [("sensor1", "temp"), ("sensor1", "humidity"), ("sensor2", "temp")],
+                    names=["device", "measurement"]
+                )
+            ),
 
-            # 2.2 Invalid type: string...
-            "invalid",
+            # 1.12 Standard Index, CategoricalIndex Columns...
+            pd.DataFrame(
+                [[1, 2]],
+                index=["a"],
+                columns=pd.CategoricalIndex(["col1", "col2"], name="categorical_col")
+            ),
 
-            # 2.3 Invalid type: integer...
-            10,
+            # 1.13 MultiIndex Index and MultiIndex Columns...
+            pd.DataFrame(
+                [[1, 2], [3, 4]],
+                index=pd.MultiIndex.from_tuples(
+                    [("X", "x1"), ("X", "x2")],
+                    names=["sample", "sub"]
+                ),
+                columns=pd.MultiIndex.from_tuples(
+                    [("A", 1), ("A", 2)],
+                    names=["group", "measure"]
+                )
+            ),
 
-            # 2.4 Invalid type: float...
-            3.14,
+            # 1.14 Base Types...
+            None, "invalid", 10, 3.14,
         ]
     )
-
     def test_dataframe(self, value):
         """ Test encoding and decoding for Pandas Dataframe. """
 
-       # 1. Valid case...
+        # 1. Valid case...
         if isinstance(value, pd.DataFrame):
 
             # 1.1 Encode, Decode...
@@ -463,11 +483,12 @@ class TestPyonEncodeDecode:
         # 2. None, Other...
         else:
 
-            # 1.1 Encode, Decode, Asserts...
+            # 2.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
             assert decoded == value
 
     # ----------------------------------------------------------------------------------------- #
+
 
     def _test_default(self, value, clazz):
         """ Test encoding and decoding for complex numbers. """
