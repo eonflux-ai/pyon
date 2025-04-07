@@ -30,10 +30,10 @@ class PyonEncoder():
         # 1. ...
         self.base_enc = BaseEnc()
         self.date_enc = DateEnc()
-        self.spec_enc = SpecEnc()
         self.num_enc = NumEnc()
 
         # 2. ...
+        self.spec_enc = SpecEnc(self)
         self.col_enc = ColEnc(self)
         self.map_enc = MapEnc(self)
 

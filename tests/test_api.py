@@ -370,7 +370,77 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize(
         "value",
-        [pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]}), None, "invalid", 10, 3.14],
+        [
+
+            # 1.1 Standard Index...
+            pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]}, index=["a", "b"]),
+
+            # 1.2 Range Index...
+            pd.DataFrame({"col1": [1, 2, 3]}, index=pd.RangeIndex(start=10, stop=13, step=1)),
+
+            # 1.3 Multi Index...
+            pd.DataFrame(
+                {"col1": [1.0, 2.0, 3.0]},
+                index=pd.MultiIndex.from_tuples(
+                    [("A", 1), ("A", 2), ("B", 1)],
+                    names=["group", "id"]
+                )
+            ),
+
+            # 1.4 Datetime Index...
+            pd.DataFrame(
+                {"col1": [10, 20, 30]},
+                index=pd.date_range("2025-01-01", periods=3, freq="D")
+            ),
+
+            # 1.5 Period Index...
+            pd.DataFrame(
+                {"col1": [100, 200]},
+                index=pd.period_range("2024Q1", periods=2, freq="Q")
+            ),
+
+            # 1.6 Timedelta Index...
+            pd.DataFrame(
+                {"col1": [5, 10]},
+                index=pd.to_timedelta(["1 days", "2 days"])
+            ),
+
+            # 1.7 Categorical Index...
+            pd.DataFrame(
+                {"col1": [42, 84]},
+                index=pd.CategoricalIndex(["cat", "dog"], name="animal")
+            ),
+
+            # 1.8 Float64 Index...
+            pd.DataFrame(
+                {"col1": [0.1, 0.2]},
+                index=pd.Index([0.1, 0.2], dtype="float64", name="float_id")
+            ),
+
+            # 1.9 Int64 Index...
+            pd.DataFrame(
+                {"col1": [10, 20]},
+                index=pd.Index([100, 200], dtype="int64", name="int_id")
+            ),
+
+            # 1.10 UInt64 Index...
+            pd.DataFrame(
+                {"col1": [1, 2]},
+                index=pd.Index([10, 20], dtype="uint64", name="uint_id")
+            ),
+
+            # 2.1 None value...
+            None,
+
+            # 2.2 Invalid type: string...
+            "invalid",
+
+            # 2.3 Invalid type: integer...
+            10,
+
+            # 2.4 Invalid type: float...
+            3.14,
+        ]
     )
 
     def test_dataframe(self, value):

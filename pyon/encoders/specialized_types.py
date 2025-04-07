@@ -29,13 +29,32 @@ from .. import utils as ut
 
 # --------------------------------------------------------------------------------------------- #
 
+from .base_encoder import BaseEncoder
+
+# --------------------------------------------------------------------------------------------- #
+
 logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------------------------- #
 
 
-class SpecEnc():
+class SpecEnc(BaseEncoder):
     """ Specialized Encoder """
+
+    # ----------------------------------------------------------------------------------------- #
+
+    _DF_INDEXES = {
+        "Index",
+        "RangeIndex",
+        "MultiIndex",
+        "DatetimeIndex",
+        "TimedeltaIndex",
+        "PeriodIndex",
+        "CategoricalIndex",
+        "Float64Index",
+        "Int64Index",
+        "UInt64Index"
+    }
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -203,66 +222,6 @@ class SpecEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_dataframe(self, value: pandas.DataFrame):
-        """ Encodes the DataFrame. """
-
-        # 1. Checks input...
-        output = None
-        if (value is not None) and isinstance(value, pandas.DataFrame):
-
-            # 1.1 Encodes...
-            output = {
-                EConst.TYPE: SupportedTypes.DATAFRAME.value,
-                EConst.DATA: value.to_dict(orient="records"),
-                EConst.AUX1: list(value.columns),
-                EConst.AUX2: list(value.index),
-            }
-
-        # 2. Logs if invalid...
-        else:
-            logger.error("Invalid input. Expected: pandas.DataFrame. Received: %s", type(value))
-
-        # 3. Returns...
-        return output
-
-    # ----------------------------------------------------------------------------------------- #
-
-    def _decode_dataframe(self, value: dict):
-        """ Decodes to a DataFrame. """
-
-        # 1. Checks input...
-        output = None
-        if (
-            (value is not None)
-            and isinstance(value, dict)
-            and (EConst.DATA in value)
-            and (EConst.AUX1 in value)
-            and (EConst.AUX2 in value)
-        ):
-
-            # 1.1 Decodes...
-            df = pandas.DataFrame(value[EConst.DATA])
-            df = df.reindex(columns=value[EConst.AUX1])
-            df.index = value[EConst.AUX2]
-            output = df
-
-        # 2. If invalid...
-        else:
-
-            # 1.1 Logs...
-            logger.error(
-                "Invalid dataframe input. Expected: dict with %s, %s, %s. Received: %s",
-                EConst.DATA,
-                EConst.AUX1,
-                EConst.AUX2,
-                type(value),
-            )
-
-        # 3. Returns...
-        return output
-
-    # ----------------------------------------------------------------------------------------- #
-
     def _encode_file(self, value: File):
         """ Encodes the file """
 
@@ -408,6 +367,197 @@ class SpecEnc():
             )
 
         # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def _encode_dataframe(self, value: pandas.DataFrame):
+        """ Encodes the DataFrame. """
+
+        # 1. Checks input...
+        output = None
+        if (value is not None) and isinstance(value, pandas.DataFrame):
+
+            # 1.1 Encodes...
+            output = {
+                EConst.TYPE: SupportedTypes.DATAFRAME.value,
+                EConst.DATA: value.to_dict(orient="records"),
+                EConst.AUX1: list(value.columns),
+                EConst.AUX2: self.__pre_encode_index(value.index),
+                EConst.AUX3: list(value.index.names),
+                EConst.AUX4: type(value.index).__name__,
+            }
+
+        # 2. Logs if invalid...
+        else:
+            logger.error("Invalid input. Expected: pandas.DataFrame. Received: %s", type(value))
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def _decode_dataframe(self, value: dict):
+        """ Decodes to a DataFrame. """
+
+        # 1. Checks input...
+        output = None
+        if (
+            (value is not None)
+            and isinstance(value, dict)
+            and (EConst.DATA in value)
+            and (EConst.AUX1 in value)
+            and (EConst.AUX2 in value)
+            and (EConst.AUX3 in value)
+            and (EConst.AUX4 in value)
+        ):
+
+            # 1.1 Recreates the base DataFrame...
+            df = pandas.DataFrame(value[EConst.DATA])
+            df = df.reindex(columns=value[EConst.AUX1])
+
+            # 1.2 Extracts the index data...
+            index_data = value[EConst.AUX2]
+            index_names = value.get(EConst.AUX3)
+            index_type = value.get(EConst.AUX4)
+
+            # 1.3 Validates the index type...
+            if index_type in self._DF_INDEXES:
+                index_name = index_names[0] if index_names else None
+
+                # 2.1 Pre-decodes the index data...
+                index_data = self.__pre_decode_index(index_data, index_type)
+
+                # 2.2 Rebuilds the index: Multi Index...
+                if index_type == "MultiIndex":
+                    df.index = pandas.MultiIndex.from_tuples(index_data, names=index_names)
+
+                # 2.3 Range Index...
+                elif (index_type == "RangeIndex") and self.__is_arithmetic_range(index_data):
+                    df.index = self.__build_range_index(index_data, index_name)
+
+                # 2.4 Datetime Index...
+                elif index_type == "DatetimeIndex":
+                    df.index = pandas.DatetimeIndex(index_data, name=index_name)
+
+                # 2.5 Period Index...
+                elif index_type == "PeriodIndex":
+                    df.index = pandas.PeriodIndex(index_data, name=index_name)
+
+                # 2.6 Timedelta Index ...
+                elif index_type == "TimedeltaIndex":
+                    df.index = pandas.TimedeltaIndex(index_data, name=index_name)
+
+                # 2.7 Categorical Index...
+                elif index_type == "CategoricalIndex":
+                    df.index = pandas.CategoricalIndex(index_data, name=index_name)
+
+                # 2.8 Generic Index...
+                else:
+                    df.index = pandas.Index(index_data, name=index_name)
+
+                # 2.9 Sets the output...
+                output = df
+
+            # 1.4 Invalid index type...
+            else:
+                logger.error("Invalid index type: %s", index_type)
+
+        # 2. If invalid...
+        else:
+
+            # 1.1 Logs...
+            logger.error(
+                "Invalid dataframe input. Expected: dict with %s, %s, %s, %s, %s. Received: %s",
+                EConst.DATA,
+                EConst.AUX1,
+                EConst.AUX2,
+                EConst.AUX3,
+                EConst.AUX4,
+                type(value),
+            )
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __is_arithmetic_range(self, seq):
+        """Validates whether a sequence represents a regular arithmetic range."""
+        
+        # 1. ...
+        return (
+            isinstance(seq, list)
+            and len(seq) >= 2
+            and all((seq[i + 1] - seq[i]) == (seq[1] - seq[0]) for i in range(len(seq) - 1))
+        )
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __build_range_index(self, seq, name):
+        """Builds a pandas RangeIndex from a valid arithmetic sequence."""
+        
+        # 1. ...
+        step = seq[1] - seq[0]
+        
+        # 2. ...
+        start = seq[0]
+        stop = seq[-1] + step
+        
+        # 3. ...
+        return pandas.RangeIndex(start=start, stop=stop, step=step, name=name)
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __pre_encode_index(self, index):
+        """ Converts the index into a JSON-safe list structure for serialization. """
+
+        # 1. Checks for MultiIndex...
+        if isinstance(index, pandas.MultiIndex):
+
+            # 1.1 Converts tuples to lists...
+            output = [list(x) for x in index.to_list()]
+
+        # 2. Handles pandas-specific temporal types...
+        else:
+
+            # 1.1 Converts each element as needed...
+            output = [
+                str(x)
+                if isinstance(x, (pandas.Timestamp, pandas.Period, pandas.Timedelta))
+                else x
+                for x in index
+            ]
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __pre_decode_index(self, index_data, index_type):
+        """ Reconstructs index elements after decoding from JSON-safe format. """
+
+        # 1. MultiIndex elements are tuples...
+        if index_type == "MultiIndex":
+            output = [tuple(x) for x in index_data]
+
+        # 2. DatetimeIndex...
+        elif index_type == "DatetimeIndex":
+            output = [pandas.Timestamp(x) for x in index_data]
+
+        # 3. PeriodIndex...
+        elif index_type == "PeriodIndex":
+            output = [pandas.Period(x) for x in index_data]
+
+        # 4. TimedeltaIndex...
+        elif index_type == "TimedeltaIndex":
+            output = [pandas.Timedelta(x) for x in index_data]
+
+        # 5. Fallback: keep as-is...
+        else:
+            output = index_data
+
+        # 6. Returns...
         return output
 
     # ----------------------------------------------------------------------------------------- #
