@@ -277,6 +277,13 @@ example_data = {
     # 1.2 Pandas Dataframe...
     "pd.DataFrame": pd.DataFrame(
         {"col1": [1, 2], "col2": ["a", "b"]}
+    ),
+
+    # 1.3 Pandas Series...
+    "pd.Series": pd.Series(
+        data=[10, 20, 30],
+        index=pd.date_range("2025-01-01", periods=3, freq="D"),
+        name="daily_values"
     )
 
 }

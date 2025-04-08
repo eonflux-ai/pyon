@@ -15,6 +15,7 @@ class EConst:
     AUX4 = "__aux4__"
     AUX5 = "__aux5__"
     AUX6 = "__aux6__"
+    AUX7 = "__aux7__"
     CLASS = "__class__"
     DATA = "__data__"
     DICT = "__dict__"

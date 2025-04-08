@@ -16,6 +16,7 @@ import pandas
 # --------------------------------------------------------------------------------------------- #
 
 from bitarray import bitarray
+from pandas.tseries.frequencies import to_offset
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -400,6 +401,7 @@ class SpecEnc(BaseEncoder):
                 EConst.AUX4: type(value.index).__name__,
                 EConst.AUX5: list(value.columns.names),
                 EConst.AUX6: type(value.columns).__name__,
+                EConst.AUX7: self.__index_freq(value.index)
             }
 
         # 2. Logs if invalid...
@@ -460,6 +462,7 @@ class SpecEnc(BaseEncoder):
                 EConst.AUX2: list(value.index.names),
                 EConst.AUX3: type(value.index).__name__,
                 EConst.AUX4: value.name,
+                EConst.AUX5: self.__index_freq(value.index)
             }
 
         # 2. Logs if invalid...
@@ -484,10 +487,11 @@ class SpecEnc(BaseEncoder):
             index_names = value.get(EConst.AUX2)
             index_type = value.get(EConst.AUX3)
             series_name = value.get(EConst.AUX4)
+            series_freq = value.get(EConst.AUX5)
 
             # 1.2 Pre-decodes and rebuilds index...
             index_data = self.__pre_decode(index_data, index_type)
-            index = self.__rebuild_index(index_data, index_names, index_type)
+            index = self.__rebuild_index(index_data, index_names, index_type, series_freq)
 
             # 1.3 Builds Series...
             output = pandas.Series(data=series_data, index=index, name=series_name)
@@ -571,10 +575,11 @@ class SpecEnc(BaseEncoder):
             index_data = value[EConst.AUX2]
             index_names = value.get(EConst.AUX3)
             index_type = value.get(EConst.AUX4)
+            index_freq = value.get(EConst.AUX7)
 
             # 1.2 Pre-decodes and rebuilds...
             index_data = self.__pre_decode(index_data, index_type)
-            index = self.__rebuild_index(index_data, index_names, index_type)
+            index = self.__rebuild_index(index_data, index_names, index_type, index_freq)
 
         # 2. If invalid...
         else:
@@ -620,7 +625,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __rebuild_index(self, index_data, index_names, index_type):
+    def __rebuild_index(self, index_data, index_names, index_type, freq=None):
         """ Rebuilds a pandas Index or subclass based on its serialized components. """
 
         # 1. Checks input...
@@ -629,6 +634,7 @@ class SpecEnc(BaseEncoder):
 
         # 2. Validates the index type...
         if index_type in self._DF_INDEXES:
+            freq = to_offset(freq) if freq else None
 
             # 1.1 MultiIndex...
             if index_type == "MultiIndex":
@@ -640,11 +646,11 @@ class SpecEnc(BaseEncoder):
 
             # 1.3 DatetimeIndex...
             elif index_type == "DatetimeIndex":
-                output = pandas.DatetimeIndex(index_data, name=index_name)
+                output = pandas.DatetimeIndex(index_data, name=index_name, freq=freq)
 
             # 1.4 PeriodIndex...
             elif index_type == "PeriodIndex":
-                output = pandas.PeriodIndex(index_data, name=index_name)
+                output = pandas.PeriodIndex(index_data, name=index_name, freq=freq)
 
             # 1.5 TimedeltaIndex...
             elif index_type == "TimedeltaIndex":
@@ -716,6 +722,24 @@ class SpecEnc(BaseEncoder):
             output = index_data
 
         # 6. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __index_freq(self, index):
+        """ Checks if the index has a frequency attribute. """
+
+        # 1. Checks for Frequency...
+        output = None
+        if (
+            isinstance(index, (pandas.DatetimeIndex, pandas.PeriodIndex))
+            and index.freq is not None
+        ):
+
+            # 1.1 Outputs...
+            output = index.freq.freqstr
+
+        # 3. Returns...
         return output
 
     # ----------------------------------------------------------------------------------------- #
