@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.5-alpha] - 2025-04-07
+### Added
+- Full support for `pandas.Series`, including all known index types: `Index`, `RangeIndex`, `MultiIndex`, `DatetimeIndex`, `PeriodIndex`, `TimedeltaIndex`, `CategoricalIndex`, `Float64Index`, `Int64Index`, and `UInt64Index`.
+- New `_encode_series` method for serializing Series objects with index metadata and name preservation.
+- New `_decode_series` method for reconstructing Series using deserialized data and regenerated index.
+- Complete test suite covering all index variants within Series, ensuring accurate round-trip serialization and deserialization.
+
+### Changed
+- Introduced internal method `__rebuild_index` to centralize index reconstruction for both `DataFrame` and `Series`.
+- Refactored `_decode_dataframe` to construct DataFrames directly with `data=`, `columns=`, and `index=` instead of mutating attributes post-creation.
+- `__decode_index` now delegates all reconstruction to `__rebuild_index` for consistency.
+
+### Fixed
+- Serialization issues for Series with complex or structured index types.
+- Improved robustness when handling `Series` elements containing objects like `pandas.Timestamp`, `pandas.Timedelta`, or nested structures.
+
+---
+
 ## [0.1.4-alpha] - 2025-04-07
 ### Added
 - Full support for `pandas.MultiIndex` in both `DataFrame.columns` and `DataFrame.index`.

@@ -69,21 +69,25 @@ class SpecEnc(BaseEncoder):
             if isinstance(value, bitarray):
                 encoded = self._encode_bitarray(value)
 
-            # 1.2 DataFrames...
-            elif isinstance(value, pandas.DataFrame):
-                encoded = self._encode_dataframe(value)
-
-            # 1.3 File...
+            # 1.2 File...
             elif isinstance(value, File):
                 encoded = self._encode_file(value)
 
-            # 1.4 Numpy...
+            # 1.3 Numpy...
             elif isinstance(value, numpy.ndarray):
                 encoded = self._encode_ndarray(value)
 
-            # 1.5 UUID...
+            # 1.4 UUID...
             elif isinstance(value, UUID):
                 encoded = self._encode_uuid(value)
+
+            # 1.5 DataFrames...
+            elif isinstance(value, pandas.DataFrame):
+                encoded = self._encode_dataframe(value)
+
+            # 1.6 Series...
+            elif isinstance(value, pandas.Series):
+                encoded = self._encode_series(value)
 
         # 2. ...
         return encoded
@@ -102,23 +106,27 @@ class SpecEnc(BaseEncoder):
 
             # 1.1 Bitarray...
             if _type == SupportedTypes.BITARRAY.value:
-                decoded = self._decode_bitarray(value)
+                decoded = self._decode_bitarray(value)            
 
-            # 1.2 Dataframe...
-            elif _type == SupportedTypes.DATAFRAME.value:
-                decoded = self._decode_dataframe(value)
-
-            # 1.3 File...
+            # 1.2 File...
             elif _type == SupportedTypes.FILE.value:
                 decoded = self._decode_file(value)
 
-            # 1.4 Numpy...
+            # 1.3 Numpy...
             elif _type == SupportedTypes.NDARRAY.value:
                 decoded = self._decode_ndarray(value)
 
-            # 1.5 UUID...
+            # 1.4 UUID...
             elif _type == SupportedTypes.UUID.value:
                 decoded = self._decode_uuid(value)
+
+            # 1.5 Dataframe...
+            elif _type == SupportedTypes.DATAFRAME.value:
+                decoded = self._decode_dataframe(value)
+
+            # 1.6 Series...
+            elif _type == SupportedTypes.SERIES.value:
+                decoded = self._decode_series(value)
 
         # 3. ...
         return decoded
@@ -127,8 +135,9 @@ class SpecEnc(BaseEncoder):
 
     def is_encode(self, value):
         """ 
-            Checks if Specialized Types:
-            - `bitarray.bitarray`, `numpy.ndarray`, `pandas.DataFrame`, `pyon.File`, `uuid.UUID`
+            Checks if encode of Specialized Types:
+            - `bitarray.bitarray`, `numpy.ndarray`, `pyon.File`, `uuid.UUID`
+            - `pandas.DataFrame`, `pandas.Series`
         """
 
         # 1. ...
@@ -137,9 +146,10 @@ class SpecEnc(BaseEncoder):
             (
                 bitarray,
                 numpy.ndarray,
-                pandas.DataFrame,
                 File,
-                UUID
+                UUID,
+                pandas.DataFrame,
+                pandas.Series
             )
         )
 
@@ -147,8 +157,9 @@ class SpecEnc(BaseEncoder):
 
     def is_decode(self, value):
         """ 
-            Checks if Specialized Types:
-            - `bitarray.bitarray`, `numpy.ndarray`, `pandas.DataFrame`, `pyon.File`, `uuid.UUID`
+            Checks if decode of Specialized Types:
+            - `bitarray.bitarray`, `numpy.ndarray`, `pyon.File`, `uuid.UUID`
+            - `pandas.DataFrame`, `pandas.Series`
         """
 
         # 1. ...
@@ -161,10 +172,11 @@ class SpecEnc(BaseEncoder):
             # 1.1 Checks...
             if _type in (
                 SupportedTypes.BITARRAY.value,
-                SupportedTypes.DATAFRAME.value,
                 SupportedTypes.FILE.value,
                 SupportedTypes.NDARRAY.value,
                 SupportedTypes.UUID.value,
+                SupportedTypes.DATAFRAME.value,
+                SupportedTypes.SERIES.value
             ):
 
                 # 2.1 ...
@@ -406,15 +418,17 @@ class SpecEnc(BaseEncoder):
         output = None
         if isinstance(value, dict) and (EConst.DATA in value):
 
-            # 1.1 Recreates the base DataFrame...
-            df = pandas.DataFrame(self._decode_from_dict(value[EConst.DATA]))
+            # 1.1 Extracts components...
+            data = self._decode_from_dict(value[EConst.DATA])
 
             # 1.2 Decodes: columns and index...
-            df = self.__decode_columns(value, df)
-            df = self.__decode_index(value, df)
+            columns = self.__decode_columns(value)
+            index = self.__decode_index(value)
 
             # 1.3 Output...
-            output = df
+            output = pandas.DataFrame(
+                data=data, columns=columns, index=index
+            )
 
         # 2. If invalid...
         else:
@@ -431,13 +445,73 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __decode_columns(self, value: dict, df: pandas.DataFrame):
+    def _encode_series(self, value: pandas.Series):
+        """ Encodes the Series. """
+
+        # 1. Checks input...
+        output = None
+        if (value is not None) and isinstance(value, pandas.Series):
+
+            # 1.1 Encodes...
+            output = {
+                EConst.TYPE: SupportedTypes.SERIES.value,
+                EConst.DATA: self._encode_as_dict(value.tolist()),
+                EConst.AUX1: self.__pre_encode(value.index),
+                EConst.AUX2: list(value.index.names),
+                EConst.AUX3: type(value.index).__name__,
+                EConst.AUX4: value.name,
+            }
+
+        # 2. Logs if invalid...
+        else:
+            logger.error("Invalid input. Expected: pandas.Series. Received: %s", type(value))
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def _decode_series(self, value: dict):
+        """ Decodes to a Series. """
+
+        # 1. Checks input...
+        output = None
+        if isinstance(value, dict) and (EConst.DATA in value):
+
+            # 1.1 Extracts components...
+            series_data = self._decode_from_dict(value[EConst.DATA])
+            index_data = value.get(EConst.AUX1)
+            index_names = value.get(EConst.AUX2)
+            index_type = value.get(EConst.AUX3)
+            series_name = value.get(EConst.AUX4)
+
+            # 1.2 Pre-decodes and rebuilds index...
+            index_data = self.__pre_decode(index_data, index_type)
+            index = self.__rebuild_index(index_data, index_names, index_type)
+
+            # 1.3 Builds Series...
+            output = pandas.Series(data=series_data, index=index, name=series_name)
+
+        # 2. If invalid...
+        else:
+            logger.error(
+                "Invalid series input. Expected: dict with %s. Received: %s",
+                EConst.DATA,
+                type(value)
+            )
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __decode_columns(self, value: dict):
         """ Decodes to a DataFrame. """
 
         # 1. Checks input...
+        columns = None
         if (
             isinstance(value, dict)
-            and isinstance(df, pandas.DataFrame)
             and (EConst.AUX1 in value)
             and (EConst.AUX5 in value)
             and (EConst.AUX6 in value)
@@ -453,11 +527,11 @@ class SpecEnc(BaseEncoder):
 
             # 1.3 Multi Index...
             if columns_type == "MultiIndex":
-                df.columns = pandas.MultiIndex.from_tuples(columns_elements, names=columns_names)
+                columns = pandas.MultiIndex.from_tuples(columns_elements, names=columns_names)
 
             # 1.4 Other types...
             else:
-                df.columns = pandas.Index(
+                columns = pandas.Index(
                     columns_elements,
                     name=columns_names[0]
                     if columns_names
@@ -477,17 +551,17 @@ class SpecEnc(BaseEncoder):
             )
 
         # 3. Returns...
-        return df
+        return columns
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __decode_index(self, value: dict, df: pandas.DataFrame):
+    def __decode_index(self, value: dict):
         """ Decodes to a DataFrame. """
 
         # 1. Checks input...
+        index = None
         if (
             isinstance(value, dict)
-            and isinstance(df, pandas.DataFrame)
             and (EConst.AUX2 in value)
             and (EConst.AUX3 in value)
             and (EConst.AUX4 in value)
@@ -498,44 +572,9 @@ class SpecEnc(BaseEncoder):
             index_names = value.get(EConst.AUX3)
             index_type = value.get(EConst.AUX4)
 
-            # 1.2 Validates the index type...
-            if index_type in self._DF_INDEXES:
-                index_name = index_names[0] if index_names else None
-
-                # 2.1 Pre-decodes the index data...
-                index_data = self.__pre_decode(index_data, index_type)
-
-                # 2.2 Rebuilds the index: Multi Index...
-                if index_type == "MultiIndex":
-                    df.index = pandas.MultiIndex.from_tuples(index_data, names=index_names)
-
-                # 2.3 Range Index...
-                elif (index_type == "RangeIndex") and self.__is_arithmetic_range(index_data):
-                    df.index = self.__build_range_index(index_data, index_name)
-
-                # 2.4 Datetime Index...
-                elif index_type == "DatetimeIndex":
-                    df.index = pandas.DatetimeIndex(index_data, name=index_name)
-
-                # 2.5 Period Index...
-                elif index_type == "PeriodIndex":
-                    df.index = pandas.PeriodIndex(index_data, name=index_name)
-
-                # 2.6 Timedelta Index ...
-                elif index_type == "TimedeltaIndex":
-                    df.index = pandas.TimedeltaIndex(index_data, name=index_name)
-
-                # 2.7 Categorical Index...
-                elif index_type == "CategoricalIndex":
-                    df.index = pandas.CategoricalIndex(index_data, name=index_name)
-
-                # 2.8 Generic Index...
-                else:
-                    df.index = pandas.Index(index_data, name=index_name)
-
-            # 1.3 Invalid index type...
-            else:
-                logger.error("Invalid index type: %s", index_type)
+            # 1.2 Pre-decodes and rebuilds...
+            index_data = self.__pre_decode(index_data, index_type)
+            index = self.__rebuild_index(index_data, index_names, index_type)
 
         # 2. If invalid...
         else:
@@ -550,7 +589,7 @@ class SpecEnc(BaseEncoder):
             )
 
         # 3. Returns...
-        return df
+        return index
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -578,6 +617,53 @@ class SpecEnc(BaseEncoder):
         
         # 3. ...
         return pandas.RangeIndex(start=start, stop=stop, step=step, name=name)
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __rebuild_index(self, index_data, index_names, index_type):
+        """ Rebuilds a pandas Index or subclass based on its serialized components. """
+
+        # 1. Checks input...
+        output = None
+        index_name = index_names[0] if index_names else None
+
+        # 2. Validates the index type...
+        if index_type in self._DF_INDEXES:
+
+            # 1.1 MultiIndex...
+            if index_type == "MultiIndex":
+                output = pandas.MultiIndex.from_tuples(index_data, names=index_names)
+
+            # 1.2 RangeIndex...
+            elif (index_type == "RangeIndex") and self.__is_arithmetic_range(index_data):
+                output = self.__build_range_index(index_data, index_name)
+
+            # 1.3 DatetimeIndex...
+            elif index_type == "DatetimeIndex":
+                output = pandas.DatetimeIndex(index_data, name=index_name)
+
+            # 1.4 PeriodIndex...
+            elif index_type == "PeriodIndex":
+                output = pandas.PeriodIndex(index_data, name=index_name)
+
+            # 1.5 TimedeltaIndex...
+            elif index_type == "TimedeltaIndex":
+                output = pandas.TimedeltaIndex(index_data, name=index_name)
+
+            # 1.6 CategoricalIndex...
+            elif index_type == "CategoricalIndex":
+                output = pandas.CategoricalIndex(index_data, name=index_name)
+
+            # 1.7 Generic fallback...
+            else:
+                output = pandas.Index(index_data, name=index_name)
+
+        # 3. Invalid type...
+        else:
+            logger.error("Invalid index type: %s", index_type)
+
+        # 4. Returns...
+        return output
 
     # ----------------------------------------------------------------------------------------- #
 

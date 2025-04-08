@@ -38,6 +38,7 @@ class SupportedTypes(Enum):
     NAMEDTUPLE = "namedtuple"
     NDARRAY = "ndarray"
     NONE = "none"
+    SERIES = "series"
     SET = "set"
     STR = "str"
     TYPE = "type"

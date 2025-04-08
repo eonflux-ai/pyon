@@ -489,6 +489,104 @@ class TestPyonEncodeDecode:
 
     # ----------------------------------------------------------------------------------------- #
 
+    @pytest.mark.parametrize(
+        "value",
+        [
+
+            # 1.1 Standard Index...
+            pd.Series([1.5, 2.0, 3.1], index=["a", "b", "c"], name="standard_series"),
+
+            # 1.2 Range Index...
+            pd.Series([100, 200, 300], index=pd.RangeIndex(start=0, stop=3, step=1), name="range_series"),
+
+            # 1.3 MultiIndex...
+            pd.Series(
+                [10, 20, 30],
+                index=pd.MultiIndex.from_tuples(
+                    [("X", 1), ("X", 2), ("Y", 1)],
+                    names=["category", "code"]
+                ),
+                name="multiindex_series"
+            ),
+
+            # 1.4 Datetime Index...
+            pd.Series(
+                [1.1, 1.2, 1.3],
+                index=pd.date_range("2024-01-01", periods=3, freq="D"),
+                name="datetime_series"
+            ),
+
+            # 1.5 Period Index...
+            pd.Series(
+                [11, 22],
+                index=pd.period_range("2024Q1", periods=2, freq="Q"),
+                name="period_series"
+            ),
+
+            # 1.6 Timedelta Index...
+            pd.Series(
+                [5, 10],
+                index=pd.to_timedelta(["1 days", "2 days"]),
+                name="timedelta_series"
+            ),
+
+            # 1.7 Categorical Index...
+            pd.Series(
+                [100, 200],
+                index=pd.CategoricalIndex(["low", "high"], name="risk_level"),
+                name="categorical_series"
+            ),
+
+            # 1.8 Float64 Index...
+            pd.Series(
+                [0.1, 0.2],
+                index=pd.Index([0.1, 0.2], dtype="float64", name="float_id"),
+                name="float_series"
+            ),
+
+            # 1.9 Int64 Index...
+            pd.Series(
+                [10, 20],
+                index=pd.Index([1, 2], dtype="int64", name="int_id"),
+                name="int_series"
+            ),
+
+            # 1.10 UInt64 Index...
+            pd.Series(
+                [99, 100],
+                index=pd.Index([11, 12], dtype="uint64", name="uint_id"),
+                name="uint_series"
+            ),
+
+            # 2.1 Base Types...
+            None, "invalid", 42, 3.1415,
+        ]
+    )
+    def test_series(self, value):
+        """ Test encoding and decoding for Pandas Series. """
+
+        # 1. Valid case...
+        if isinstance(value, pd.Series):
+
+            # 1.1 Encode, Decode...
+            encoded = pyon.encode(value)
+            decoded = pyon.decode(encoded)
+
+            # 1.2 Asserts: encoded...
+            assert isinstance(encoded, str)
+
+            # 1.3 Asserts: decoded...
+            assert isinstance(decoded, pd.Series)
+            assert decoded.equals(value)
+
+        # 2. None, Other...
+        else:
+
+            # 2.1 Encode, Decode, Asserts...
+            decoded = pyon.decode(pyon.encode(value))
+            assert decoded == value
+
+    # ----------------------------------------------------------------------------------------- #
 
     def _test_default(self, value, clazz):
         """ Test encoding and decoding for complex numbers. """

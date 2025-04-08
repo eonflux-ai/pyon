@@ -77,7 +77,8 @@ Pyon supports a broad array of Python types out-of-the-box:
 - `class` (user defined classes), `dataclasses.dataclass`, `dict`, `Enum`
 
 **6. Specialized Types**
-- `bitarray.bitarray`, `numpy.ndarray`, `pandas.DataFrame`, `pyon.File`, `uuid.UUID`
+- `bitarray.bitarray`, `numpy.ndarray`, `pyon.File`, `uuid.UUID`
+- `pandas.DataFrame`, `pandas.Series`
 
 ---
 <br>
@@ -258,7 +259,8 @@ Each submodule is responsible for specific categories of data types, ensuring ma
 |                     | `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple` (from collections)          |
 | `datetime_types`    | `datetime.date`, `datetime.datetime`, `datetime.time`                                   |
 | `mapping_types`     | `class` (user defined classes), `dataclasses.dataclass`, `dict`, `Enum`                 |
-| `specialized_types` | `bitarray.bitarray`, `numpy.ndarray`, `pandas.DataFrame`, `pyon.File`, `uuid.UUID`      |
+| `specialized_types` | `bitarray.bitarray`, `numpy.ndarray`, `pyon.File`, `uuid.UUID`                          |
+|                     | `pandas.DataFrame`, `pandas.Series`                                                     |
 
 
 This modularization simplifies the process of adding support for new data types and ensures that each encoder submodule focuses solely on its designated category of data.
@@ -298,6 +300,7 @@ For detailed plans, phased expansions, and future directions, see the [ROADMAP.m
 - [ROADMAP.md](docs/ROADMAP.md): Detailed plans and future directions for Pyon.  
 - [VERSION.md](docs/VERSION.md): Current version details and key features.  
 - [TASKS.md](docs/TASKS.md): Progress tracking and specific tasks for each version.
+- [CHANGELOG.md](./CHANGELOG.md): History of changes between versions.
 
 ---
 <br>
@@ -317,7 +320,7 @@ Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 14. About the Creator
 
-Eduardo Rodrigues is the visionary behind **Pyon**. As a seasoned developer and project manager, he blends deep technical expertise with a passion for creating scalable and innovative solutions. His journey spans a variety of domains, from public sector innovation to advanced AI research.
+Eduardo Rodrigues is the visionary behind Pyon. As a seasoned developer and project manager, he blends deep technical expertise with a passion for creating scalable and innovative solutions. His journey spans a variety of domains, from public sector innovation to advanced AI research.
 
 ### A Passion for Problem-Solving
 Eduardo's development philosophy revolves around simplicity, efficiency, and extensibility. His work often bridges the gap between theory and application, as seen in Pyon's ability to handle complex Python types with ease. Eduardo believes in empowering developers to tackle intricate data scenarios through tools that are both robust and user-friendly.
@@ -326,7 +329,7 @@ Eduardo's development philosophy revolves around simplicity, efficiency, and ext
 Beyond Pyon, Eduardo has spearheaded projects in Artificial Intelligence, such as integrating generative AI to improve knowledge management in government systems. His expertise lies in architecting solutions that merge cutting-edge technology with practical needs, ensuring both performance and reliability.
 
 ### Driven by a Larger Vision
-Eduardo envisions **Pyon** as more than a library—it’s a stepping stone toward redefining data serialization in Python. His ultimate goal is to drive innovation through open-source projects, fostering collaboration and pushing boundaries in software development.
+Eduardo envisions Pyon as more than a library—it’s a stepping stone toward redefining data serialization in Python. His ultimate goal is to drive innovation through open-source projects, fostering collaboration and pushing boundaries in software development.
 
 For questions, collaborations, or contributions, Eduardo invites you to join the journey on GitHub or email him at:
 `eduardo@eonflux.ai`
