@@ -136,7 +136,7 @@ class MapEnc(BaseEncoder):
             output = {
                 EConst.TYPE: SupportedTypes.ENUM.value,
                 EConst.CLASS: ut.get_class_name(value),
-                EConst.DATA: value.value,
+                EConst.DATA: self._encode_as_dict(value.value)
             }
 
         # 2. Logs if invalid...
@@ -160,7 +160,8 @@ class MapEnc(BaseEncoder):
             if cls_enum is not None:
 
                 # 2.1 Decodes...
-                output = cls_enum(value[EConst.DATA])
+                val = self._decode_from_dict(value[EConst.DATA])
+                output = cls_enum(val)
 
         # 2. If invalid...
         else:

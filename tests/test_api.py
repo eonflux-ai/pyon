@@ -217,6 +217,17 @@ class TestPyonEncodeDecode:
 
     # ----------------------------------------------------------------------------------------- #
 
+    @pytest.mark.parametrize("value", [{"key_a": 1, "key_b": 2}, {"key_a": 'a', "key_b": 'b'}])
+
+    def test_dict(self, value):
+        """ Test encoding and decoding for deque. """
+
+        # 1. Default test...
+        self._test_default(value, dict)
+
+    # ----------------------------------------------------------------------------------------- #
+
+
     @pytest.mark.parametrize("value", [Color.RED, None, "invalid", 10, 3.14])
 
     def test_enum(self, value):
