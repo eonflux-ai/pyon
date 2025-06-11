@@ -4,16 +4,11 @@ This document contains a structured list of tasks organized by version for the d
 
 ---
 
-## Version 0.2.0-alpha — Arbitrary Dict Keys and Hashing Features
+## Version 0.2.0-alpha — Arbitrary Dict Keys
 
 ### Mapping Flexibility
-- `[x]` Support for any hashable type as a dict key (instead of only strings)
+- `[x]` Allow any pyon supported type be used as a dict key (instead of only strings)
 - `[x]` Encode/decode recursive mapping types with mixed key/value types
-
-### Hashing and Object Identification
-- `[x]` Add `to_hash(obj, algorithm)` with support for `sha256`, `sha512`, `sha3_256`, `sha3_512`, `blake2b`, `md5`, and `sha1`
-- `[x]` Add `to_int(obj)` to convert any serializable object into a deterministic 256-bit integer
-- `[x]` Ensure deterministic behavior across machines and executions
 
 ### Attribute Visibility Control
 - `[x]` Add support for optional inclusion of protected attributes (`_`) via `enc_protected=True`
@@ -21,9 +16,6 @@ This document contains a structured list of tasks organized by version for the d
 
 ### Enum Enhancements
 - `[x]` Support for serializing Enums with complex values (e.g., tuples, dicts)
-
-### Object Lifecycle Hooks
-- [x] Add support for `__pyon_post_init__()` to finalize object construction after decoding
 
 ---
 
@@ -113,13 +105,11 @@ This document contains a structured list of tasks organized by version for the d
 - `[ ]` `networkx.Graph`, `scipy.sparse` matrices
 
 ### 0.6.0-alpha — ML Integration
-- `[ ]` Scikit-learn pipelines with `pickle`/`joblib`
 - `[ ]` Serialize ML models in reusable format
 
 ### 0.7.0-alpha — Distributed and Streaming Support
 - `[ ]` `dask` DataFrames/Arrays
 - `[ ]` `xarray` for N-D labeled arrays
-- `[ ]` Fallback integration with `pickle`
 - `[ ]` Support for generators/iterators
 
 ---

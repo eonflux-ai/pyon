@@ -121,7 +121,6 @@ Below is our plan for expanding the range of types that **Pyon** supports. We’
 ### Phase 2
 
 - **scikit-learn Models/Pipelines**  
-  - Integrate with or wrap existing serialization mechanisms (`pickle`/`joblib`).  
   - Store model artifacts (estimators, preprocessing pipelines) in a Pyon-friendly format.
 
 *Rationale*: scikit-learn remains one of the most popular machine learning libraries, so supporting its models will broaden Pyon’s appeal in production and research environments.
@@ -134,8 +133,6 @@ Below is our plan for expanding the range of types that **Pyon** supports. We’
   - Preserve coordinate metadata and dimension labels, crucial for scientific data.  
 - **HDF5 Integration**  
   - Explore interoperability with chunked and compressed dataset storage.  
-- **Optional `pickle`/`joblib` Wrappers**  
-  - Fallback for exotic objects not natively handled, with clear disclaimers regarding security.  
 - **Iterators/Generators (Limited Support)**  
   - Possibly store basic state or configurations (though full generator state is complex).
 

@@ -5,14 +5,14 @@ A package for serializing and deserializing complex Python objects, extending JS
 # --------------------------------------------------------------------------------------------- #
 
 
-from .api import encode, decode, to_file, from_file, to_hash, to_int
+from .api import encode, decode, to_file, from_file
 from .file import File
 
 
 # --------------------------------------------------------------------------------------------- #
 
 
-__all__ = ["encode", "decode", "to_file", "from_file", "to_hash", "to_int", "File"]
+__all__ = ["encode", "decode", "to_file", "from_file", "File"]
 
 
 # --------------------------------------------------------------------------------------------- #

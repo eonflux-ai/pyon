@@ -667,54 +667,6 @@ class TestPyonEncodeDecode:
 
     # ----------------------------------------------------------------------------------------- #
 
-    @pytest.mark.parametrize("value", [
-        {"a": 1, "b": 2},
-        {1, 2, 3},
-    ])
-    @pytest.mark.parametrize("algorithm", [
-        "md5", "sha1", "sha256", "sha512", "sha3_256", "sha3_512", "blake2b"
-    ])
-    def test_to_hash(
-        self,
-        value: dict[str, int] | set[int],
-        algorithm: Literal[
-            "md5", "sha1", "sha256", "sha512", "sha3_256", "sha3_512", "blake2b"
-        ],
-    ):
-        """ Test deterministic hash string generation for various algorithms. """
-
-        # 1. Generate hash...
-        hash1 = pyon.to_hash(value, algorithm=algorithm)
-        hash2 = pyon.to_hash(value, algorithm=algorithm)
-
-        # 2. Asserts: string, consistent, not empty...
-        assert isinstance(hash1, str)
-        assert isinstance(hash2, str)
-        assert hash1 == hash2
-        assert len(hash1) > 0
-
-    # ----------------------------------------------------------------------------------------- #
-
-    @pytest.mark.parametrize("value1, value2", [
-        ({"x": 1, "y": 2}, {1, 2, 3}),
-        (set(["a", "b"]), {"foo": "bar"})
-    ])
-    def test_to_int(self, value1: dict[str, int] | set[str], value2: set[int] | dict[str, str]):
-        """ Test deterministic integer generation. """
-
-        # 1. Compute int hashes...
-        int1 = pyon.to_int(value1)
-        int2 = pyon.to_int(value2)
-
-        # 2. Asserts: integers, consistent, different...
-        assert isinstance(int1, int)
-        assert isinstance(int2, int)
-        assert int1 == pyon.to_int(value1)
-        assert int2 == pyon.to_int(value2)
-        assert int1 != int2
-
-    # ----------------------------------------------------------------------------------------- #
-
     @pytest.mark.parametrize(
         "enc_protected, enc_private, expected_protected, expected_private",
         [
@@ -740,26 +692,6 @@ class TestPyonEncodeDecode:
         assert decoded.public == 1
         assert getattr(decoded, "_protected", None) == expected_protected  # pylint: disable=protected-access
         assert getattr(decoded, "_TestClass__private", None) == expected_private
-
-    # ----------------------------------------------------------------------------------------- #
-
-    @pytest.mark.parametrize("name", ["alpha", "beta", "gamma"])
-    def test_pyon_post_init_hook(self, name):
-        """
-        Tests if `__pyon_post_init__()` is called automatically after decoding.
-        """
-
-        # 2. Prepare...
-        obj = ModelConfig(name)
-
-        # 3. Encode and Decode...
-        encoded = pyon.encode(obj)
-        decoded = pyon.decode(encoded)
-
-        # 4. Validates...
-        assert isinstance(decoded, ModelConfig)
-        assert decoded.name == name
-        assert decoded._model == obj._model  # pylint: disable=protected-access
 
     # ----------------------------------------------------------------------------------------- #
 

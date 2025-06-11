@@ -6,21 +6,22 @@
 Alpha (Mature)
 
 ### Overview
-This version of Pyon introduces several critical features aimed at enhancing flexibility, introspection, and identification.  
-In addition to supporting arbitrary types as dictionary keys, it adds robust hashing utilities and control over class attribute visibility during serialization.  
-These enhancements significantly expand Pyon's applicability to object tracking, caching, and structural comparison use cases.
+
+A significant structural evolution of Pyon. Allows supported pyon types as dictionary keys — a major step beyond string-only mappings — adding enhanced flexibility for object introspection.\
+This release also improves support for encoding and decoding user-defined classes, including optional serialization of protected and private attributes.\
+The internal system now correctly handles complex `Enum` values, including those based on tuples or dictionaries.\
+Although still in alpha, this version is stable for use cases involving complex but acyclic Python supported structures and JSON-safe types.
+
 
 ---
 
 ### Key Features in 0.2.0-alpha
 
-- ✅ Full support for any hashable type as a dictionary key (not just strings).
-- ✅ Recursive serialization of mapping types with mixed key/value structures.
-- ✅ New `to_hash()` utility supporting 7 algorithms (`sha256`, `sha512`, `sha3_256`, `sha3_512`, `blake2b`, `md5`, `sha1`) for deterministic hashing.
-- ✅ New `to_int()` method for generating a 256-bit stable integer hash from any object.
-- ✅ Optional inclusion of protected (`_`) and private (`__`) attributes during serialization using `enc_protected` and `enc_private` flags.
-- ✅ Support for complex `Enum` values (e.g., tuples, dicts) in serialization.
-- ✅ New `__pyon_post_init__()` hook allows objects to self-reconstruct internal state after deserialization.
+- ✅ Allow any pyon supported type be used as a dict key (instead of only strings).
+- ✅ Encode/decode recursive mapping types with mixed key/value types.
+- ✅ Add support for optional inclusion of protected attributes (`_`) via `enc_protected=True`.
+- ✅ Add support for optional inclusion of private attributes (`__`) via `enc_private=True`.
+- ✅ Support for serializing Enums with complex values (e.g., tuples, dicts).
 
 ---
 
@@ -28,13 +29,8 @@ These enhancements significantly expand Pyon's applicability to object tracking,
 
 - [x] Add support for any type as dictionary key.
 - [x] Support recursive encoding/decoding of mixed key/value types in mappings.
-- [x] Add `to_hash()` with configurable algorithm.
-- [x] Add `to_int()` deterministic integer hash.
 - [x] Add `enc_protected` and `enc_private` flags to include non-public attributes.
 - [x] Add support for complex `Enum` values.
-- [x] Ensure hash behavior is deterministic across platforms and executions.
-- [x] Refactor internal hash API into `to_hash()` and `_to_hash()` for separation of concerns.
-- [x] Add support for `__pyon_post_init__()` lifecycle hook after object deserialization.
 
 ---
 
@@ -43,7 +39,6 @@ These enhancements significantly expand Pyon's applicability to object tracking,
 - Shared and cyclical references are not yet supported.
 - Binary output and encryption are pending implementation.
 - No support yet for deep ML structures like `torch.Tensor`, `tf.Tensor`, `networkx.Graph`, or `scipy.sparse`.
-- Fallback integration with `pickle` not yet available.
 
 ---
 

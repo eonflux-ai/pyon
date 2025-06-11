@@ -13,8 +13,8 @@
 5. [Quick Start](#5-quick-start)
 6. [Examples](#6-examples)
 7. [Recursion in Encoding and Decoding](#7-recursion-in-encoding-and-decoding)
-8. [Hashing Serialized Objects](#8-hashing-serialized-objects)
-9. [Pyon Post Init](#9-pyon-post-init)
+8. [Decode Without Execution](#8-decode-without-execution)
+9. [JSON Compatibility](#9-json-compatibility)
 10. [Project Structure](#10-project-structure)
 11. [Encoders](#11-encoders)
 12. [Testing](#12-testing)
@@ -28,14 +28,17 @@
 
 ## 1. Overview
 
-Pyon is built on top of JSON, but goes beyond standard JSON encoding a wide range of Python-specific data types. \
-Whether you are working with typical Python containers, specialized data structures for AI/ML, or custom classes, Pyon aims to seamlessly serialize and deserialize them.
+Pyon is a Python library that extends the JSON format to support a broader set of Python-native data types, including sets, tuples, enums, user-defined classes, and structures from libraries such as NumPy and pandas.
 
-Key goals include:
+It provides a serialization and deserialization mechanism that preserves the structure and type information of supported objects using additional metadata embedded in standard JSON.
 
-- **Robustness**: Proper handling of complex or custom Python objects.  
-- **Efficiency**: Designed for data-intensive applications such as ML or large-scale data pipelines.  
-- **Extensibility**: Future reliases will add support for new data types.
+Pyon was designed with the following principles:
+
+- **JSON-valid output**: All serialized data is valid JSON and can be parsed by any standard JSON parser.
+- **Type preservation**: Encoded objects retain enough metadata to be accurately reconstructed as their original Python types.
+- **Modular architecture**: Support for data types is implemented through independent encoders, allowing structured maintenance and future expansion.
+
+Pyon is suitable for tasks such as storing structured data, saving configurations, exporting Python objects for inspection or reuse, and ensuring deterministic reconstruction across environments — provided that all involved types are supported.
 
 ---
 <br>
@@ -50,13 +53,6 @@ Pyon provides a straightforward interface with four main methods:
 - **`from_file(file_path)`**: Loads data from a file and deserializes it into the corresponding Python object.
 
 Each of these methods automatically detects the data type and applies the appropriate serialization or deserialization logic.
-
-Pyon also includes two helper methods for hash-based identifiers:
-
-- **`to_hash(obj, algorithm)`**: Computes a deterministic hash string from the serialized object. Supports multiple algorithms.
-- **`to_int(obj)`**: Returns a 256-bit deterministic integer identifier based on the SHA-256 hash of the serialized object.
-
-These helpers **enable deterministic identification** of previously **unhashable types**, such as **dictionaries and sets**, making them suitable for use in persistent maps, content tracking, and distributed caching.
 <br>
 
 ### Additional options
@@ -66,8 +62,6 @@ Additional options are available in the core encoding methods:
 |----------------|-------------------------------------------------------|
 | `encode(...)`  | Serializes an object to a Pyon string                 |
 | `to_file(...)` | Saves a serialized object to disk                     |
-| `to_hash(...)` | Computes a deterministic hash of the serialized form |
-| `to_int(...)`  | Returns a 256-bit integer ID derived from the object |
 
 These methods accept two optional parameters:
 
@@ -119,8 +113,6 @@ Alternatively, you can install directly from the source:
 pip install git+https://github.com/eonflux-ai/pyon.git
 ```
 
-*The package 'pion-core' is engine behind the upcoming Pyon ecosystem. If the original PyPI package 'pyon' is released, this package will become its foundation.*
-
 ---
 <br>
 
@@ -150,7 +142,7 @@ decoded = pyon.from_file("data.pyon")
 
 ## 6. Examples
 
-Pyon includes a wide set of examples to demonstrate its capabilities in handling different data types and scenarios.  
+Pyon provides several usage examples covering supported data types and common serialization scenarios.
 These examples are located in the `examples/` directory and provide practical use cases for serialization and deserialization.
 
 Check **[EXAMPLES.md](examples/EXAMPLES.md)** for more information.
@@ -160,7 +152,7 @@ Check **[EXAMPLES.md](examples/EXAMPLES.md)** for more information.
 
 ## 7. Recursion in Encoding and Decoding
 
-Pyon excels at handling recursive data structures (nested types) seamlessly. Whether your data includes deeply nested dictionaries, lists, or custom objects, Pyon ensures accurate serialization and deserialization across all levels.
+Pyon supports recursive and nested data structures, such as dictionaries containing lists of sets, or custom objects nested within other containers. It is capable of encoding and decoding these compositions while preserving the original structure and supported types.
 
 ```python
 import pyon
@@ -192,76 +184,68 @@ encoded = pyon.encode(example_data)
 decoded = pyon.decode(encoded)
 ```
 
-Pyon's recursive encoding and decoding provide a reliable way to handle arbitrarily complex structures, making it ideal for advanced use cases like configuration management, AI/ML pipelines, or hierarchical datasets.
+This capability allows Pyon to represent arbitrarily nested structures without flattening or discarding information, as long as the types involved are supported by the library.
 
 Check **[EXAMPLES.md](examples/EXAMPLES.md)** for more information.
 
 ---
 <br>
 
-## 8. Hashing Serialized Objects
+## 8. Decode Without Execution
 
-Pyon provides a deterministic and flexible hashing function for any serializable object.
+Pyon was designed with **security and predictability** as core principles during deserialization.
 
-```python
-from pyon import to_hash
+When decoding a `.pyon` file, Pyon **does not execute any user-defined code**.
 
-hash1 = to_hash(obj)  # Default: sha256
-hash2 = to_hash(obj, algorithm="blake2b")
-hash3 = to_hash(obj, algorithm="sha3_256")
-```
+The `decode()` function strictly reconstructs object structures by assigning values to their attributes.\
+No methods are called, no constructors are run, and no business logic is triggered during the process.
 
-This ensures object identity tracking, deduplication, or cache mapping with robust and repeatable hashes.
+This behavior ensures that deserialization remains fully **passive and deterministic**, regardless of the object’s type.\
+This design favors transparency and reduces side effects during object reconstruction.
 
-**Supported algorithms:**
-- `"sha256"` – Secure default (recommended)
-- `"sha512"` – Stronger than sha256, longer output, cryptographically secure
-- `"sha3_256"` – SHA-3 (Keccak), theoretically stronger
-- `"sha3_512"` – SHA-3 (Keccak), theoretically stronger
-- `"blake2b"` – Fast and modern alternative to SHA-2
-- `"md5"` – Useful for fingerprints and compact identifiers
-- `"sha1"` – Suitable for quick matching and legacy systems
+### 🔒 What Happens During Decoding
 
-*Although `md5` and `sha1` remain useful for fast fingerprinting and object identification,\
-they are `insecure` by cryptographic standards and should not be used in security-sensitive contexts.*
-
----
-
-### Int hash
-
-To generate a deterministic integer (256-bit) from any serializable object, use `to_int()`:
-
-```python
-from pyon import to_int
-
-value = to_int(obj)
-```
-
-This allows you to generate stable numeric identifiers even for types that are normally unhashable in Python, such as dictionaries, sets, or custom objects with mutable structure.
+- Only object attributes are restored — methods are not invoked.
+- No constructors (`__init__`) are called.
+- No evaluation or arbitrary code interpretation occurs.
+- No custom logic is executed.
+- **Reflection** is used to locate and instantiate Python types based on module and class names.
+- Type reconstruction is driven entirely by static text fields embedded in the `.pyon` file.
+- Even for custom classes, only the internal structure is rebuilt.
 
 ---
 <br>
 
-## 9. Pyon Post Init
+## 9. JSON Compatibility
 
-When decoding an object, Pyon checks if it defines the special method `__pyon_post_init__()`.  
-If present and callable, this method is automatically invoked after the object is reconstructed and all available attributes are set.
+Pyon is built entirely on top of the JSON standard — it **generates**, **loads**, and **stores** valid JSON data.
 
-This hook allows custom classes to finalize their internal state, rebuild caches, or load files based on the restored configuration—without requiring changes to the constructor.
+Pyon extends JSON by adding an internal logic layer that **preserves type information**. This allows Pyon to **reconstruct complex Python objects**, including types that JSON alone cannot represent, such as `set`, `tuple`, `complex`, `datetime`, or custom classes.
 
-```python
-class MyConfig:
+### 🔁 Encoding Process
 
-    def __init__(self, name):
-        self.name = name
-        self._model = None
+During encoding, Pyon performs two key steps:
 
-    def __pyon_post_init__(self):
-        self._model = self._load_model()
+1. It converts the original Python object into a **JSON-compatible dictionary** that includes both the data and additional text fields indicating the original types.
+2. This dictionary is then serialized into a standard JSON string and optionally saved to a file.
 
-    def _load_model(self):
-        return SomeMLModel.load(f"{self.name}.pt")
-```
+The output is a fully valid JSON document — readable and parseable by any standard JSON parser — but structured in a way that allows Pyon to restore Python-specific semantics.
+
+### 🔄 Decoding Process
+
+During decoding, Pyon follows the reverse logic:
+
+1. It loads the JSON string and parses it into a plain dictionary.
+2. It then interprets the additional textual fields to **rebuild the original Python objects** and restore their intended types.
+
+This process is entirely passive and does not invoke any user-defined logic or methods.
+
+### 🧩 JSON-Compatible but Python-Aware
+
+Pyon can be thought of as a **lossless extension of JSON for Python** — enabling round-trip serialization of supported types.
+
+Data saved with Pyon remains readable, transferable, and inspectable across environments, while preserving the ability to recover supported Python types securely.
+
 ---
 <br>
 
@@ -408,18 +392,17 @@ Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 16. About the Creator
 
-Eduardo Rodrigues is the visionary behind Pyon. As a seasoned developer and project manager, he blends deep technical expertise with a passion for creating scalable and innovative solutions. His journey spans a variety of domains, from public sector innovation to advanced AI research.
+Pyon was created by Eduardo Rodrigues, a software engineer with over two decades of experience and a deep interest in science, artificial intelligence, and data structures.
 
-### A Passion for Problem-Solving
-Eduardo's development philosophy revolves around simplicity, efficiency, and extensibility. His work often bridges the gap between theory and application, as seen in Pyon's ability to handle complex Python types with ease. Eduardo believes in empowering developers to tackle intricate data scenarios through tools that are both robust and user-friendly.
+He conducts independent research at **eonflux-ai**, a quiet and evolving initiative dedicated to exploring various aspects of intelligent systems — including machine learning, deep learning, natural language processing, computer vision, expert systems, and generative AI. While not a development hub, eonflux-ai serves as a research environment where ideas are tested, refined, and occasionally shared through open-source tools and publications.
 
-### Innovator in AI and Beyond
-Beyond Pyon, Eduardo has spearheaded projects in Artificial Intelligence, such as integrating generative AI to improve knowledge management in government systems. His expertise lies in architecting solutions that merge cutting-edge technology with practical needs, ensuring both performance and reliability.
+Pyon itself emerged from a simple but critical need encountered during AI research: to serialize and reload complex datasets using minimal code, without compromising safety, clarity, or Python compatibility.
 
-### Driven by a Larger Vision
-Eduardo envisions Pyon as more than a library—it’s a stepping stone toward redefining data serialization in Python. His ultimate goal is to drive innovation through open-source projects, fostering collaboration and pushing boundaries in software development.
+Throughout his career, Eduardo has worked across a range of industries — including finance, healthcare, legal systems, the automotive sector, academia, and independent research — always aiming to design tools that combine conceptual clarity with practical efficiency.
 
-For questions, collaborations, or contributions, Eduardo invites you to join the journey on GitHub or email him at:
+Pyon reflects a commitment to simplicity, default safety, and reproducibility. It is both a personal tool and an open invitation for collaboration.
+
+For contact, feedback, or collaboration:  
 `eduardo@eonflux.ai`
 
 ---

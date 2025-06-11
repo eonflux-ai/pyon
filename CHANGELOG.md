@@ -10,17 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.2.0-alpha] - 2025-06-09
 
 ### Added
-- Support for hashing via `to_hash(obj, algorithm='sha256')`, with selectable algorithms: `sha256`, `sha512`, `sha3_256`, `sha3_512`, `blake2b`, `md5`, and `sha1`.
-- New method `to_int(obj)` that generates a deterministic 256-bit integer identifier based on the SHA-256 hash of the serialized object, even for non-hashable types like `dict` and `set`.
-- New optional parameters `enc_protected` and `enc_private` in `encode()` to allow serialization of class attributes prefixed with `_` or `__`.
+- New optional parameters `enc_protected` and `enc_private` in `encode()` and `to_file()` to allow serialization of class attributes prefixed with `_` or `__`.
 - Support for serializing Enums with complex values (e.g., tuples, dicts), extending beyond primitive types.
-- Support for `__pyon_post_init__()` method to finalize object reconstruction after decoding.
-
-### Changed
-- Internal hash API split into `to_hash()` and `_to_hash()` to improve maintainability.
 
 ### Fixed
-- Ensured deterministic behavior in all supported hashing algorithms for identical object states across machines and executions.
+- Enums decoding errors with complex values.
 
 ---
 
