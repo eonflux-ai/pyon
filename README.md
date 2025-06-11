@@ -13,14 +13,16 @@
 5. [Quick Start](#5-quick-start)
 6. [Examples](#6-examples)
 7. [Recursion in Encoding and Decoding](#7-recursion-in-encoding-and-decoding)
-8. [Project Structure](#8-project-structure)
-9. [Encoders](#9-encoders)
-10. [Testing](#10-testing)
-11. [Roadmap](#11-roadmap)
-12. [Additional Documentation](#12-additional-documentation)
-13. [Contributing](#13-contributing)
-14. [About the Creator](#14-about-the-creator)
-15. [License](#15-license)
+8. [Hashing Serialized Objects](#8-hashing-serialized-objects)
+9. [Pyon Post Init](#9-pyon-post-init)
+10. [Project Structure](#10-project-structure)
+11. [Encoders](#11-encoders)
+12. [Testing](#12-testing)
+13. [Roadmap](#13-roadmap)
+14. [Additional Documentation](#14-additional-documentation)
+15. [Contributing](#15-contributing)
+16. [About the Creator](#16-about-the-creator)
+17. [License](#17-license)
 
 ---
 
@@ -42,15 +44,35 @@ Key goals include:
 
 Pyon provides a straightforward interface with four main methods:
 
-- **`encode(obj)`**: Serialize a Python object into a Pyon string.
-
-- **`decode(data)`**: Deserialize a Pyon string into the corresponding Python object.
-
-- **`to_file(obj, file_path)`**: Serialize a Python object and save the resulting data to a file.
-
-- **`from_file(file_path)`**: Load data from a file and deserialize it into the corresponding Python object.
+- **`encode(obj)`**: Serializes a Python object into a Pyon string.
+- **`decode(data)`**: Deserializes a Pyon string into the corresponding Python object.
+- **`to_file(obj, file_path)`**: Serializes a Python object and saves the result to a file.
+- **`from_file(file_path)`**: Loads data from a file and deserializes it into the corresponding Python object.
 
 Each of these methods automatically detects the data type and applies the appropriate serialization or deserialization logic.
+
+Pyon also includes two helper methods for hash-based identifiers:
+
+- **`to_hash(obj, algorithm)`**: Computes a deterministic hash string from the serialized object. Supports multiple algorithms.
+- **`to_int(obj)`**: Returns a 256-bit deterministic integer identifier based on the SHA-256 hash of the serialized object.
+
+These helpers **enable deterministic identification** of previously **unhashable types**, such as **dictionaries and sets**, making them suitable for use in persistent maps, content tracking, and distributed caching.
+<br>
+
+### Additional options
+Additional options are available in the core encoding methods:
+
+| Method         | Description                                           |
+|----------------|-------------------------------------------------------|
+| `encode(...)`  | Serializes an object to a Pyon string                 |
+| `to_file(...)` | Saves a serialized object to disk                     |
+| `to_hash(...)` | Computes a deterministic hash of the serialized form |
+| `to_int(...)`  | Returns a 256-bit integer ID derived from the object |
+
+These methods accept two optional parameters:
+
+- `enc_protected=True` includes attributes starting with `_` in the serialization.
+- `enc_private=True` includes name-mangled attributes starting with `__` in the serialization.
 
 ---
 <br>
@@ -136,9 +158,9 @@ Check **[EXAMPLES.md](examples/EXAMPLES.md)** for more information.
 ---
 <br>
 
-## 7. Recursion in Encoding and Decoding (Nested Types)
+## 7. Recursion in Encoding and Decoding
 
-Pyon excels at handling recursive data structures seamlessly. Whether your data includes deeply nested dictionaries, lists, or custom objects, Pyon ensures accurate serialization and deserialization across all levels.
+Pyon excels at handling recursive data structures (nested types) seamlessly. Whether your data includes deeply nested dictionaries, lists, or custom objects, Pyon ensures accurate serialization and deserialization across all levels.
 
 ```python
 import pyon
@@ -177,7 +199,73 @@ Check **[EXAMPLES.md](examples/EXAMPLES.md)** for more information.
 ---
 <br>
 
-## 8. Project Structure
+## 8. Hashing Serialized Objects
+
+Pyon provides a deterministic and flexible hashing function for any serializable object.
+
+```python
+from pyon import to_hash
+
+hash1 = to_hash(obj)  # Default: sha256
+hash2 = to_hash(obj, algorithm="blake2b")
+hash3 = to_hash(obj, algorithm="sha3_256")
+```
+
+This ensures object identity tracking, deduplication, or cache mapping with robust and repeatable hashes.
+
+**Supported algorithms:**
+- `"sha256"` – Secure default (recommended)
+- `"sha512"` – Stronger than sha256, longer output, cryptographically secure
+- `"sha3_256"` – SHA-3 (Keccak), theoretically stronger
+- `"sha3_512"` – SHA-3 (Keccak), theoretically stronger
+- `"blake2b"` – Fast and modern alternative to SHA-2
+- `"md5"` – Useful for fingerprints and compact identifiers
+- `"sha1"` – Suitable for quick matching and legacy systems
+
+*Although `md5` and `sha1` remain useful for fast fingerprinting and object identification,\
+they are `insecure` by cryptographic standards and should not be used in security-sensitive contexts.*
+
+---
+
+### Int hash
+
+To generate a deterministic integer (256-bit) from any serializable object, use `to_int()`:
+
+```python
+from pyon import to_int
+
+value = to_int(obj)
+```
+
+This allows you to generate stable numeric identifiers even for types that are normally unhashable in Python, such as dictionaries, sets, or custom objects with mutable structure.
+
+---
+<br>
+
+## 9. Pyon Post Init
+
+When decoding an object, Pyon checks if it defines the special method `__pyon_post_init__()`.  
+If present and callable, this method is automatically invoked after the object is reconstructed and all available attributes are set.
+
+This hook allows custom classes to finalize their internal state, rebuild caches, or load files based on the restored configuration—without requiring changes to the constructor.
+
+```python
+class MyConfig:
+
+    def __init__(self, name):
+        self.name = name
+        self._model = None
+
+    def __pyon_post_init__(self):
+        self._model = self._load_model()
+
+    def _load_model(self):
+        return SomeMLModel.load(f"{self.name}.pt")
+```
+---
+<br>
+
+## 10. Project Structure
 
 Here’s the project structure for Pyon:
 
@@ -244,7 +332,7 @@ This structure ensures clarity, scalability, and ease of maintenance as the proj
 ---
 <br>
 
-## 9. Encoders
+## 11. Encoders
 
 The **encoders** in Pyon are modularized to handle different data types efficiently. The main `encoder.py` file serves as the public interface for encoding and decoding, while the internal logic is organized into submodules within the `encoders/` directory.
 
@@ -270,7 +358,7 @@ As the building blocks for other types, the base types don't require encoding an
 ---
 <br>
 
-## 10. Testing
+## 12. Testing
 
 Pyon uses **pytest** for automated testing. The test suite covers:
 
@@ -288,14 +376,14 @@ pytest
 ---
 <br>
 
-## 11. Roadmap
+## 13. Roadmap
 
 For detailed plans, phased expansions, and future directions, see the [ROADMAP.md](docs/ROADMAP.md) file.
 
 ---
 <br>
 
-## 12. Additional Documentation
+## 14. Additional Documentation
 
 - [ROADMAP.md](docs/ROADMAP.md): Detailed plans and future directions for Pyon.  
 - [VERSION.md](docs/VERSION.md): Current version details and key features.  
@@ -305,7 +393,7 @@ For detailed plans, phased expansions, and future directions, see the [ROADMAP.m
 ---
 <br>
 
-## 13. Contributing
+## 15. Contributing
 
 We will welcome contributions of all kinds:
 
@@ -318,7 +406,7 @@ Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ---
 <br>
 
-## 14. About the Creator
+## 16. About the Creator
 
 Eduardo Rodrigues is the visionary behind Pyon. As a seasoned developer and project manager, he blends deep technical expertise with a passion for creating scalable and innovative solutions. His journey spans a variety of domains, from public sector innovation to advanced AI research.
 
@@ -337,7 +425,7 @@ For questions, collaborations, or contributions, Eduardo invites you to join the
 ---
 <br>
 
-## 15. License
+## 17. License
 
 This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
 

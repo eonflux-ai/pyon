@@ -34,6 +34,15 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
+    def __init__(self, encoder, enc_protected: bool = False, enc_private: bool = False):
+        super().__init__(encoder)
+
+        # 1. ...
+        self.enc_protected = enc_protected
+        self.enc_private = enc_private
+
+    # ----------------------------------------------------------------------------------------- #
+
     def encode(self, value):
         """ Encodes the Entity object """
 
@@ -189,16 +198,34 @@ class MapEnc(BaseEncoder):
             serialized_dict = {}
             for key, val in vars(value).items() if hasattr(value, EConst.DICT) else value.items():
 
-                # 2.1 Encodes Key...
-                enc_key = self._encode_as_str(key)
+                # 2.1 Validates...
+                if not (isinstance(key, str) and key.startswith("___")):
+                    mangled_name = ut.get_mangled_name(value)
 
-                # 2.2 Defines private attributes as None...
-                if enc_key.startswith("_"):
-                    serialized_dict[enc_key] = None
+                    # 3.1 Private and Protected...
+                    process = True
+                    if isinstance(key, str):
 
-                # 2.3 Encodes...
-                else:
-                    serialized_dict[enc_key] = self._encode_as_dict(val)
+                        # 4.1 Private key (starts with double underscore)...
+                        if key.startswith("__") or key.startswith(mangled_name):
+                            if not self.enc_private:
+                                process = False
+
+                        # 4.2 Protected key (starts with double underscore)...
+                        elif key.startswith("_") and not self.enc_protected:
+                            process = False
+
+                        # 4.3 Private or Procted...
+                        if not process:
+                            enc_key = self._encode_as_str(key)
+                            serialized_dict[enc_key] = None
+
+                    # 3.2 Valid keys...
+                    if process:
+
+                        # 4.1 Encodes Key...
+                        enc_key = self._encode_as_str(key)
+                        serialized_dict[enc_key] = self._encode_as_dict(val)
 
             # 1.2 ...
             encoded = {
@@ -225,6 +252,8 @@ class MapEnc(BaseEncoder):
 
                 # 2.1 Iterates to process...
                 for key, val in dict_items:
+
+                    # 3.1 ...
                     dec_key = self._decode_from_str(key)
                     decoded[dec_key] = self._decode_from_dict(val)
 

@@ -4,40 +4,26 @@ This document contains a structured list of tasks organized by version for the d
 
 ---
 
-## Version 0.1.1-alpha — Internal Refactors
+## Version 0.2.0-alpha — Arbitrary Dict Keys and Hashing Features
 
-### Core Improvements
-- `[x]` Initial encoder modularization and file structure setup
-- `[x]` Preliminary support for future extensibility
-- `[ ]` Refactor test methods adding tests to all project files
-- `[ ]` Create tests for key methods beyond the public API
+### Mapping Flexibility
+- `[x]` Support for any hashable type as a dict key (instead of only strings)
+- `[x]` Encode/decode recursive mapping types with mixed key/value types
 
----
+### Hashing and Object Identification
+- `[x]` Add `to_hash(obj, algorithm)` with support for `sha256`, `sha512`, `sha3_256`, `sha3_512`, `blake2b`, `md5`, and `sha1`
+- `[x]` Add `to_int(obj)` to convert any serializable object into a deterministic 256-bit integer
+- `[x]` Ensure deterministic behavior across machines and executions
 
-## Version 0.1.2-alpha — Type Serialization
+### Attribute Visibility Control
+- `[x]` Add support for optional inclusion of protected attributes (`_`) via `enc_protected=True`
+- `[x]` Add support for optional inclusion of private attributes (`__`) via `enc_private=True`
 
-### New Type Support
-- `[x]` Add support for Python `Type` objects (`type`, `isinstance`)
-- `[x]` Extend internal type detection and handler routing
+### Enum Enhancements
+- `[x]` Support for serializing Enums with complex values (e.g., tuples, dicts)
 
----
-
-## Version 0.1.3-alpha — PyPI Release
-
-### Packaging
-- `[x]` Create `setup.py`, finalize project metadata
-- `[x]` First release on [PyPI](https://pypi.org/project/pyon-core/) as `pyon-core`
-
----
-
-## Version 0.1.4-alpha — DataFrame MultiIndex Support
-
-### Advanced Pandas Support
-- `[x]` Full support for `pandas.MultiIndex` in `DataFrame.index` and `DataFrame.columns`
-- `[x]` Add modular decode logic via `__decode_columns` and `__decode_index`
-- `[x]` Normalize complex labels to JSON-safe types
-- `[x]` Integrate recursive encoding for cells with `Timestamp`, `Period`, `Timedelta`, etc.
-- `[x]` Add complete test coverage for all known `pandas.Index` types
+### Object Lifecycle Hooks
+- [x] Add support for `__pyon_post_init__()` to finalize object construction after decoding
 
 ---
 
@@ -52,47 +38,74 @@ This document contains a structured list of tasks organized by version for the d
 
 ---
 
-## Version 0.2.0-alpha — Arbitrary Dict Keys
+## Version 0.1.4-alpha — DataFrame MultiIndex Support
 
-### Mapping Flexibility
-- `[p]` Support for any hashable type as a dict key (instead of only strings)
-- `[ ]` Encode/decode recursive mapping types with mixed key/value types
-- `[ ]` Add tests for edge cases: tuples, enums, frozenset, nested keys
-- `[ ]` Update encoder routing to handle these during dict traversal
+### Advanced Pandas Support
+- `[x]` Full support for `pandas.MultiIndex` in `DataFrame.index` and `DataFrame.columns`
+- `[x]` Add modular decode logic via `__decode_columns` and `__decode_index`
+- `[x]` Normalize complex labels to JSON-safe types
+- `[x]` Integrate recursive encoding for cells with `Timestamp`, `Period`, `Timedelta`, etc.
+- `[x]` Add complete test coverage for all known `pandas.Index` types
 
 ---
 
-## Version 0.3.0-alpha — Shared and Cyclical References
+## Version 0.1.3-alpha — PyPI Release
 
-### Shared References
+### Packaging
+- `[x]` Create `setup.py`, finalize project metadata
+- `[x]` First release on [PyPI](https://pypi.org/project/pyon-core/) as `pyon-core`
+
+---
+
+## Version 0.1.2-alpha — Type Serialization
+
+### New Type Support
+- `[x]` Add support for Python `Type` objects (`type`, `isinstance`)
+- `[x]` Extend internal type detection and handler routing
+
+---
+
+## Version 0.1.1-alpha — Internal Refactors
+
+### Core Improvements
+- `[x]` Initial encoder modularization and file structure setup
+- `[x]` Preliminary support for future extensibility
+- `[ ]` Refactor test methods adding tests to all project files
+- `[ ]` Create tests for key methods beyond the public API
+
+---
+
+## Future Versions
+
+### Version 0.3.0-alpha — Shared and Cyclical References
+
+#### Shared References
 - `[ ]` Create a hash dictionary for shared objects during serialization
 - `[ ]` Replace duplicates with unique references in the output
 - `[ ]` Restore shared references during deserialization
 - `[ ]` Add tests for aliasing scenarios
 
-### Cyclical References
+#### Cyclical References
 - `[ ]` Detect cycles and inject reference tokens
 - `[ ]` Resolve references during decode
 - `[ ]` Prevent infinite recursion in cyclical structures
 
 ---
 
-## Version 0.4.0-alpha — Binary and Encryption Support
+### Version 0.4.0-alpha — Binary and Encryption Support
 
-### Binary I/O
+#### Binary I/O
 - `[ ]` Add `binary=True` to `to_file`, support `gzip`, `lzma`, `zipfile`
 - `[ ]` Ensure compatibility with `from_file`
 - `[ ]` Write tests for compressed I/O
 
-### Encryption
+#### Encryption
 - `[ ]` Add `encrypt=True` and `password` to `to_file`
 - `[ ]` Use `cryptography` for secure AES-based encryption
 - `[ ]` Integrate with binary output
 - `[ ]` Write tests for encrypted round-trip
 
 ---
-
-## Future Versions
 
 ### 0.5.0-alpha — Scientific Ecosystem Support
 - `[ ]` PyTorch: `torch.Tensor`

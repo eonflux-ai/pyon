@@ -24,7 +24,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __init__(self):
+    def __init__(self, enc_protected: bool = False, enc_private: bool = False):
         """ Initializes a Pyon Encoder """
 
         # 1. ...
@@ -35,7 +35,9 @@ class PyonEncoder():
         # 2. ...
         self.spec_enc = SpecEnc(self)
         self.col_enc = ColEnc(self)
-        self.map_enc = MapEnc(self)
+
+        # 3. ...
+        self.map_enc = MapEnc(self, enc_protected=enc_protected, enc_private=enc_private)
 
     # ----------------------------------------------------------------------------------------- #
 

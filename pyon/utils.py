@@ -103,3 +103,51 @@ def get_class(obj):
 
 
 # --------------------------------------------------------------------------------------------- #
+
+
+def lstrip(s: str, char: str) -> str:
+    """
+    Removes all leading `char` characters from the beginning of `s` 
+    until the first different character is found.
+
+    Example:
+        lstrip_until(",,,hello", ",") -> "hello"
+        lstrip_until("///path/to/file", "/") -> "path/to/file"
+    """
+    if not char or len(char) != 1:
+        raise ValueError("char must be a single character")
+
+    # 1. Initialize index
+    i = 0
+
+    # 1.1 Iterate until a different character is found
+    while i < len(s) and s[i] == char:
+        i += 1
+
+    # 2. Return the trimmed string
+    return s[i:]
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def get_mangled_name(obj):
+    """
+    Returns the Python name-mangled prefix for private attributes of the given object's class.
+
+    Args:
+        obj: The object whose class name will be used for mangling.
+
+    Returns:
+        str: The mangled name prefix (e.g., '_ClassName__').
+    """
+
+    # 1. ...
+    mangled_name = type(obj).__name__
+    mangled_name = lstrip(mangled_name, '_')
+
+    # 2. ...
+    return f"_{mangled_name}__"
+
+
+# --------------------------------------------------------------------------------------------- #

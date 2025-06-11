@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, date, time
 from decimal import Decimal
 from enum import Enum
+from typing import Literal
 from uuid import UUID, uuid4
 
 # --------------------------------------------------------------------------------------------- #
@@ -16,6 +17,7 @@ from bitarray import bitarray
 # --------------------------------------------------------------------------------------------- #
 
 import numpy as np
+from numpy._typing._array_like import NDArray
 import pandas as pd
 
 # --------------------------------------------------------------------------------------------- #
@@ -65,6 +67,50 @@ class Cat:
 # --------------------------------------------------------------------------------------------- #
 
 
+class ComplexEnum(Enum):
+    """Enum with complex values (tuples, dicts) for testing."""
+    PAIR = ("pair", 2)
+    TRIPLE = ("triple", {"x": 3})
+    FULL = ("full", {"a": 2, "b": 3})
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+class _TestClass:
+    """ Inner test class """
+
+    def __init__(self):
+        self.public = 1
+        self._protected = 2
+        self.__private = 3  # pylint: disable=unused-private-member
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+class ModelConfig:
+    """ A class with post-init logic """
+
+    def __init__(self, name):
+        self.name = name
+        self._model = None
+
+        # 2.1 ...
+        self.__init()
+
+    # 1.2 ...
+    def __init(self):
+        self.__pyon_post_init__()
+
+    # 1.3 ...
+    def __pyon_post_init__(self):
+        self._model = f"Loaded model: {self.name}"
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
 # Namedtuple for Tests
 Named = namedtuple("Named", ["field1", "field2"])
 
@@ -79,7 +125,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [bitarray("1101"), None, "invalid", 10, 3.14])
 
-    def test_bitarray(self, value):
+    def test_bitarray(self, value: bitarray | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for bitarray. """
 
         # 1. Default test...
@@ -89,7 +135,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [bytearray(b"hello"), None, "invalid", 10, 3.14])
 
-    def test_bytearray(self, value):
+    def test_bytearray(self, value: bytearray | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for bytearray. """
 
         # 1. Default test...
@@ -99,7 +145,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [b"hello", None, "invalid", 10, 3.14])
 
-    def test_bytes(self, value):
+    def test_bytes(self, value: None | float | bytes | str | int | float):
         """ Test encoding and decoding for bytes. """
 
         # 1. Default test...
@@ -109,7 +155,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [True, False, None, "invalid", 3.14])
 
-    def test_bool(self, value):
+    def test_bool(self, value: None | float | bool | Literal['invalid']):
         """ Test encoding and decoding for boolean values. """
 
         # 1. Default test...
@@ -119,7 +165,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [ChainMap({"a": 1}, {"b": 2}), None, "invalid", 10, 3.14])
 
-    def test_chainmap(self, value):
+    def test_chainmap(self, value: ChainMap | None | float | str | int | float):
         """ Test encoding and decoding for ChainMap. """
 
         # 1. Default test...
@@ -129,7 +175,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [Cat("Malbec", 6), None, "invalid", 10, 3.14])
 
-    def test_class(self, value):
+    def test_class(self, value: Cat | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for Class. """
 
         # 1. Default test...
@@ -139,7 +185,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [2 + 3j, None, "invalid", 10, 3.14])
 
-    def test_complex(self, value):
+    def test_complex(self, value: complex | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for complex numbers. """
 
         # 1. Default test...
@@ -149,7 +195,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [Counter({"a": 1, "b": 2}), None, "invalid", 10, 3.14])
 
-    def test_counter(self, value):
+    def test_counter(self, value: Counter[str] | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for Counter. """
 
         # 1. Default test...
@@ -159,7 +205,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [Person("Alice", 25), None, "invalid", 10, 3.14])
 
-    def test_dataclass(self, value):
+    def test_dataclass(self, value: Person | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for dataclass. """
 
         # 1. Default test...
@@ -169,7 +215,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [date.today(), None, "invalid", 10, 3.14])
 
-    def test_date(self, value):
+    def test_date(self, value: date | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for date. """
 
         # 1. Default test...
@@ -179,7 +225,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [datetime.now(), None, "invalid", 10, 3.14])
 
-    def test_datetime(self, value):
+    def test_datetime(self, value: datetime | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for datetime. """
 
         # 1. Default test...
@@ -189,7 +235,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [Decimal("123.45"), None, "invalid", 10, 3.14])
 
-    def test_decimal(self, value):
+    def test_decimal(self, value: Decimal | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for complex numbers. """
 
         # 1. Default test...
@@ -199,7 +245,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [defaultdict(int, a=1), None, "invalid", 10, 3.14])
 
-    def test_defaultdict(self, value):
+    def test_defaultdict(self, value: defaultdict | None | str | int | float):
         """ Test encoding and decoding for defaultdict. """
 
         # 1. Default test...
@@ -209,7 +255,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [deque(["a", "b"]), None, "invalid", 10, 3.14])
 
-    def test_deque(self, value):
+    def test_deque(self, value: deque[str] | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for deque. """
 
         # 1. Default test...
@@ -219,7 +265,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [{"key_a": 1, "key_b": 2}, {"key_a": 'a', "key_b": 'b'}])
 
-    def test_dict(self, value):
+    def test_dict(self, value: dict[str, int] | dict[str, str]):
         """ Test encoding and decoding for deque. """
 
         # 1. Default test...
@@ -227,10 +273,9 @@ class TestPyonEncodeDecode:
 
     # ----------------------------------------------------------------------------------------- #
 
-
     @pytest.mark.parametrize("value", [Color.RED, None, "invalid", 10, 3.14])
 
-    def test_enum(self, value):
+    def test_enum(self, value: None | Color | str | int | float):
         """ Test encoding and decoding for Enum. """
 
         # 1. Default test...
@@ -238,11 +283,28 @@ class TestPyonEncodeDecode:
 
     # ----------------------------------------------------------------------------------------- #
 
+    @pytest.mark.parametrize("value", [ComplexEnum.PAIR, ComplexEnum.TRIPLE, ComplexEnum.FULL])
+    def test_complex_enum_encoding(self, value: ComplexEnum):
+        """
+        Tests encoding/decoding for Enums with complex values (tuples, dicts).
+        """
+
+        # 1. Prepare...
+        encoded = pyon.encode(value)
+        decoded = pyon.decode(encoded)
+
+        # 2. Validate...
+        assert isinstance(decoded, ComplexEnum)
+        assert decoded is value
+
+    # ----------------------------------------------------------------------------------------- #
+
+
     @pytest.mark.parametrize(
         "value", [File("./tests/data/img.jpg"), None, "invalid", 10, 3.14]
     )
 
-    def test_file(self, value):
+    def test_file(self, value: File | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for File. """
 
         # 1. Default test...
@@ -252,7 +314,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [2.72, None, "invalid", 10, False])
 
-    def test_float(self, value):
+    def test_float(self, value: float | None | Literal['invalid'] | Literal[10] | Literal[False]):
         """ Test encoding and decoding for float. """
 
         # 1. Default test...
@@ -262,7 +324,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [frozenset([1, 2, 3]), None, "invalid", 10, 3.14])
 
-    def test_frozenset(self, value):
+    def test_frozenset(self, value: frozenset | None | str | int | float):
         """ Test encoding and decoding for frozenset. """
 
         # 1. Default test...
@@ -272,7 +334,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [42, None, "invalid", 10, False])
 
-    def test_int(self, value):
+    def test_int(self, value: None | int | str | int | bool):
         """ Test encoding and decoding for int. """
 
         # 1. Default test...
@@ -282,7 +344,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [Named("value1", 123), None, "invalid", 10, 3.14])
 
-    def test_namedtuple(self, value):
+    def test_namedtuple(self, value: Named | None | str | int | float):
         """ Test encoding and decoding for namedtuple. """
 
         # 1. Default test...
@@ -292,7 +354,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [{1, 2, 3}, None, "invalid", 10, 3.14])
 
-    def test_set(self, value):
+    def test_set(self, value: set | None | str | int | float):
         """ Test encoding and decoding for set. """
 
         # 1. Default test...
@@ -302,7 +364,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", ["Hello World", None, "invalid", 10, 3.14])
 
-    def test_str(self, value):
+    def test_str(self, value: str | None | int | float):
         """ Test encoding and decoding for str. """
 
         # 1. Default test...
@@ -312,7 +374,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [time(14, 30, 15), None, "invalid", 10, 3.14])
 
-    def test_time(self, value):
+    def test_time(self, value: time | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for time. """
 
         # 1. Default test...
@@ -322,7 +384,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [File, None, "invalid", 10, 3.14])
 
-    def test_type(self, value):
+    def test_type(self, value: File | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for type. """
 
         # 1. Default test...
@@ -332,7 +394,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [(1, "two", 3.0), None, "invalid", 10, 3.14])
 
-    def test_tuple(self, value):
+    def test_tuple(self, value: None | float | Literal[1] | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for tuple. """
 
         # 1. Default test...
@@ -342,7 +404,7 @@ class TestPyonEncodeDecode:
 
     @pytest.mark.parametrize("value", [uuid4(), None, "invalid", 10, 3.14])
 
-    def test_uuid(self, value):
+    def test_uuid(self, value: UUID | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for uuid. """
 
         # 1. Default test...
@@ -354,10 +416,10 @@ class TestPyonEncodeDecode:
         "value", [np.array([[1, 2, 3], [4, 5, 6]]), None, "invalid", 10, 3.14]
     )
 
-    def test_ndarray(self, value):
+    def test_ndarray(self, value: NDArray | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for Numpy Array. """
 
-       # 1. Valid case...
+        # 1. Valid case...
         if isinstance(value, np.ndarray):
 
             # 1.1 Encode, Decode...
@@ -368,14 +430,14 @@ class TestPyonEncodeDecode:
             assert isinstance(encoded, str)
 
             # 1.3 Asserts: decoded...
-            assert np.array_equal(decoded, value)
+            assert np.array_equal(decoded, value)  # type: ignore
 
         # 2. None, Other...
         else:
 
             # 1.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
-            assert decoded == value
+            assert decoded == value  # type: ignore
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -474,7 +536,7 @@ class TestPyonEncodeDecode:
             None, "invalid", 10, 3.14,
         ]
     )
-    def test_dataframe(self, value):
+    def test_dataframe(self, value: pd.DataFrame | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for Pandas Dataframe. """
 
         # 1. Valid case...
@@ -496,7 +558,7 @@ class TestPyonEncodeDecode:
 
             # 2.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
-            assert decoded == value
+            assert decoded == value  # type: ignore
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -508,7 +570,11 @@ class TestPyonEncodeDecode:
             pd.Series([1.5, 2.0, 3.1], index=["a", "b", "c"], name="standard_series"),
 
             # 1.2 Range Index...
-            pd.Series([100, 200, 300], index=pd.RangeIndex(start=0, stop=3, step=1), name="range_series"),
+            pd.Series(
+                [100, 200, 300],
+                index=pd.RangeIndex(start=0, stop=3, step=1),
+                name="range_series",
+            ),
 
             # 1.3 MultiIndex...
             pd.Series(
@@ -573,7 +639,9 @@ class TestPyonEncodeDecode:
             None, "invalid", 42, 3.1415,
         ]
     )
-    def test_series(self, value):
+    def test_series(
+        self, value: pd.Series | None | float | Literal["invalid"] | Literal[42]
+    ):
         """ Test encoding and decoding for Pandas Series. """
 
         # 1. Valid case...
@@ -595,7 +663,103 @@ class TestPyonEncodeDecode:
 
             # 2.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
-            assert decoded == value
+            assert decoded == value # type: ignore
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize("value", [
+        {"a": 1, "b": 2},
+        {1, 2, 3},
+    ])
+    @pytest.mark.parametrize("algorithm", [
+        "md5", "sha1", "sha256", "sha512", "sha3_256", "sha3_512", "blake2b"
+    ])
+    def test_to_hash(
+        self,
+        value: dict[str, int] | set[int],
+        algorithm: Literal[
+            "md5", "sha1", "sha256", "sha512", "sha3_256", "sha3_512", "blake2b"
+        ],
+    ):
+        """ Test deterministic hash string generation for various algorithms. """
+
+        # 1. Generate hash...
+        hash1 = pyon.to_hash(value, algorithm=algorithm)
+        hash2 = pyon.to_hash(value, algorithm=algorithm)
+
+        # 2. Asserts: string, consistent, not empty...
+        assert isinstance(hash1, str)
+        assert isinstance(hash2, str)
+        assert hash1 == hash2
+        assert len(hash1) > 0
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize("value1, value2", [
+        ({"x": 1, "y": 2}, {1, 2, 3}),
+        (set(["a", "b"]), {"foo": "bar"})
+    ])
+    def test_to_int(self, value1: dict[str, int] | set[str], value2: set[int] | dict[str, str]):
+        """ Test deterministic integer generation. """
+
+        # 1. Compute int hashes...
+        int1 = pyon.to_int(value1)
+        int2 = pyon.to_int(value2)
+
+        # 2. Asserts: integers, consistent, different...
+        assert isinstance(int1, int)
+        assert isinstance(int2, int)
+        assert int1 == pyon.to_int(value1)
+        assert int2 == pyon.to_int(value2)
+        assert int1 != int2
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize(
+        "enc_protected, enc_private, expected_protected, expected_private",
+        [
+            (True,  False, 2, None),   # Only protected
+            (False, True, None, 3),    # Only private
+            (True,  True, 2, 3),       # Both protected and private
+        ]
+    )
+    def test_visibility_options(
+        self, enc_protected, enc_private, expected_protected, expected_private
+    ):
+        """
+        Tests encoding/decoding with combinations of `enc_protected` and `enc_private`.
+        """
+
+        # 1. Prepare...
+        obj = _TestClass()
+        encoded = pyon.encode(obj, enc_protected=enc_protected, enc_private=enc_private)
+        decoded = pyon.decode(encoded)
+
+        # 2. Validate...
+        assert isinstance(decoded, _TestClass)
+        assert decoded.public == 1
+        assert getattr(decoded, "_protected", None) == expected_protected  # pylint: disable=protected-access
+        assert getattr(decoded, "_TestClass__private", None) == expected_private
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize("name", ["alpha", "beta", "gamma"])
+    def test_pyon_post_init_hook(self, name):
+        """
+        Tests if `__pyon_post_init__()` is called automatically after decoding.
+        """
+
+        # 2. Prepare...
+        obj = ModelConfig(name)
+
+        # 3. Encode and Decode...
+        encoded = pyon.encode(obj)
+        decoded = pyon.decode(encoded)
+
+        # 4. Validates...
+        assert isinstance(decoded, ModelConfig)
+        assert decoded.name == name
+        assert decoded._model == obj._model  # pylint: disable=protected-access
 
     # ----------------------------------------------------------------------------------------- #
 
