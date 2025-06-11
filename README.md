@@ -1,4 +1,7 @@
 # Pyon
+[![PyPI version](https://badge.fury.io/py/pyon-core.svg)](https://pypi.org/project/pyon-core/)
+[![GitHub stars](https://img.shields.io/github/stars/eonflux-ai/pyon?style=social)](https://github.com/eonflux-ai/pyon)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Pyon (Python Object Notation)** is a serialization/deserialization library that extends JSON to natively support complex Python types. It aims to provide a robust and efficient solution for advanced scenarios like Artificial Intelligence, Machine Learning, and heterogeneous data manipulation.
 
@@ -23,6 +26,7 @@
 15. [Contributing](#15-contributing)
 16. [About the Creator](#16-about-the-creator)
 17. [License](#17-license)
+18. [Project Links](#18-project-links)
 
 ---
 
@@ -400,10 +404,10 @@ Pyon itself emerged from a simple but critical need encountered during AI resear
 
 Throughout his career, Eduardo has worked across a range of industries — including finance, healthcare, legal systems, the automotive sector, academia, and independent research — always aiming to design tools that combine conceptual clarity with practical efficiency.
 
-Pyon reflects a commitment to simplicity, default safety, and reproducibility. It is both a personal tool and an open invitation for collaboration.
+Pyon reflects a commitment to simplicity, default safety, and reproducibility. It is both a support tool and an open invitation for collaboration.
 
 For contact, feedback, or collaboration:  
-`eduardo@eonflux.ai`
+`pyon@eonflux.ai`
 
 ---
 <br>
@@ -411,6 +415,14 @@ For contact, feedback, or collaboration:
 ## 17. License
 
 This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
+
+---
+<br>
+
+## 18. Project Links
+
+- 🔗 [GitHub Repository](https://github.com/eonflux-ai/pyon)
+- 📦 [PyPI Page](https://pypi.org/project/pyon-core/)
 
 ---
 <br>
