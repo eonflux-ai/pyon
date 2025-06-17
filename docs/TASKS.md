@@ -4,6 +4,49 @@ This document contains a structured list of tasks organized by version for the d
 
 ---
 
+## Version 0.2.5-alpha — Enhanced File Handling
+
+### ✅ File Object Refactor
+- [x] Replace `fetch` with `export_mode: Literal["reference", "data"]`
+- [x] Redesign constructor interface to accept `path`, `content`, `mime`, and `export_mode`
+- [x] Use `__new__` in `from_dict()` to bypass `__init__`, preserving deserialization neutrality
+- [x] Update `to_dict()` to include content only when `export_mode == "data"`
+
+### ✅ Temporary File Support
+- [x] Add `_write_temp()` to write content to a temporary file
+- [x] Add `_tmp_path` tracking for temporary file location
+- [x] Update `load()` to prioritize loading from temporary file if present
+- [x] Add `unload()` method to discard memory content and persist to file or temp location
+
+### ✅ Interface Improvements
+- [x] Add `__len__()` to return raw byte size
+- [x] Redefine `size` to return formatted size string (e.g., "3.1 MB")
+- [x] Add `name`, `extension`, `directory` properties
+- [x] Add `loaded` and `temp` state properties
+- [x] Implement comparison operators: `__eq__`, `__lt__`, `__le__`, `__gt__`, `__ge__`
+
+### ✅ MIME Type and IANA Registration
+- [x] Define MIME type as `application/vnd.pyon+json`
+- [x] Add section to README specifying MIME type and usage
+- [x] Prepare full registration form for IANA media type registry
+- [x] Archive registration info in `docs/other/iana-registration.md`
+
+### ✅ Modularization and Isolation
+- [x] Create `pyon.file` as its own module directory
+- [x] Move implementation from `file.py` to `pyon/file/api.py`
+- [x] Create `pyon/file/__init__.py` to expose `File` from `api`
+- [x] Ensure `from pyon.file import File` works as expected
+- [x] Refactor imports across project to reflect new structure
+
+### ✅ Documentation Bootstrap
+- [x] Create standalone `README.md` for `pyon/file` submodule
+- [x] Include version badge, GitHub links, license, and summary
+- [x] Document current public interface of `File` (pre-refactor)
+- [x] Provide example usage consistent with Pyon serialization
+- [x] Plan for migration to future interface (0.3.x)
+
+---
+
 ## Version 0.2.0-alpha — Arbitrary Dict Keys
 
 ### Mapping Flexibility

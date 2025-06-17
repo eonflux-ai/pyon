@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.5-alpha] - 2025-06-16
+
+### Added
+- `export_mode` parameter in the `File` class, replacing the previous `fetch` flag. Accepts `"reference"` (default) or `"data"` to control export behavior.
+- `load()` method to populate the `content` attribute from the file path or temporary path, if available.
+- `unload()` method to discard in-memory content after writing it to a defined path or temporary location.
+- `_write_temp()` method to write file content to a temporary file and register its path in `_tmp_path`.
+- `temp` property to indicate if a temporary file is currently associated.
+- `loaded` property to indicate whether the file content is currently in memory.
+- `name`, `extension`, `directory` properties for extracting metadata from the file path.
+- `exists` property to check if the file exists on disk.
+- Status now with 3 options: `memory`, `filesystem`, and `temp`.
+- Support for `__len__()` to return file size in bytes, dynamically computed from either `content` or `path`.
+- Support for comparison operators (`__eq__`, `__lt__`, `__le__`, `__gt__`, `__ge__`) based on file size or content identity.
+- Enhanced `__repr__` and `__str__` with structured and informative output.
+- MIME type `application/vnd.pyon+json` defined and documented for `.pyon` files.
+- Modularization: `file.py` moved to `pyon/file/api.py`, and now exposed via `pyon.file` package.
+- Dedicated `README.md` for the `file` submodule, with usage, structure, and public interface.
+
+### Changed
+- The constructor signature of `File` was updated. It now accepts `path`, `content`, `mime`, and `export_mode`, replacing the older `filepath`, `filename`, `content`, `mime`, and `fetch`.
+- `from_dict()` no longer calls `__init__()`; it instantiates objects using `__new__()` and assigns attributes directly, maintaining consistency with Pyon's deserialization constraints.
+- `to_dict()` now respects the `export_mode` setting to decide whether or not to include `content`. An optional `encode: bool` argument was added to control base64 encoding.
+- MIME type detection logic was moved into a private helper and reorganized to support fallbacks from `path`, `content`, and `name`.
+- The `size` property no longer returns an integer. It now returns a formatted string representing the file size using appropriate units (e.g., "3.5 MB"). To obtain the raw size in bytes, use `len(file)` via the newly implemented `__len__()` method.
+- Imports across modules updated to reflect the new structure of the `pyon.file` package.
+
+### Removed
+- The `fetch` parameter and related logic were removed from the `File` class.
+- Attributes `filename`, `_size`, and `get_content()` method were removed or replaced by new properties and helpers.
+- Direct exposure of `file.py` was removed; it is now accessed through `pyon.file`.
+
+---
+
 ## [0.2.0-alpha] - 2025-06-09
 
 ### Added

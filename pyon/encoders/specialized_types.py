@@ -20,7 +20,7 @@ from pandas.tseries.frequencies import to_offset
 
 # --------------------------------------------------------------------------------------------- #
 
-from ..file import File
+from ..file.api import File
 from ..utils import EConst
 from ..supported_types import SupportedTypes
 
@@ -107,7 +107,7 @@ class SpecEnc(BaseEncoder):
 
             # 1.1 Bitarray...
             if _type == SupportedTypes.BITARRAY.value:
-                decoded = self._decode_bitarray(value)            
+                decoded = self._decode_bitarray(value)
 
             # 1.2 File...
             elif _type == SupportedTypes.FILE.value:
@@ -245,7 +245,7 @@ class SpecEnc(BaseEncoder):
             # 1.1 Encodes...
             output = {
                 EConst.TYPE: SupportedTypes.FILE.value,
-                EConst.DATA: value.to_dict()
+                EConst.DATA: value.to_dict(encode=True)
             }
 
         # 2. Logs if invalid...
@@ -531,7 +531,10 @@ class SpecEnc(BaseEncoder):
 
             # 1.3 Multi Index...
             if columns_type == "MultiIndex":
-                columns = pandas.MultiIndex.from_tuples(columns_elements, names=columns_names)
+                columns = pandas.MultiIndex.from_tuples(
+                    columns_elements,  # type: ignore
+                    names=columns_names
+                )
 
             # 1.4 Other types...
             else:
@@ -600,7 +603,7 @@ class SpecEnc(BaseEncoder):
 
     def __is_arithmetic_range(self, seq):
         """Validates whether a sequence represents a regular arithmetic range."""
-        
+
         # 1. ...
         return (
             isinstance(seq, list)
@@ -612,14 +615,14 @@ class SpecEnc(BaseEncoder):
 
     def __build_range_index(self, seq, name):
         """Builds a pandas RangeIndex from a valid arithmetic sequence."""
-        
+
         # 1. ...
         step = seq[1] - seq[0]
-        
+
         # 2. ...
         start = seq[0]
         stop = seq[-1] + step
-        
+
         # 3. ...
         return pandas.RangeIndex(start=start, stop=stop, step=step, name=name)
 
@@ -646,7 +649,11 @@ class SpecEnc(BaseEncoder):
 
             # 1.3 DatetimeIndex...
             elif index_type == "DatetimeIndex":
-                output = pandas.DatetimeIndex(index_data, name=index_name, freq=freq)
+                output = pandas.DatetimeIndex(
+                    index_data,
+                    name=index_name,
+                    freq=freq  # type: ignore
+                )
 
             # 1.4 PeriodIndex...
             elif index_type == "PeriodIndex":
@@ -654,7 +661,7 @@ class SpecEnc(BaseEncoder):
 
             # 1.5 TimedeltaIndex...
             elif index_type == "TimedeltaIndex":
-                output = pandas.TimedeltaIndex(index_data, name=index_name)
+                output = pandas.TimedeltaIndex(index_data, name=index_name)  # type: ignore
 
             # 1.6 CategoricalIndex...
             elif index_type == "CategoricalIndex":

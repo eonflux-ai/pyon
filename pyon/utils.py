@@ -1,7 +1,19 @@
 """ Pyon: Python Object Notation - Utils """
 # --------------------------------------------------------------------------------------------- #
 
+import os
+import random
+import string
 import importlib
+
+# --------------------------------------------------------------------------------------------- #
+
+MAX_ATTEMPTS = 1000
+
+# --------------------------------------------------------------------------------------------- #
+
+PYON_MIME = "application/vnd.pyon+json"
+PYON_EXT = "pyon"
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -148,6 +160,56 @@ def get_mangled_name(obj):
 
     # 2. ...
     return f"_{mangled_name}__"
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def generate_unique_filename(
+    name: str | None = None,
+    extension: str | None = None,
+    size: int = 5,
+    folder_path: str | None = None
+) -> str:
+    """
+    Generates a unique filename composed of a base name, a random suffix, and an extension.
+
+    Args:
+        name (str | None): Base name of the file (can be None).
+        extension (str | None): File extension without the dot (can be None).
+        size (int): Length of the random alphanumeric suffix (default is 3).
+        folder_path (str | None): If provided, ensures filename does not already exist in folder.
+
+    Returns:
+        str: A unique filename with the specified structure.
+    """
+
+    # 1. Setup base values...
+    base = name or "file"
+    ext = f".{extension}" if extension else ""
+    attempts = 0
+
+    # 2. Loop until unique or max attempts...
+    while attempts < MAX_ATTEMPTS:
+
+        # 1.1 Generate suffix...
+        suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=size))
+        filename = f"{base}_{suffix}{ext}"
+
+        # 1.2 Check if unique or skip folder check...
+        if not folder_path:
+            break
+
+        # 1.3 ...
+        file_path = os.path.join(folder_path, filename)
+        if not os.path.exists(file_path):
+            break
+
+        # 1.3 Count attempts...
+        attempts += 1
+
+    # 3. Return result...
+    return filename
 
 
 # --------------------------------------------------------------------------------------------- #

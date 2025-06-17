@@ -18,10 +18,10 @@ FILE_PATH = "./data/img.jpg"
 example_data = {
 
     # 1.1 File Reference: Does not fetch the data. Just saves filesystem references.
-    "File-1": File(FILE_PATH),
+    "File-1": File(FILE_PATH, export_mode="reference"),
 
     # 1.2 File Data: Fetchs the data and encodes it.
-    "File-2": File(FILE_PATH, fetch=True)
+    "File-2": File(FILE_PATH, export_mode="data")
 
 }
 

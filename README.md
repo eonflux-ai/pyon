@@ -22,11 +22,12 @@
 11. [Encoders](#11-encoders)
 12. [Testing](#12-testing)
 13. [Roadmap](#13-roadmap)
-14. [Additional Documentation](#14-additional-documentation)
-15. [Contributing](#15-contributing)
-16. [About the Creator](#16-about-the-creator)
-17. [License](#17-license)
-18. [Project Links](#18-project-links)
+14. [MIME Type](#14-mime-type)
+15. [Additional Documentation](#15-additional-documentation)
+16. [Contributing](#16-contributing)
+17. [About the Creator](#17-about-the-creator)
+18. [License](#18-license)
+19. [Project Links](#19-project-links)
 
 ---
 
@@ -371,7 +372,19 @@ For detailed plans, phased expansions, and future directions, see the [ROADMAP.m
 ---
 <br>
 
-## 14. Additional Documentation
+## 14. MIME Type
+
+Pyon files use a structured JSON-compatible format and are best identified by the MIME type:  
+`application/vnd.pyon+json`
+
+This follows the IANA convention for custom JSON-based types (`+json`) and is appropriate for files with `.pyon` extension.
+
+This media type has been submitted for registration with IANA and may appear in the official registry in future versions.
+
+---
+<br>
+
+## 15. Additional Documentation
 
 - [ROADMAP.md](docs/ROADMAP.md): Detailed plans and future directions for Pyon.  
 - [VERSION.md](docs/VERSION.md): Current version details and key features.  
@@ -381,7 +394,7 @@ For detailed plans, phased expansions, and future directions, see the [ROADMAP.m
 ---
 <br>
 
-## 15. Contributing
+## 16. Contributing
 
 We will welcome contributions of all kinds:
 
@@ -394,7 +407,7 @@ Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ---
 <br>
 
-## 16. About the Creator
+## 17. About the Creator
 
 Pyon was created by Eduardo Rodrigues, a software engineer with over two decades of experience and a deep interest in science, artificial intelligence, and data structures.
 
@@ -404,22 +417,22 @@ Pyon itself emerged from a simple but critical need encountered during AI resear
 
 Throughout his career, Eduardo has worked across a range of industries — including finance, healthcare, legal systems, the automotive sector, academia, and independent research — always aiming to design tools that combine conceptual clarity with practical efficiency.
 
-Pyon reflects a commitment to simplicity, default safety, and reproducibility. It is both a support tool and an open invitation for collaboration.
+Pyon reflects a commitment to simplicity, default safety, and reproducibility. It is both a personal tool and an open invitation for collaboration.
 
-For contact, feedback, or collaboration:  
-`pyon@eonflux.ai`
+For contact, feedback, or collaboration:
+`eduardo@eonflux.ai`
 
 ---
 <br>
 
-## 17. License
+## 18. License
 
 This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
 
 ---
 <br>
 
-## 18. Project Links
+## 19. Project Links
 
 - 🔗 [GitHub Repository](https://github.com/eonflux-ai/pyon)
 - 📦 [PyPI Page](https://pypi.org/project/pyon-core/)

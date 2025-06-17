@@ -6,7 +6,7 @@ A package for serializing and deserializing complex Python objects, extending JS
 
 
 from .api import encode, decode, to_file, from_file
-from .file import File
+from .file.api import File
 
 
 # --------------------------------------------------------------------------------------------- #
