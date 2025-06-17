@@ -323,7 +323,7 @@ example_data = {
     "File-1": File(FILE_PATH),
 
     # 1.2 File Data: Fetchs the data and encodes it.
-    "File-2": File(FILE_PATH, fetch=True)
+    "File-2": File(FILE_PATH, export_mode="data")
 
 }
 
