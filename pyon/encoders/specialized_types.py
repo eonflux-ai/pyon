@@ -311,15 +311,21 @@ class SpecEnc(BaseEncoder):
         # 1. Checks input...
         output = None
         if (
-            (value is not None)
-            and isinstance(value, dict)
-            and (EConst.DATA in value)
-            and (EConst.AUX1 in value)
+            isinstance(value, dict)
+            and isinstance(value.get(EConst.DATA), list)
+            and isinstance(value.get(EConst.AUX1), (list, tuple))
         ):
 
-            # 1.1 Decodes...
-            np_array = numpy.array(value[EConst.DATA])
-            output = np_array.reshape(value[EConst.AUX1])
+            # 1.1 ...
+            try:
+
+                # 2.1 ...
+                np_array = numpy.array(value[EConst.DATA])
+                output = np_array.reshape(value[EConst.AUX1])
+
+            # 1.2 ...
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("Failed to decode ndarray (reshape or cast failed).")
 
         # 2. If invalid...
         else:

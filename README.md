@@ -1,7 +1,9 @@
 # Pyon
 [![PyPI version](https://badge.fury.io/py/pyon-core.svg)](https://pypi.org/project/pyon-core/)
 [![GitHub stars](https://img.shields.io/github/stars/eonflux-ai/pyon?style=social)](https://github.com/eonflux-ai/pyon)
+[![MIME Type: application/vnd.pyon+json](https://img.shields.io/badge/MIME-IANA%20Registered-blue.svg)](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 
 **Pyon (Python Object Notation)** is a serialization/deserialization library that extends JSON to natively support complex Python types. It aims to provide a robust and efficient solution for advanced scenarios like Artificial Intelligence, Machine Learning, and heterogeneous data manipulation.
 
@@ -24,10 +26,11 @@
 13. [Roadmap](#13-roadmap)
 14. [MIME Type](#14-mime-type)
 15. [Additional Documentation](#15-additional-documentation)
-16. [Contributing](#16-contributing)
-17. [About the Creator](#17-about-the-creator)
-18. [License](#18-license)
-19. [Project Links](#19-project-links)
+16. [Security Considerations](#16-security-considerations)
+17. [Contributing](#17-contributing)
+18. [About the Creator](#18-about-the-creator)
+19. [License](#19-license)
+20. [Project Links](#20-project-links)
 
 ---
 
@@ -379,7 +382,9 @@ Pyon files use a structured JSON-compatible format and are best identified by th
 
 This follows the IANA convention for custom JSON-based types (`+json`) and is appropriate for files with `.pyon` extension.
 
-This media type has been submitted for registration with IANA and may appear in the official registry in future versions.
+This media type is officially registered with IANA and listed in the official registry:  
+🔗 [https://www.iana.org/assignments/media-types/application/vnd.pyon+json](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
+
 
 ---
 <br>
@@ -390,11 +395,45 @@ This media type has been submitted for registration with IANA and may appear in 
 - [VERSION.md](docs/VERSION.md): Current version details and key features.  
 - [TASKS.md](docs/TASKS.md): Progress tracking and specific tasks for each version.
 - [CHANGELOG.md](./CHANGELOG.md): History of changes between versions.
+- [FILE.md](pyon/file/README.md): `File` module documentation.
+- [IANA-REG.md](docs/other/iana-registration.md): IANA's mime type registration form.
 
 ---
 <br>
 
-## 16. Contributing
+## 16. Security Considerations
+
+Pyon files are structured using a JSON-compatible format and contain no executable code or embedded instructions.
+
+During the decoding process:
+
+- Reflection is used to instantiate objects based on their declared types.
+- After instantiation, attributes are restored exclusively via direct assignment.
+- No methods, constructors, or evaluation routines are invoked.
+
+This means that decoding a `.pyon` file results only in the reconstruction of data structures, without any execution of custom logic from the original objects.
+
+The format itself does not implement:
+
+- Encryption
+- Access control
+- Integrity verification
+
+If the serialized data includes confidential or sensitive information, it is the responsibility of the implementer to apply appropriate protections, such as TLS for transport or encryption mechanisms for file storage.
+
+As a JSON-derived format, Pyon may be subject to known issues such as:
+
+- High memory or CPU usage when processing deeply nested or very large documents
+- Absence of schema validation or type enforcement during decoding
+
+Pyon does not include support for compression or referencing external resources.
+
+This design aims to offer a predictable and controlled serialization mechanism, but implementers should evaluate and test its behavior according to the requirements and risk profile of their specific use case.
+
+---
+<br>
+
+## 17. Contributing
 
 We will welcome contributions of all kinds:
 
@@ -407,7 +446,7 @@ Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ---
 <br>
 
-## 17. About the Creator
+## 18. About the Creator
 
 Pyon was created by Eduardo Rodrigues, a software engineer with over two decades of experience and a deep interest in science, artificial intelligence, and data structures.
 
@@ -425,7 +464,7 @@ For contact, feedback, or collaboration:
 ---
 <br>
 
-## 18. License
+## 19. License
 
 This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
 
@@ -436,6 +475,8 @@ This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LI
 
 - 🔗 [GitHub Repository](https://github.com/eonflux-ai/pyon)
 - 📦 [PyPI Page](https://pypi.org/project/pyon-core/)
+- 📄 [IANA MIME Type](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
+
 
 ---
 <br>
