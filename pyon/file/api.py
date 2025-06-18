@@ -45,7 +45,8 @@ class File:
         path: str | None = None,
         content: bytes | None = None,
         mime: str | None = None,
-        export_mode: Literal["data", "reference"] = "reference"
+        export_mode: Literal["data", "reference"] = "reference",
+        export_reset: bool = False
     ):
         """
         Initializes a new instance of the class.
@@ -57,6 +58,8 @@ class File:
                 it will be determined automatically.
             export_mode (Literal["data", "reference"], optional): Determines how the file
                 is exported, either as raw data or as a reference to the filesystem.
+            export_reset (bool, optional): If should reset path on export with export_mode
+                `data`.
 
         Raises:
             ValueError: If both `path` and `content` are None.
@@ -67,15 +70,65 @@ class File:
             raise ValueError("Path or Content must be provided")
 
         # 2. ...
-        self.path = self.__clean_path(path) if path else None
+        self._path = self.__clean_path(path) if path else None
         self.content = content
 
         # 3. ...
+        self._tmp_path = None
         self.mime = self.__get_mime(mime)
-        self.export_mode = export_mode
 
         # 4. ...
-        self._tmp_path = None
+        self.export_mode = export_mode
+        self.export_reset = export_reset
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @property
+    def path(self) -> str | None:
+        """
+        Returns the most appropriate file path associated with the object.
+        
+        Returns the main path if (`self._path`) is set and points to an existing file or
+        the temporary path does not point to an existing file.
+
+        Otherwise, if the temporary path is set, it is returned.
+
+        If neither condition is met, returns None.
+        
+        Returns:
+            (str | None): The selected file path or None if no valid path is available.
+        """
+
+        # 1. ...
+        output = None
+
+        # 2. ...
+        if (
+            self._path and (
+                self._tmp_path is None
+                or os.path.isfile(self._path)
+                or not os.path.isfile(self._tmp_path)
+            )
+        ):
+
+            # 1.1 ...
+            output = self._path
+
+        # 3. ...
+        elif self._tmp_path:
+            output = self._tmp_path
+
+        # 4. ...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @path.setter
+    def path(self, value: str | None):
+        """ Sets the main path to be used for the file. """
+
+        # 1. Sets path...
+        self._path = value
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -189,6 +242,7 @@ class File:
             "name": self.name,
             "directory": self.directory,
             "export_mode": self.export_mode,
+            "export_reset": self.export_reset,
             "loaded": self.loaded,
             "temp": self.temp
         }
@@ -291,19 +345,24 @@ class File:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def to_dict(self, encode: bool = False):
+    def to_dict(self, encode: bool = True):
         """ Converts to dictionary. """
 
         # 1. ...
         output = {
             "path": self.path,
             "mime": self.mime,
-            "export_mode": self.export_mode
+            "export_mode": self.export_mode,
+            "export_reset": self.export_reset
         }
 
         # 2. ...
         if self.export_mode == "data":
             output["content"] = self._encode() if encode else self._get_content()
+
+            # 1.1 ...
+            if self.export_reset:
+                output["path"] = None
 
         # 3. ...
         return output
@@ -324,12 +383,15 @@ class File:
             # 1.2 ...
             obj.path = data.get("path")
             obj.mime = data.get("mime")
-            obj.export_mode = data.get("export_mode")
 
             # 1.3 ...
-            obj.content = File._decode_content(data.get("content"))
+            obj.export_mode = data.get("export_mode")
+            obj.export_reset = data.get("export_reset")
 
             # 1.4 ...
+            obj.content = File._decode_content(data.get("content"))
+
+            # 1.5 ...
             obj._tmp_path = None
 
         # 2. ...
