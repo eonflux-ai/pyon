@@ -7,12 +7,13 @@ A package for serializing and deserializing complex Python objects, extending JS
 
 from .api import encode, decode, to_file, from_file
 from .file.api import File
+from .annotations import export
 
 
 # --------------------------------------------------------------------------------------------- #
 
 
-__all__ = ["encode", "decode", "to_file", "from_file", "File"]
+__all__ = ["encode", "decode", "to_file", "from_file", "File", "export"]
 
 
 # --------------------------------------------------------------------------------------------- #

@@ -13,6 +13,7 @@ from enum import Enum
 
 from ..supported_types import SupportedTypes
 from ..utils import EConst
+from ..annotations import core as ann
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -194,7 +195,14 @@ class MapEnc(BaseEncoder):
         encoded = None
         if self._is_dict(value):
 
-            # 1.1 ...
+            # 1.1 Annotations...
+            exp_info = ann.get_export_flags(value)
+
+            # 1.2 Private and Protected...
+            enc_private = exp_info[0] or self.enc_private
+            enc_protected = exp_info[1] or self.enc_protected
+
+            # 1.3 ...
             serialized_dict = {}
             for key, val in vars(value).items() if hasattr(value, EConst.DICT) else value.items():
 
@@ -208,11 +216,11 @@ class MapEnc(BaseEncoder):
 
                         # 4.1 Private key (starts with double underscore)...
                         if key.startswith("__") or key.startswith(mangled_name):
-                            if not self.enc_private:
+                            if not enc_private:
                                 process = False
 
                         # 4.2 Protected key (starts with double underscore)...
-                        elif key.startswith("_") and not self.enc_protected:
+                        elif key.startswith("_") and not enc_protected:
                             process = False
 
                         # 4.3 Private or Procted...
@@ -227,7 +235,7 @@ class MapEnc(BaseEncoder):
                         enc_key = self._encode_as_str(key)
                         serialized_dict[enc_key] = self._encode_as_dict(val)
 
-            # 1.2 ...
+            # 1.4 ...
             encoded = {
                 EConst.TYPE: self._get_defulat_type(value),
                 EConst.CLASS: ut.get_class_name(value),
