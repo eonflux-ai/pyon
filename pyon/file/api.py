@@ -413,7 +413,7 @@ class File:
 
             # 1.1 ...
             if self.temp and self.content:
-                self.__clean_tmp()
+                self.clean()
 
         # 2. ...
         return self.content is not None
@@ -486,6 +486,60 @@ class File:
 
         # 2. ...
         return self.content is None
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def clean(self) -> bool:
+        """
+        Deletes the temporary file specified by self._tmp_path, if it exists.
+        
+        Returns:
+            bool: True if the file was successfully deleted or does not exist, False otherwise.
+        
+        Logs:
+            An error message if the file could not be deleted due to an OSError.
+        """
+
+        # 1. ...
+        clean = True
+        if self._tmp_path:
+
+            # 1.1 ...
+            clean = False
+            try:
+
+                # 2.1 ...
+                path = self.__clean_path(self._tmp_path)
+                if path:
+
+                    # 3.1 ...
+                    if os.path.isfile(path):
+
+                        # 4.1 Remove temp file...
+                        os.remove(path)
+                        clean = True
+
+                        # 4.2 Remove empty folder...
+                        folder = os.path.dirname(path)
+                        if os.path.isdir(folder) and not os.listdir(folder):
+
+                            # 5.1 ...
+                            os.rmdir(folder)
+
+                    # 3.2 ...
+                    else:
+                        clean = True
+
+            # 1.2 ...
+            except OSError as e:
+                logger.error("Error deleting temp file '%s': %s", path, e)
+
+        # 2. ...
+        if clean and self._tmp_path:
+            self._tmp_path = None
+
+        # 3. ...
+        return clean
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -581,7 +635,7 @@ class File:
 
         # 1. Output...
         output = False
-        if self.__clean_tmp():
+        if self.clean():
 
             # 1.1 Creates temporary directory...
             tmp_dir = tempfile.mkdtemp(dir=self.__get_temp_dir())
@@ -743,60 +797,6 @@ class File:
 
         # 3. ...
         return output
-
-    # ----------------------------------------------------------------------------------------- #
-
-    def __clean_tmp(self) -> bool:
-        """
-        Deletes the temporary file specified by self._tmp_path, if it exists.
-        
-        Returns:
-            bool: True if the file was successfully deleted or does not exist, False otherwise.
-        
-        Logs:
-            An error message if the file could not be deleted due to an OSError.
-        """
-
-        # 1. ...
-        clean = True
-        if self._tmp_path:
-
-            # 1.1 ...
-            clean = False
-            try:
-
-                # 2.1 ...
-                path = self.__clean_path(self._tmp_path)
-                if path:
-
-                    # 3.1 ...
-                    if os.path.isfile(path):
-
-                        # 4.1 Remove temp file...
-                        os.remove(path)
-                        clean = True
-
-                        # 4.2 Remove empty folder...
-                        folder = os.path.dirname(path)
-                        if os.path.isdir(folder) and not os.listdir(folder):
-
-                            # 5.1 ...
-                            os.rmdir(folder)
-
-                    # 3.2 ...
-                    else:
-                        clean = True
-
-            # 1.2 ...
-            except OSError as e:
-                logger.error("Error deleting temp file '%s': %s", path, e)
-
-        # 2. ...
-        if clean and self._tmp_path:
-            self._tmp_path = None
-
-        # 3. ...
-        return clean
 
     # ----------------------------------------------------------------------------------------- #
 

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.6-alpha] - 2025-06-18
+
+### Added
+- Full decoding pipeline audit conducted and documented in `SECURITY.md` and internal reports.
+- New `SECURITY.md` file with detailed analysis of constructor-based exceptions, decoding behavior, and risk scenarios.
+- Overview and redirection to `SECURITY.md` added in the security section of `README.md`.
+- Complete rewrite of section 8 ("Decode Without Execution") to align with findings from the decode audit.
+- Expanded section 9 ("JSON Compatibility") in the `README.md` to reflect limitations with generic JSON tools and clarify the role of Pyon-specific metadata.
+- Dedicated list of types that require constructor invocation during decoding, with notes on deterministic behavior and controlled reconstruction logic.
+
+### Changed
+- Terminology and explanations across documentation revised to reflect clearer distinctions between `decode()`, `deserialize`, `constructors`, and `reflection`.
+- Minor restructuring of `README.md` content to improve logical flow and ensure consistency with audit conclusions.
+
+### Removed
+- Previous simplified explanation of decoding behavior in `README.md` section 8 replaced by a more accurate and technical version based on the audit.
+
+---
+
 ## [0.2.5-alpha] - 2025-06-16
 
 ### Added
