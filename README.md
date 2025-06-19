@@ -18,7 +18,7 @@
 5. [Quick Start](#5-quick-start)
 6. [Examples](#6-examples)
 7. [Recursion in Encoding and Decoding](#7-recursion-in-encoding-and-decoding)
-8. [Decode Without Execution](#8-decode-without-execution)
+8. [Decode Behavior and Safety Overview](#8-decode-behavior-and-safety-overview)
 9. [JSON Compatibility](#9-json-compatibility)
 10. [Project Structure](#10-project-structure)
 11. [Encoders](#11-encoders)
@@ -26,11 +26,10 @@
 13. [Roadmap](#13-roadmap)
 14. [MIME Type](#14-mime-type)
 15. [Additional Documentation](#15-additional-documentation)
-16. [Security Considerations](#16-security-considerations)
-17. [Contributing](#17-contributing)
-18. [About the Creator](#18-about-the-creator)
-19. [License](#19-license)
-20. [Project Links](#20-project-links)
+16. [Contributing](#16-contributing)
+17. [About the Creator](#17-about-the-creator)
+18. [License](#18-license)
+19. [Project Links](#19-project-links)
 
 ---
 
@@ -42,7 +41,7 @@ It provides a serialization and deserialization mechanism that preserves the str
 
 Pyon was designed with the following principles:
 
-- **JSON-valid output**: All serialized data is valid JSON and can be parsed by any standard JSON parser.
+- **JSON-valid output**: All serialized data is valid JSON and can be parsed back by a Pyon decoder.
 - **Type preservation**: Encoded objects retain enough metadata to be accurately reconstructed as their original Python types.
 - **Modular architecture**: Support for data types is implemented through independent encoders, allowing structured maintenance and future expansion.
 
@@ -199,60 +198,89 @@ Check **[EXAMPLES.md](examples/EXAMPLES.md)** for more information.
 ---
 <br>
 
-## 8. Decode Without Execution
+## 8. Decode Behavior and Safety Overview
 
-Pyon was designed with **security and predictability** as core principles during deserialization.
+Pyon was designed to ensure **safe and deterministic reconstruction** of Python objects from `.pyon` files.
 
-When decoding a `.pyon` file, Pyon **does not execute any user-defined code**.
+The decoding process does **not execute any user-defined code**. No custom methods such as `__init__`, `__post_init__` are triggered.
 
-The `decode()` function strictly reconstructs object structures by assigning values to their attributes.\
-No methods are called, no constructors are run, and no business logic is triggered during the process.
+Instead, object reconstruction follows this predictable flow:
 
-This behavior ensures that deserialization remains fully **passive and deterministic**, regardless of the object’s type.\
-This design favors transparency and reduces side effects during object reconstruction.
+- Type information is parsed from static metadata fields.
+- Objects are instantiated using `__new__` or built-in constructors where necessary.
+- Attributes are restored via direct assignment — no custom logic is invoked.
 
-### 🔒 What Happens During Decoding
+This approach ensures that deserialization remains **passive, safe, and transparent** in trusted contexts.
 
-- Only object attributes are restored — methods are not invoked.
-- No constructors (`__init__`) are called.
-- No evaluation or arbitrary code interpretation occurs.
-- No custom logic is executed.
-- **Reflection** is used to locate and instantiate Python types based on module and class names.
-- Type reconstruction is driven entirely by static text fields embedded in the `.pyon` file.
-- Even for custom classes, only the internal structure is rebuilt.
+---
+
+### 🔍 Constructor Exceptions
+
+Some supported types — such as `decimal.Decimal`, `datetime`, `pandas.DataFrame`, `numpy.ndarray`, and `File` — require calling their constructors during decoding.
+
+In all such cases, constructors are used in a **controlled and deterministic way**, strictly for data restoration, without invoking arbitrary or user-defined logic.
+
+However, a few types involve additional caveats:
+
+- `defaultdict` may invoke its `default_factory`, which can contain logic.
+- `namedtuple` subclasses may define methods or side effects.
+- `Enum` can override `__new__`, introducing dynamic behavior.
+- `File` content can be manipulated by third parties to inject unsafe payloads.
+
+These types are handled within modules such as `collection_types.py` and `specialized_types.py`, which are documented as **having special decoding behavior**.
+
+🔎 For a complete audit, including a table of safe vs. logic-invoking constructors, see the [`SECURITY.md`](docs/SECURITY.md) documentation.
+
+
+---
+
+### 🔐 For Security Details
+
+For a full audit and analysis of risks (including `Enum`, `defaultdict`, and tampering scenarios), see:
+
+**[SECURITY.md](docs/SECURITY.md)**
+
 
 ---
 <br>
 
 ## 9. JSON Compatibility
 
-Pyon is built entirely on top of the JSON standard — it **generates**, **loads**, and **stores** valid JSON data.
+Pyon uses standard **JSON syntax** for all its serialized output. The result is a `.pyon` file that can be parsed by any standard JSON parser in terms of structure — but not necessarily understood in terms of semantics.
 
-Pyon extends JSON by adding an internal logic layer that **preserves type information**. This allows Pyon to **reconstruct complex Python objects**, including types that JSON alone cannot represent, such as `set`, `tuple`, `complex`, `datetime`, or custom classes.
+Although every `.pyon` file is a valid JSON document, it embeds additional metadata (e.g., `__type__`, `__module__`) that is **essential for reconstructing Python objects**. This makes Pyon a **superset of JSON**, not a drop-in replacement.
 
 ### 🔁 Encoding Process
 
-During encoding, Pyon performs two key steps:
+When encoding, Pyon:
 
-1. It converts the original Python object into a **JSON-compatible dictionary** that includes both the data and additional text fields indicating the original types.
-2. This dictionary is then serialized into a standard JSON string and optionally saved to a file.
+1. Converts Python objects into a **dictionary structure compatible with JSON syntax**.
+2. Adds metadata fields that describe the object’s original type and context.
+3. Serializes the resulting dictionary to a JSON string (or file).
 
-The output is a fully valid JSON document — readable and parseable by any standard JSON parser — but structured in a way that allows Pyon to restore Python-specific semantics.
+The output is a syntactically valid JSON document that retains full information about Python-specific constructs, including:
+
+- Complex types like `tuple`, `set`, `complex`, `datetime`, `Decimal`
+- Nested and custom classes
+- Type annotations for accurate reconstruction
 
 ### 🔄 Decoding Process
 
-During decoding, Pyon follows the reverse logic:
+When decoding:
 
-1. It loads the JSON string and parses it into a plain dictionary.
-2. It then interprets the additional textual fields to **rebuild the original Python objects** and restore their intended types.
+1. The `.pyon` file is first parsed using a standard JSON parser (e.g., `json.loads`).
+2. Then, Pyon-specific metadata is interpreted to **reconstruct the original object structure and types**.
 
-This process is entirely passive and does not invoke any user-defined logic or methods.
+### 🧩 Compatibility Notes
 
-### 🧩 JSON-Compatible but Python-Aware
+While the file format conforms to JSON in syntax:
 
-Pyon can be thought of as a **lossless extension of JSON for Python** — enabling round-trip serialization of supported types.
+- Generic tools can parse the structure but **will not reconstruct the original Python types** without a Pyon-compatible decoder.
+- Do **not** use `.pyon` files as substitutes for `application/json` in systems expecting generic JSON — behavior may be incorrect or undefined.
+- The Pyon format is most effective when both encoding and decoding are done using the Pyon library itself.
 
-Data saved with Pyon remains readable, transferable, and inspectable across environments, while preserving the ability to recover supported Python types securely.
+> ✅ JSON-readable.  
+> ❌ Not semantically interoperable without the Pyon specification.
 
 ---
 <br>
@@ -383,7 +411,7 @@ Pyon files use a structured JSON-compatible format and are best identified by th
 This follows the IANA convention for custom JSON-based types (`+json`) and is appropriate for files with `.pyon` extension.
 
 This media type is officially registered with IANA and listed in the official registry:  
-🔗 [https://www.iana.org/assignments/media-types/application/vnd.pyon+json](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
+🔗 [https://www.iana.org/assignments/media-types/media-types.xhtml#application](https://www.iana.org/assignments/media-types/media-types.xhtml#application)
 
 
 ---
@@ -396,44 +424,12 @@ This media type is officially registered with IANA and listed in the official re
 - [TASKS.md](docs/TASKS.md): Progress tracking and specific tasks for each version.
 - [CHANGELOG.md](./CHANGELOG.md): History of changes between versions.
 - [FILE.md](pyon/file/README.md): `File` module documentation.
-- [IANA-REG.md](docs/other/iana-registration.md): IANA's mime type registration form.
+- [SECURITY.md](docs/SECURITY.md): Analysis of security guarantees and risks.
 
 ---
 <br>
 
-## 16. Security Considerations
-
-Pyon files are structured using a JSON-compatible format and contain no executable code or embedded instructions.
-
-During the decoding process:
-
-- Reflection is used to instantiate objects based on their declared types.
-- After instantiation, attributes are restored exclusively via direct assignment.
-- No methods, constructors, or evaluation routines are invoked.
-
-This means that decoding a `.pyon` file results only in the reconstruction of data structures, without any execution of custom logic from the original objects.
-
-The format itself does not implement:
-
-- Encryption
-- Access control
-- Integrity verification
-
-If the serialized data includes confidential or sensitive information, it is the responsibility of the implementer to apply appropriate protections, such as TLS for transport or encryption mechanisms for file storage.
-
-As a JSON-derived format, Pyon may be subject to known issues such as:
-
-- High memory or CPU usage when processing deeply nested or very large documents
-- Absence of schema validation or type enforcement during decoding
-
-Pyon does not include support for compression or referencing external resources.
-
-This design aims to offer a predictable and controlled serialization mechanism, but implementers should evaluate and test its behavior according to the requirements and risk profile of their specific use case.
-
----
-<br>
-
-## 17. Contributing
+## 16. Contributing
 
 We will welcome contributions of all kinds:
 
@@ -446,7 +442,7 @@ Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ---
 <br>
 
-## 18. About the Creator
+## 17. About the Creator
 
 Pyon was created by Eduardo Rodrigues, a software engineer with over two decades of experience and a deep interest in science, artificial intelligence, and data structures.
 
@@ -464,7 +460,7 @@ For contact, feedback, or collaboration:
 ---
 <br>
 
-## 19. License
+## 18. License
 
 This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
 

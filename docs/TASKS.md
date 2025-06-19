@@ -4,6 +4,35 @@ This document contains a structured list of tasks organized by version for the d
 
 ---
 
+## Version 0.2.6-alpha — Decode Audit & Security Documentation
+
+### ✅ Decode Pipeline Audit
+- [x] Conduct full audit of the decoding logic across all modules
+- [x] Identify and categorize all types that invoke constructors
+- [x] Confirm passive behavior of `__new__` + direct attribute assignment
+- [x] Validate that no user-defined methods (`__init__`, `from_json`, etc.) are invoked
+- [x] Classify modules as fully conformant or with documented caveats
+
+### ✅ SECURITY.md Creation
+- [x] Create dedicated `SECURITY.md` with full security overview
+- [x] Document constructor-based exceptions with detailed table
+- [x] Highlight risks related to external or tampered `.pyon` files
+- [x] Recommend best practices for secure decoding
+
+### ✅ README.md Updates
+- [x] Revise section on **Decode Without Execution** to reflect audit findings
+- [x] Add summary of constructor-based exceptions, with link to `SECURITY.md`
+- [x] Update section on **JSON Compatibility** to clarify that Pyon is not a drop-in JSON replacement
+- [x] Add MIME type information and its implications for tooling
+
+### ✅ Documentation Cleanup
+- [x] Standardize terminology: decoding, deserialization, constructor-based logic
+- [x] Include links to `SECURITY.md` in relevant sections (Decode, JSON Compatibility)
+- [x] Cross-link audit data from `decode-pipeline--2025-06-18.md` where appropriate
+- [x] Ensure consistency between `README.md`, `SECURITY.md`, and MIME registration notes
+
+---
+
 ## Version 0.2.5-alpha — Enhanced File Handling
 
 ### ✅ File Object Refactor
