@@ -130,7 +130,7 @@ class BaseEnc():
 
         # 1. Checks input...
         output = None
-        if (value is not None):
+        if value is not None:
 
             # 1.1 Decodes...
             output = ut.get_class(value)

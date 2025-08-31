@@ -28,6 +28,7 @@ class EConst:
     AUX5 = "__aux5__"
     AUX6 = "__aux6__"
     AUX7 = "__aux7__"
+    AUX8 = "__aux8__"
     CLASS = "__class__"
     DATA = "__data__"
     DICT = "__dict__"
@@ -190,6 +191,7 @@ def generate_unique_filename(
     attempts = 0
 
     # 2. Loop until unique or max attempts...
+    filename = f"{base}{ext}"
     while attempts < MAX_ATTEMPTS:
 
         # 1.1 Generate suffix...

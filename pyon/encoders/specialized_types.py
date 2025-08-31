@@ -407,7 +407,8 @@ class SpecEnc(BaseEncoder):
                 EConst.AUX4: type(value.index).__name__,
                 EConst.AUX5: list(value.columns.names),
                 EConst.AUX6: type(value.columns).__name__,
-                EConst.AUX7: self.__index_freq(value.index)
+                EConst.AUX7: self.__index_freq(value.index),
+                EConst.AUX8: self.__index_tz(value.index)
             }
 
         # 2. Logs if invalid...
@@ -468,7 +469,8 @@ class SpecEnc(BaseEncoder):
                 EConst.AUX2: list(value.index.names),
                 EConst.AUX3: type(value.index).__name__,
                 EConst.AUX4: value.name,
-                EConst.AUX5: self.__index_freq(value.index)
+                EConst.AUX5: self.__index_freq(value.index),
+                EConst.AUX8: self.__index_tz(value.index)
             }
 
         # 2. Logs if invalid...
@@ -494,10 +496,13 @@ class SpecEnc(BaseEncoder):
             index_type = value.get(EConst.AUX3)
             series_name = value.get(EConst.AUX4)
             series_freq = value.get(EConst.AUX5)
+            series_tz = value.get(EConst.AUX8)
 
             # 1.2 Pre-decodes and rebuilds index...
             index_data = self.__pre_decode(index_data, index_type)
-            index = self.__rebuild_index(index_data, index_names, index_type, series_freq)
+            index = self.__rebuild_index(
+                index_data, index_names, index_type, series_freq, series_tz
+            )
 
             # 1.3 Builds Series...
             output = pandas.Series(data=series_data, index=index, name=series_name)
@@ -585,10 +590,11 @@ class SpecEnc(BaseEncoder):
             index_names = value.get(EConst.AUX3)
             index_type = value.get(EConst.AUX4)
             index_freq = value.get(EConst.AUX7)
+            index_tz = value.get(EConst.AUX8)
 
             # 1.2 Pre-decodes and rebuilds...
             index_data = self.__pre_decode(index_data, index_type)
-            index = self.__rebuild_index(index_data, index_names, index_type, index_freq)
+            index = self.__rebuild_index(index_data, index_names, index_type, index_freq, index_tz)
 
         # 2. If invalid...
         else:
@@ -634,7 +640,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __rebuild_index(self, index_data, index_names, index_type, freq=None):
+    def __rebuild_index(self, index_data, index_names, index_type, freq=None, tz=None):
         """ Rebuilds a pandas Index or subclass based on its serialized components. """
 
         # 1. Checks input...
@@ -655,11 +661,33 @@ class SpecEnc(BaseEncoder):
 
             # 1.3 DatetimeIndex...
             elif index_type == "DatetimeIndex":
-                output = pandas.DatetimeIndex(
-                    index_data,
-                    name=index_name,
-                    freq=freq  # type: ignore
-                )
+
+                # 2.1 Preserve timezone if provided or infer from data...
+                tz_param = tz
+                if tz_param is None:
+
+                    # 3.1 ...
+                    for _x in index_data:
+                        tz_param = self.__get_tz_str(_x)
+
+                        # 4.1 ...
+                        if tz_param:
+                            break
+
+                # 2.3 Build a DatetimeIndex while preserving tz when available...
+                dt = pandas.to_datetime(index_data, errors="raise")
+                if tz_param is not None:
+
+                    # 3.1 ...
+                    if getattr(dt, "tz", None) is None:
+                        dt = dt.tz_localize(tz_param)
+
+                    # 3.2 ...
+                    else:
+                        dt = dt.tz_convert(tz_param)
+
+                # 2.4 ...
+                output = pandas.DatetimeIndex(dt, name=index_name, freq=freq)  # type: ignore
 
             # 1.4 PeriodIndex...
             elif index_type == "PeriodIndex":
@@ -739,6 +767,17 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
+    def __index_tz(self, index):
+        """Extracts tz name/key/str from a DatetimeIndex, if any."""
+
+        output = None
+        if isinstance(index, pandas.DatetimeIndex) and (index.tz is not None):
+            tzobj = index.tz
+            output = getattr(tzobj, "zone", None) or getattr(tzobj, "key", None) or str(tzobj)
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
     def __index_freq(self, index):
         """ Checks if the index has a frequency attribute. """
 
@@ -753,6 +792,24 @@ class SpecEnc(BaseEncoder):
             output = index.freq.freqstr
 
         # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __get_tz_str(self, x):
+        """Extracts tz name/key/str from a datetime-like object, if any."""
+
+        # 1. ...
+        output = None
+
+        # 2. ...
+        tzobj = getattr(x, "tz", None) or getattr(x, "tzinfo", None)
+
+        # 3. ...
+        if tzobj is not None:
+            output = getattr(tzobj, "zone", None) or getattr(tzobj, "key", None) or str(tzobj)
+
+        # 4. ...
         return output
 
     # ----------------------------------------------------------------------------------------- #

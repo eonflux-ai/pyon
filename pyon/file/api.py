@@ -334,11 +334,11 @@ class File:
 
             # 2.1 Path-based identity...
             if self.path and other.path:
-                result = (self.path == other.path)
+                result = self.path == other.path
 
             # 2.2 Content-based fallback...
             elif self.loaded and other.loaded:
-                result = (self.content == other.content)
+                result = self.content == other.content
 
         # 2. Return result...
         return result
@@ -506,6 +506,9 @@ class File:
 
             # 1.1 ...
             clean = False
+            path = ''
+
+            # 1.2 ...
             try:
 
                 # 2.1 ...
@@ -530,7 +533,7 @@ class File:
                     else:
                         clean = True
 
-            # 1.2 ...
+            # 1.3 ...
             except OSError as e:
                 logger.error("Error deleting temp file '%s': %s", path, e)
 

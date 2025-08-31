@@ -7,7 +7,7 @@ import logging
 
 # --------------------------------------------------------------------------------------------- #
 
-from collections import ChainMap, Counter, deque, defaultdict, namedtuple
+from collections import ChainMap, Counter, deque, defaultdict
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -582,7 +582,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_list(self, value: list):
+    def _decode_list(self, value: dict):
         """ Decodes to List """
 
         # 1. Checks input...
@@ -607,12 +607,20 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_namedtuple(self, value: namedtuple):
+    def _encode_namedtuple(self, value: tuple):
         """ Encodes a namedtuple object to a dictionary representation. """
 
         # 1. Checks input...
         output = None
-        if (value is not None) and isinstance(value, tuple) and hasattr(value, EConst.FIELDS):
+
+        # 2. Validates...
+        if (
+            isinstance(value, tuple)
+            and hasattr(value, "_fields")
+            and isinstance(getattr(value, "_fields", None), tuple)
+            and all(isinstance(f, str) for f in getattr(value, "_fields", ()))
+            and getattr(value, "_fields", None)
+        ):
 
             # 1.1 Encodes...
             output = {
@@ -620,15 +628,15 @@ class ColEnc(BaseEncoder):
                 EConst.CLASS: ut.get_class_name(value),
                 EConst.DATA: {
                     field: self._encode_as_dict(getattr(value, field))
-                    for field in value._fields
+                    for field in getattr(value, "_fields", ())
                 },
             }
 
-        # 2. Logs if invalid...
+        # 3. Logs if invalid...
         else:
             logger.error("Invalid input. Expected: namedtuple. Received: %s", type(value))
 
-        # 3. Returns...
+        # 4. Returns...
         return output
 
     # ----------------------------------------------------------------------------------------- #
