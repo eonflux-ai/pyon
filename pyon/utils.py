@@ -33,6 +33,12 @@ class EConst:
     DICT = "__dict__"
     TYPE = "__type__"
     FIELDS = "_fields"
+    
+    # Timezone metadata (optional)
+    TZ = "__tz__"
+    TZ_ZONE = "__zone__"
+    TZ_OFFSET = "__offset__"
+    TZ_FOLD = "__fold__"
 
 
 # --------------------------------------------------------------------------------------------- #

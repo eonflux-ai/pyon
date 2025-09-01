@@ -5,3 +5,4 @@
 .env
 dist/
 build/
+.vscode/settings.json
