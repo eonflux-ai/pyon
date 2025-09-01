@@ -178,7 +178,7 @@ class DateEnc():
             output = {
                 EConst.TYPE: SupportedTypes.DATETIME.value,
                 EConst.DATA: value.isoformat(),
-                EConst.TZ: {}
+                EConst.AUX1: {}
             }
 
             # 1.2 Preserve timezone identity and offset if available...
@@ -206,7 +206,7 @@ class DateEnc():
 
                 # 2.6 Attach tz meta if any...
                 if tz_meta:
-                    output[EConst.TZ] = tz_meta
+                    output[EConst.AUX1] = tz_meta
 
         # 2. Logs if invalid...
         else:
@@ -228,7 +228,7 @@ class DateEnc():
             output = datetime.fromisoformat(value[EConst.DATA])
 
             # 1.2 Apply timezone identity if provided...
-            tz_meta = value.get(EConst.TZ)
+            tz_meta = value.get(EConst.AUX1)
             if isinstance(tz_meta, dict):
 
                 # 2.1 Extracts TZ...
@@ -294,7 +294,7 @@ class DateEnc():
             output = {
                 EConst.TYPE: SupportedTypes.TIME.value,
                 EConst.DATA: value.isoformat(),
-                EConst.TZ: {}
+                EConst.AUX1: {}
             }
 
             # 1.2 Preserve timezone identity and offset if available...
@@ -315,7 +315,7 @@ class DateEnc():
 
                 # 2.4 Attach tz meta if any...
                 if tz_meta:
-                    output[EConst.TZ] = tz_meta
+                    output[EConst.AUX1] = tz_meta
 
         # 2. Logs if invalid...
         else:
@@ -337,7 +337,7 @@ class DateEnc():
             output = time.fromisoformat(value[EConst.DATA])
 
             # 1.2 Apply timezone identity if provided...
-            tz_meta = value.get(EConst.TZ)
+            tz_meta = value.get(EConst.AUX1)
             if isinstance(tz_meta, dict):
 
                 # 2.1 Extracts TZ...

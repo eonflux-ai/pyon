@@ -28,14 +28,14 @@ class EConst:
     AUX5 = "__aux5__"
     AUX6 = "__aux6__"
     AUX7 = "__aux7__"
+    AUX8 = "__aux8__"
     CLASS = "__class__"
     DATA = "__data__"
     DICT = "__dict__"
     TYPE = "__type__"
     FIELDS = "_fields"
-    
+
     # Timezone metadata (optional)
-    TZ = "__tz__"
     TZ_ZONE = "__zone__"
     TZ_OFFSET = "__offset__"
     TZ_FOLD = "__fold__"

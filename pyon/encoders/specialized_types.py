@@ -7,6 +7,8 @@ import logging
 # --------------------------------------------------------------------------------------------- #
 
 from uuid import UUID
+from zoneinfo import ZoneInfo
+from datetime import timedelta, timezone
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -407,7 +409,8 @@ class SpecEnc(BaseEncoder):
                 EConst.AUX4: type(value.index).__name__,
                 EConst.AUX5: list(value.columns.names),
                 EConst.AUX6: type(value.columns).__name__,
-                EConst.AUX7: self.__index_freq(value.index)
+                EConst.AUX7: self.__index_freq(value.index),
+                EConst.AUX8: self.__index_tz(value.index)
             }
 
         # 2. Logs if invalid...
@@ -468,7 +471,8 @@ class SpecEnc(BaseEncoder):
                 EConst.AUX2: list(value.index.names),
                 EConst.AUX3: type(value.index).__name__,
                 EConst.AUX4: value.name,
-                EConst.AUX5: self.__index_freq(value.index)
+                EConst.AUX5: self.__index_freq(value.index),
+                EConst.AUX6: self.__index_tz(value.index)
             }
 
         # 2. Logs if invalid...
@@ -496,8 +500,9 @@ class SpecEnc(BaseEncoder):
             series_freq = value.get(EConst.AUX5)
 
             # 1.2 Pre-decodes and rebuilds index...
+            tz_meta = value.get(EConst.AUX6)
             index_data = self.__pre_decode(index_data, index_type)
-            index = self.__rebuild_index(index_data, index_names, index_type, series_freq)
+            index = self.__rebuild_index(index_data, index_names, index_type, series_freq, tz_meta)
 
             # 1.3 Builds Series...
             output = pandas.Series(data=series_data, index=index, name=series_name)
@@ -587,8 +592,9 @@ class SpecEnc(BaseEncoder):
             index_freq = value.get(EConst.AUX7)
 
             # 1.2 Pre-decodes and rebuilds...
+            tz_meta = value.get(EConst.AUX8)
             index_data = self.__pre_decode(index_data, index_type)
-            index = self.__rebuild_index(index_data, index_names, index_type, index_freq)
+            index = self.__rebuild_index(index_data, index_names, index_type, index_freq, tz_meta)
 
         # 2. If invalid...
         else:
@@ -634,7 +640,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __rebuild_index(self, index_data, index_names, index_type, freq=None):
+    def __rebuild_index(self, index_data, index_names, index_type, freq=None, tz_meta=None):
         """ Rebuilds a pandas Index or subclass based on its serialized components. """
 
         # 1. Checks input...
@@ -655,9 +661,18 @@ class SpecEnc(BaseEncoder):
 
             # 1.3 DatetimeIndex...
             elif index_type == "DatetimeIndex":
+                tzinfo = self.__tzinfo_from_meta(tz_meta)
+
+                # 2.1 If no tz meta but data is tz-aware (from pre-decode UTC normalization),
+                # reuse that tz to avoid incompatibility with tz=None.
+                if tzinfo is None:
+                    tzinfo = getattr(index_data, "tz", None)
+
+                # 2.2 ...
                 output = pandas.DatetimeIndex(
                     index_data,
                     name=index_name,
+                    tz=tzinfo,  # type: ignore
                     freq=freq  # type: ignore
                 )
 
@@ -712,29 +727,38 @@ class SpecEnc(BaseEncoder):
     # ----------------------------------------------------------------------------------------- #
 
     def __pre_decode(self, index_data, index_type):
-        """ Reconstructs index elements after decoding from JSON-safe format. """
+        """
+        Reconstructs index elements after decoding from JSON-safe format.
 
-        # 1. MultiIndex elements are tuples...
+        **Note**:
+        When rebuilding a DatetimeIndex without explicit timezone metadata (no __tz__),
+        force UTC unification early to avoid pandas errors with mixed tz-aware inputs.
+        """
+
+        # 1. ...
+        output = None
+
+        # 2. MultiIndex elements are tuples...
         if index_type == "MultiIndex":
             output = [tuple(x) for x in index_data]
 
-        # 2. DatetimeIndex...
+        # 3. DatetimeIndex...
         elif index_type == "DatetimeIndex":
             output = [pandas.Timestamp(x) for x in index_data]
 
-        # 3. PeriodIndex...
+        # 4. PeriodIndex...
         elif index_type == "PeriodIndex":
             output = [pandas.Period(x) for x in index_data]
 
-        # 4. TimedeltaIndex...
+        # 5. TimedeltaIndex...
         elif index_type == "TimedeltaIndex":
             output = [pandas.Timedelta(x) for x in index_data]
 
-        # 5. Fallback: keep as-is...
+        # 6. Fallback: keep as-is...
         else:
             output = index_data
 
-        # 6. Returns...
+        # 7. Returns...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -756,6 +780,149 @@ class SpecEnc(BaseEncoder):
         return output
 
     # ----------------------------------------------------------------------------------------- #
+
+    def __index_tz(self, index):
+        """ Checks if the index has a timezone attribute. """
+
+        # 1. Output...
+        output = None
+
+        # 2. Checks for Timezone...
+        if isinstance(index, pandas.DatetimeIndex) and (index.tz is not None):
+            output = self.__build_tz_meta_from_index(index)
+
+        # 3. Returns...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __build_tz_meta_from_index(self, index: pandas.DatetimeIndex):
+        """Builds timezone metadata dict from a DatetimeIndex (zone or fixed offset)."""
+
+        # 1. ...
+        tz_meta = {}
+
+        # 2. Zone identity when available (ZoneInfo/pytz)...
+        tz = getattr(index, "tz", None)
+        tz_zone = getattr(tz, "key", None) or getattr(tz, "zone", None)
+
+        # 3. ...
+        if tz_zone:
+            tz_meta[EConst.TZ_ZONE] = tz_zone
+
+        # 4. Representative fixed offset from the first element (fallback)...
+        if len(index) > 0:
+
+            # 1.1 ...
+            try:
+                off = index[0].utcoffset()
+
+                # 2.1 ...
+                if off is not None:
+                    offset_str = self.__format_offset(off)
+
+                    # 3.1 ...
+                    if offset_str is not None:
+                        tz_meta[EConst.TZ_OFFSET] = offset_str
+
+            # 1.2 ...
+            except Exception:  # pylint: disable=broad-except
+                pass
+
+        # 5. Return only if any metadata present...
+        return tz_meta or None
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __format_offset(self, delta):
+        """Format a UTC offset timedelta as "+HH:MM" or "-HH:MM"."""
+
+        # 1. ...
+        total_seconds = None
+        try:
+
+            # 1.1 ...
+            total_seconds = int(delta.total_seconds())
+
+        # 2. ...
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+        # 3. ...
+        output = None
+        if total_seconds is not None:
+
+            # 1.1 ...
+            sign = "+" if total_seconds >= 0 else "-"
+            total_seconds = abs(total_seconds)
+
+            # 1.2 ...
+            hours, rem = divmod(total_seconds, 3600)
+            minutes, _ = divmod(rem, 60)
+
+            # 1.3 ...
+            output = f"{sign}{hours:02d}:{minutes:02d}"
+
+        # 4. ...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __parse_offset(self, s: str):
+        """Parse a string like "+HH:MM"/"-HH:MM" to a tzinfo (fixed offset)."""
+
+        # 1. ...
+        output = None
+        try:
+
+            # 1.1 ...
+            if isinstance(s, str) and (len(s) > 6) and (s[3] == ":"):
+                sign = 1 if s[0] == "+" else -1
+
+                # 2.1 ...
+                hours = int(s[1:3])
+                minutes = int(s[4:6])
+
+                # 2.2 ...
+                delta = timedelta(hours=hours, minutes=minutes) * sign
+                output = timezone(delta)
+
+        # 2. ...
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+        # 3. ...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __tzinfo_from_meta(self, tz_meta):
+        """Build tzinfo from serialized tz metadata (zone preferred, else fixed offset)."""
+
+        # 1. ...
+        tzinfo = None
+        if isinstance(tz_meta, dict):
+
+            # 1.1 ...
+            tz_zone = tz_meta.get(EConst.TZ_ZONE)
+            tz_offset = tz_meta.get(EConst.TZ_OFFSET)
+
+            # 1.2 Prefer zone when available...
+            if tz_zone:
+                try:
+
+                    # 3.1 ...
+                    tzinfo = ZoneInfo(tz_zone)
+
+                except Exception:  # pylint: disable=broad-except
+                    tzinfo = None
+
+            # 1.3 Fallback to fixed offset...
+            if (tzinfo is None) and tz_offset:
+                tzinfo = self.__parse_offset(tz_offset)
+
+        # 4. ...
+        return tzinfo
 
 
 # --------------------------------------------------------------------------------------------- #
