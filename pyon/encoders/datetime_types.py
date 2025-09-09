@@ -240,8 +240,16 @@ class DateEnc():
                 if tz_zone and ZoneInfo is not None:
                     try:
 
-                        # 4.1 ...
-                        output = output.astimezone(ZoneInfo(tz_zone))
+                        # 4.1 Prefer attach tz when naive to avoid ValueError in astimezone
+                        zone = ZoneInfo(tz_zone)
+
+                        # 4.2 Attach tz directly...
+                        if output.tzinfo is None:
+                            output = output.replace(tzinfo=zone)
+
+                        # 4.3 Convert between timezones
+                        else:
+                            output = output.astimezone(zone)
 
                     # 3.1 ...
                     except ZoneInfoNotFoundError:
@@ -405,7 +413,7 @@ class DateEnc():
         try:
 
             # 1.1 ...
-            if isinstance(s, str) and (len(s) > 6) and (s[3] == ":"):
+            if isinstance(s, str) and (len(s) >= 6) and (s[3] == ":"):
 
                 # 2.1 ...
                 sign = 1 if s[0] == "+" else -1

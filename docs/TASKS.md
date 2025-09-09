@@ -2,6 +2,28 @@
 
 This document contains a structured list of tasks organized by version for the development of the Pyon project. Tasks are based on the roadmap and are tied to specific milestones. Use this file to track progress locally in VSCode.
 
+## Version 0.2.7-alpha — Timezone Region Support (TZDB) for datetime & pandas indexes
+
+### Core
+- [x] Encode `datetime` with TZ metadata:
+- Store **region** (IANA TZDB, e.g., `America/Sao_Paulo`)
+- Store **UTC offset** (`+HH:MM`) and **fold** (PEP 495) when applicable
+- [x] Decode `datetime`:
+- Prefer **ZoneInfo(region)**; fallback to **fixed offset** when the region is unavailable
+- Handle **naïve** `datetime` before calling `astimezone` (avoids `ValueError`)
+- [x] Offset parser updated to accept `+HH:MM`/`-HH:MM` (length `>= 6`)
+- [x] `time` with TZ: preserve and restore `tzinfo` by region/offset
+- [x] **pandas**:
+- Serialize TZ metadata of index (`DatetimeIndex`) and rebuild with the **original region**
+- `PeriodIndex`/`TimedeltaIndex`: unchanged (no tz)
+- `freq` preserved when available
+
+### IANA
+- [x] `docs/other/iana-registration-v2.md`:
+- Security: explicitly note controlled constructors for temporal/scientific types
+- Interoperability: JSON syntax + Pyon semantics;
+- Clipboard/Pasteboard: generic wording for Windows; UTI/macOS without repeating “media type”
+
 ---
 
 ## Version 0.2.6-alpha — Decode Audit & Security Documentation

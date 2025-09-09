@@ -9,6 +9,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Literal
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -230,6 +231,151 @@ class TestPyonEncodeDecode:
 
         # 1. Default test...
         self._test_default(value, datetime)
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def test_datetime_with_region_round_trip(self):
+        """
+        Ensures exact round-trip for timezone-aware datetimes using TZDB region.
+        """
+
+        # 1. Arrange
+        dt_in = datetime(2025, 1, 2, 3, 4, 5, tzinfo=ZoneInfo("America/Sao_Paulo"))
+
+        # 2. Act
+        encoded = pyon.encode(dt_in)
+        dt_out = pyon.decode(encoded)
+
+        # 3. Assert
+        assert isinstance(dt_out, datetime)
+        assert dt_out == dt_in
+        assert getattr(dt_out.tzinfo, "key", None) == "America/Sao_Paulo"
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize("fold", [0, 1])
+    def test_datetime_dst_fold_round_trip(self, fold):
+        """
+        Validates preservation of 'fold' (PEP 495) on ambiguous local times in DST zones.
+        Uses America/New_York which has DST transitions.
+        """
+
+        # 1. Arrange: ambiguous wall time at fall-back (01:30 occurs twice)
+        # Example: 2020-11-01 in America/New_York
+        try:
+            zone = ZoneInfo("America/New_York")
+        except ZoneInfoNotFoundError:
+            pytest.skip("Timezone data not available for America/New_York")
+
+        dt_in = datetime(2020, 11, 1, 1, 30, 0, tzinfo=zone).replace(fold=fold)
+
+        # 2. Act
+        dt_out = pyon.decode(pyon.encode(dt_in))
+
+        # 3. Assert: preserve wall time and fold flag
+        assert isinstance(dt_out, datetime)
+        assert dt_out.replace(tzinfo=None) == dt_in.replace(tzinfo=None)
+        assert getattr(dt_out, "fold", 0) == fold
+
+        # 3.1 Timezone identity when available, else fallback to matching offset
+        tz_key = getattr(dt_out.tzinfo, "key", None) or getattr(dt_out.tzinfo, "zone", None)
+        if tz_key is not None:
+            assert tz_key == "America/New_York"
+        else:
+            assert dt_out.utcoffset() == dt_in.utcoffset()
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def test_datetime_naive_remains_naive(self):
+        """
+        Confirms naive datetimes remain naive after round-trip (no accidental tz injection).
+        """
+
+        # 1. Arrange
+        dt_in = datetime(2025, 2, 3, 4, 5, 6)  # naive
+
+        # 2. Act
+        dt_out = pyon.decode(pyon.encode(dt_in))
+
+        # 3. Assert
+        assert isinstance(dt_out, datetime)
+        assert dt_out == dt_in
+        assert dt_out.tzinfo is None
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize(
+        "start,periods,freq,tz",
+        [("2025-01-01", 5, "h", "America/Sao_Paulo")],
+    )
+    def test_dataframe_datetimeindex_with_tz_round_trip_preserves_freq(
+        self, start, periods, freq, tz
+    ):
+        """Ensures DataFrame with DatetimeIndex(tz) + freq preserves tz region and freq."""
+
+        # 1. Arrange
+        idx = pd.date_range(start, periods=periods, freq=freq, tz=tz)
+        df_in = pd.DataFrame({"v": range(periods)}, index=idx)
+
+        # 2. Act
+        df_out = pyon.decode(pyon.encode(df_in))
+
+        # 3. Assert basic type/shape/columns
+        assert isinstance(df_out, pd.DataFrame)
+        assert list(df_out.columns) == list(df_in.columns)
+        assert df_out.shape == df_in.shape
+
+        # 3.1 Compare data with aligned timezones (UTC) to avoid tz-identity mismatches
+        if isinstance(df_in.index, pd.DatetimeIndex) and (df_in.index.tz is not None):
+            df_in_aligned = df_in.copy()
+            df_out_aligned = df_out.copy()
+            df_in_aligned.index = df_in.index.tz_convert("UTC")
+            df_out_aligned.index = df_out.index.tz_convert("UTC")
+            assert df_out_aligned.equals(df_in_aligned)
+        else:
+            assert df_out.equals(df_in)
+
+        # 3.2 Extra checks: timezone identity when available and frequency preserved
+        tz_key = getattr(df_out.index.tz, "key", None) or getattr(df_out.index.tz, "zone", None)
+        if tz_key is not None:
+            assert tz_key == tz
+        else:
+            assert df_out.index[0].utcoffset() == df_in.index[0].utcoffset()
+
+        assert (df_out.index.freqstr or None) == (df_in.index.freqstr or None)
+
+    # ----------------------------------------------------------------------------------------- #
+
+    @pytest.mark.parametrize(
+        "start,periods,freq,tz",
+        [("2025-06-01", 3, "D", "America/Sao_Paulo")],
+    )
+    def test_series_datetimeindex_with_tz_round_trip(self, start, periods, freq, tz):
+        """Ensures Series with DatetimeIndex(tz) round-trips with original region or offset."""
+
+        # 1. Arrange
+        idx = pd.date_range(start, periods=periods, freq=freq, tz=tz)
+        s_in = pd.Series(list(range(10, 10 + periods * 10, 10)), index=idx, name="tz_series")
+
+        # 2. Act
+        s_out = pyon.decode(pyon.encode(s_in))
+
+        # 3. Assert
+        assert isinstance(s_out, pd.Series)
+
+        # 3.1 Compare data with aligned timezones (UTC) to avoid tz-identity mismatches
+        s_in_aligned = s_in.copy()
+        s_out_aligned = s_out.copy()
+        s_in_aligned.index = s_in.index.tz_convert("UTC")
+        s_out_aligned.index = s_out.index.tz_convert("UTC")
+        assert s_out_aligned.equals(s_in_aligned)
+
+        # 3.2 Region identity when available, else offset equality
+        tz_key = getattr(s_out.index.tz, "key", None) or getattr(s_out.index.tz, "zone", None)
+        if tz_key is not None:
+            assert tz_key == tz
+        else:
+            assert s_out.index[0].utcoffset() == s_in.index[0].utcoffset()
 
     # ----------------------------------------------------------------------------------------- #
 

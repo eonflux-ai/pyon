@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.7-alpha] - 2025-09-09
+
+### Added
+- Support for **timezone region metadata** (IANA TZDB) in `datetime` and pandas indexes, enabling exact round-trip restoration.
+- Extended encode/decode logic to include `TZ_OFFSET` and `TZ_FOLD` (PEP 495).
+- Tests covering timezone-aware datetimes, ambiguous DST folds, and pandas `DatetimeIndex` with tz and freq.
+- Documentation updates (`README.md`, `SECURITY.md`) with notes on timezone handling and controlled constructor usage.
+- Expanded **Security Considerations** in IANA registration (`iana-registration-v2.md`) to align with the security audit and the `SECURITY.md`.
+
+### Changed
+- Decode pipeline hardened: naïve `datetime` handled safely before applying `astimezone`.
+- Offset parser corrected to accept canonical formats (`+HH:MM`, `-HH:MM`).
+- Terminology in documentation and IANA registration updated to consistently use **media type** instead of legacy “MIME type”.
+
+### Added (IANA registration)
+- References to repository documents (`README.md`, `SECURITY.md`) for specification and security details.
+- Section on **Clipboard & Pasteboard Interoperability** (Windows and macOS).
+
+### Removed
+- Redundant implementation details from IANA registration (encode/decode internals and low-level notes).
+
+---
+
 ## [0.2.6-alpha] - 2025-06-18
 
 ### Added

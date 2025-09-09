@@ -1,7 +1,7 @@
 # Pyon
 [![PyPI version](https://badge.fury.io/py/pyon-core.svg)](https://pypi.org/project/pyon-core/)
 [![GitHub stars](https://img.shields.io/github/stars/eonflux-ai/pyon?style=social)](https://github.com/eonflux-ai/pyon)
-[![MIME Type: application/vnd.pyon+json](https://img.shields.io/badge/MIME-IANA%20Registered-blue.svg)](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
+[![Media Type: application/vnd.pyon+json](https://img.shields.io/badge/MIME-IANA%20Registered-blue.svg)](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 
@@ -24,7 +24,7 @@
 11. [Encoders](#11-encoders)
 12. [Testing](#12-testing)
 13. [Roadmap](#13-roadmap)
-14. [MIME Type](#14-mime-type)
+14. [Media Type (IANA)](#14-media-type-iana)
 15. [Additional Documentation](#15-additional-documentation)
 16. [Contributing](#16-contributing)
 17. [About the Creator](#17-about-the-creator)
@@ -399,9 +399,9 @@ For detailed plans, phased expansions, and future directions, see the [ROADMAP.m
 ---
 <br>
 
-## 14. MIME Type
+## 14. Media Type (IANA)
 
-Pyon files use a structured JSON-compatible format and are best identified by the MIME type:  
+Pyon files use a structured JSON-compatible format and are best identified by the media type:  
 `application/vnd.pyon+json`
 
 This follows the IANA convention for custom JSON-based types (`+json`) and is appropriate for files with `.pyon` extension.
@@ -409,6 +409,21 @@ This follows the IANA convention for custom JSON-based types (`+json`) and is ap
 This media type is officially registered with IANA and listed in the official registry:  
 🔗 [https://www.iana.org/assignments/media-types/media-types.xhtml#application](https://www.iana.org/assignments/media-types/media-types.xhtml#application)
 
+Direct link:  
+🔗 [https://www.iana.org/assignments/media-types/application/vnd.pyon+json](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
+
+---
+
+### Clipboard & Pasteboard Interoperability
+
+**Windows (Clipboard):** Applications should use the **Microsoft-recommended clipboard registration function** when placing or reading Pyon data on the clipboard (e.g., today this is typically done via `RegisterClipboardFormatW`, but the specification intentionally avoids coupling to a specific API name).
+
+**macOS (Pasteboard / UTI):**
+- **Uniform Type Identifier (UTI):** `ai.eonflux.pyon`
+- **Conforms to:** `public.json`, `public.data`
+- **Filename extension:** `.pyon`
+
+These identifiers enable consistent copy-paste and drag-and-drop behavior between desktop applications that handle Pyon objects, without repeating or redefining the media type information already provided in the IANA registration.
 
 ---
 <br>
@@ -467,7 +482,7 @@ This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LI
 
 - 🔗 [GitHub Repository](https://github.com/eonflux-ai/pyon)
 - 📦 [PyPI Page](https://pypi.org/project/pyon-core/)
-- 📄 [IANA MIME Type](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
+- 📄 [IANA Media Type](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
 
 
 ---

@@ -876,7 +876,7 @@ class SpecEnc(BaseEncoder):
         try:
 
             # 1.1 ...
-            if isinstance(s, str) and (len(s) > 6) and (s[3] == ":"):
+            if isinstance(s, str) and (len(s) >= 6) and (s[3] == ":"):
                 sign = 1 if s[0] == "+" else -1
 
                 # 2.1 ...
