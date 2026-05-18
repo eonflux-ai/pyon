@@ -39,10 +39,37 @@ Tracker = "https://github.com/eonflux-ai/pyon/issues"
 dev = [
   "pytest",
   "pytest-cov",
-  "black",
   "pylint"
+]
+debug = [
+  "pyright",
+  "ruff",
+  "bandit",
+  "radon",
+  "vulture",
+  "mypy",
+  "pandas-stubs"
 ]
 
 [tool.setuptools]
 packages = { find = { where = ["."] } }
 include-package-data = true
+
+[tool.pyright]
+include = ["pyon", "tests"]
+exclude = ["**/__pycache__", ".venv", "build"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+reportMissingTypeStubs = "none"
+
+[tool.mypy]
+python_version = "3.12"
+files = ["pyon"]
+exclude = ["^build/", "^tests/", "^examples/"]
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["magic", "pandas", "pandas.*"]
+ignore_missing_imports = true

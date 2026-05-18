@@ -29,7 +29,7 @@ class Cat:
     Class representing a cat.
     """
 
-    # 1.1 ...
+    # 1.1 Initialize attributes...
     def __init__(self, name, color):
         self.name = name
         self.color = color

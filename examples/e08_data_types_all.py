@@ -75,7 +75,7 @@ class Cat:
         age (int): The age of the cat.
     """
 
-    # 1.1 ...
+    # 1.1 Initialize attributes...
     def __init__(self, name, age):
         self.name = name
         self.age = age

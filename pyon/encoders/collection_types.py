@@ -81,7 +81,7 @@ class ColEnc(BaseEncoder):
             elif isinstance(value, set):
                 encoded = self._encode_set(value)
 
-            # 1.11 Tuplas...
+            # 1.11 Tuples...
             elif isinstance(value, tuple):
                 encoded = self._encode_tuple(value)
 
@@ -196,7 +196,7 @@ class ColEnc(BaseEncoder):
                 SupportedTypes.TUPLE.value
             ):
 
-                # 2.1 ...
+                # 2.1 It validates class...
                 is_decode = True
 
         # 3. ...
@@ -219,7 +219,7 @@ class ColEnc(BaseEncoder):
         output = None
         if (value is not None) and isinstance(value, bytearray):
 
-            # 1.1 ...
+            # 1.1 It encodes data...
             output = {
                 EConst.TYPE: SupportedTypes.BYTEARRAY.value,
                 EConst.DATA: base64.b64encode(value).decode('utf-8')
@@ -241,13 +241,13 @@ class ColEnc(BaseEncoder):
         output = None
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
-            # 1.1 ...
+            # 1.1 It decodes content...
             output = bytearray(base64.b64decode(value[EConst.DATA]))
 
         # 2. ...
         else:
 
-            # 1.1 ...
+            # 1.1 It decodes text...
             logger.error(
                 "Invalid bytearray input. Expected: dict with %s. Received: %s",
                 EConst.DATA,

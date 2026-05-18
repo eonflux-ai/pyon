@@ -30,7 +30,7 @@ class Color(Enum):
 class Person:
     """ Dataclass representing a person. """
 
-    # 1.1 ...
+    # 1.1 Initialize attributes...
     name: str
     age: int
     height: float
@@ -40,11 +40,11 @@ class Person:
     favorite_colors: list
     pets: dict
 
-    # 1.2 ...
+    # 1.2 String output...
     def __repr__(self):
         return f"({Person}):({self.name}):({self.age})"
 
-    # 1.3 ...
+    # 1.3 Repr output...
     def __hash__(self):
         return hash(self.__repr__())
 
@@ -54,7 +54,7 @@ class Person:
 class Pet:
     """ Class representing a Pet. """
 
-    # 1.1 ...
+    # 1.1 Initialize attributes...
     def __init__(self, p_type, name, color):
         self.p_type = p_type
         self.name = name

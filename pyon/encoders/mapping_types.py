@@ -119,7 +119,7 @@ class MapEnc(BaseEncoder):
                 SupportedTypes.ENUM.value
             ):
 
-                # 2.1 ...
+                # 2.1 It validates type...
                 is_decode = True
 
         # 3. ...
@@ -202,7 +202,7 @@ class MapEnc(BaseEncoder):
             enc_private = exp_info[0] or self.enc_private
             enc_protected = exp_info[1] or self.enc_protected
 
-            # 1.3 ...
+            # 1.3 It serializes items...
             serialized_dict = {}
             for key, val in vars(value).items() if hasattr(value, EConst.DICT) else value.items():
 
@@ -223,7 +223,7 @@ class MapEnc(BaseEncoder):
                         elif key.startswith("_") and not enc_protected:
                             process = False
 
-                        # 4.3 Private or Procted...
+                        # 4.3 Private or Protected...
                         if not process:
                             enc_key = self._encode_as_str(key)
                             serialized_dict[enc_key] = None
@@ -235,7 +235,7 @@ class MapEnc(BaseEncoder):
                         enc_key = self._encode_as_str(key)
                         serialized_dict[enc_key] = self._encode_as_dict(val)
 
-            # 1.4 ...
+            # 1.4 It builds output...
             encoded = {
                 EConst.TYPE: self._get_defulat_type(value),
                 EConst.CLASS: ut.get_class_name(value),
@@ -261,7 +261,7 @@ class MapEnc(BaseEncoder):
                 # 2.1 Iterates to process...
                 for key, val in dict_items:
 
-                    # 3.1 ...
+                    # 3.1 It decodes item...
                     dec_key = self._decode_from_str(key)
                     decoded[dec_key] = self._decode_from_dict(val)
 
@@ -288,15 +288,15 @@ class MapEnc(BaseEncoder):
         tp = None
         if obj is not None:
 
-            # 1.1 ...
+            # 1.1 It detects dictionary...
             if isinstance(obj, dict):
                 tp = SupportedTypes.DICT.value
 
-            # 1.2 ...
+            # 1.2 It detects dataclass...
             elif is_dataclass(obj):
                 tp = SupportedTypes.DATACLASS.value
 
-            # 1.3 ...
+            # 1.3 It detects class...
             else:
                 tp = SupportedTypes.CLASS.value
 
