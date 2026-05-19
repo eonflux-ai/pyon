@@ -3,29 +3,18 @@
 # --------------------------------------------------------------------------------------------- #
 
 from collections import Counter, defaultdict, deque
-from datetime import datetime, timezone, timedelta, time
+from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, cast
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
 # --------------------------------------------------------------------------------------------- #
 
 import pytest
 from pyon import api as pyon_api
-import pyon.encoders.datetime_types as dt_module
 
 # --------------------------------------------------------------------------------------------- #
 
 from pyon.encoder import PyonEncoder
 from pyon.file.api import File
-from pyon.encoders.base_encoder import BaseEncoder
-from pyon.encoders.base_types import BaseEnc
-from pyon.encoders.collection_types import ColEnc
-from pyon.encoders.datetime_types import DateEnc
-from pyon.encoders.mapping_types import MapEnc
-from pyon.encoders.numeric_types import NumEnc
-from pyon.encoders.specialized_types import SpecEnc
 from pyon.supported_types import SupportedTypes
 from pyon.utils import EConst, generate_unique_filename, get_class, lstrip, parse_utc_offset
 
@@ -92,60 +81,7 @@ def test_decode_dict_defensive_on_malformed_payloads(payload):
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_datetime_decoder_fallbacks_to_offset_when_zone_is_unknown(monkeypatch):
-    """ Zone lookup failure should still preserve offset-based timezone. """
-
-    # 1. Prepares payload with explicit zone+offset...
-    value = {
-        EConst.TYPE: SupportedTypes.DATETIME.value,
-        EConst.DATA: "2025-01-01T10:00:00",
-        EConst.AUX1: {
-            EConst.TZ_ZONE: "Invalid/Zone",
-            EConst.TZ_OFFSET: "+02:30",
-            EConst.TZ_FOLD: 1,
-        },
-    }
-
-    # 2. Forces zone lookup failure...
-    def _raise_zoneinfo(_):
-        raise ZoneInfoNotFoundError("zone missing")
-
-    monkeypatch.setattr("pyon.encoders.datetime_types.ZoneInfo", _raise_zoneinfo)
-
-    # 3. Decodes...
-    output = DateEnc().decode(value)
-
-    # 4. Validates output type...
-    assert isinstance(output, datetime)
-
-    # 5. Validates offset and fold...
-    assert output.utcoffset() == timedelta(hours=2, minutes=30)
-    assert getattr(output, "fold", 0) == 1
-
-
 # --------------------------------------------------------------------------------------------- #
-
-
-def test_specialized_decoder_rejects_invalid_index_type_gracefully():
-    """ Invalid index metadata should be rejected without raising exceptions. """
-
-    # 1. Prepares malformed dataframe payload...
-    payload = {
-        EConst.TYPE: SupportedTypes.DATAFRAME.value,
-        EConst.DATA: [],
-        EConst.AUX1: [],
-        EConst.AUX2: [],
-        EConst.AUX3: [],
-        EConst.AUX4: "InvalidIndex",
-        EConst.AUX5: [],
-        EConst.AUX6: "Index",
-    }
-
-    # 2. Decodes...
-    output = SpecEnc(PyonEncoder()).decode(payload)
-
-    # 3. Validates safe failure...
-    assert output is None or hasattr(output, "shape")
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -235,136 +171,13 @@ def test_to_file_verbose_logs_success(tmp_path):
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_base_and_numeric_and_mapping_helpers_reject_invalid_inputs():
-    """ Defensive helper methods should reject invalid types gracefully. """
-
-    # 1. Prepares base helpers...
-    base = BaseEnc()
-    num = NumEnc()
-
-    # 2. Prepares mapping helper...
-    mapping = MapEnc(PyonEncoder())
-
-    # 3. Validates base helper contracts...
-    assert getattr(cast(Any, base), "_encode_type")(cast(Any, "not-type")) is None
-    assert getattr(cast(Any, base), "_decode_type")(cast(Any, None)) is None
-
-    # 4. Validates numeric helper contracts...
-    assert getattr(cast(Any, num), "_encode_complex")(cast(Any, "bad")) is None
-    assert getattr(cast(Any, num), "_encode_decimal")(cast(Any, 1)) is None
-
-    # 5. Validates mapping helper contracts...
-    assert getattr(cast(Any, mapping), "_encode_enum")(cast(Any, "bad")) is None
-
-    # 6. Validates internal mapping key filtering...
-    encoded = getattr(cast(Any, mapping), "_encode_dict")({"___internal": "x", "public": "y"})
-    assert len(encoded[EConst.DICT]) == 1
+# --------------------------------------------------------------------------------------------- #
 
 
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_specialized_helpers_reject_invalid_inputs():
-    """ Specialized encoder helpers should fail safely on invalid values. """
-
-    # 1. Prepares helper...
-    spec = SpecEnc(PyonEncoder())
-
-    # 2. Prepares dynamic helper...
-    inner = cast(Any, spec)
-
-    # 3. Validates simple encoders...
-    _assert_helpers_return_none(
-        inner,
-        [
-            ("_encode_bitarray", "bad"),
-            ("_encode_file", "bad"),
-            ("_decode_file", None),
-        ],
-    )
-
-    # 4. Validates array/data encoders...
-    _assert_helpers_return_none(
-        inner,
-        [
-            ("_encode_ndarray", "bad"),
-            ("_encode_uuid", "bad"),
-            ("_encode_dataframe", "bad"),
-            ("_encode_series", "bad"),
-        ],
-    )
-
-    # 5. Validates index helpers...
-    assert getattr(spec, "_SpecEnc__decode_index")({}) is None
-    assert getattr(spec, "_SpecEnc__decode_columns")({}) is None
-
-    # 6. Validates timezone helpers...
-    assert getattr(spec, "_SpecEnc__parse_offset")("+00:30") is not None
-    assert getattr(spec, "_SpecEnc__tzinfo_from_meta")(
-        {EConst.TZ_OFFSET: "+00:00"}
-    ) is not None
-
-
 # --------------------------------------------------------------------------------------------- #
-
-
-def _assert_helpers_return_none(target, method_inputs):
-    """Checks that invalid helper calls return None."""
-
-    # 1. Validate helper contracts...
-    for method_name, invalid_input in method_inputs:
-        assert getattr(target, method_name)(cast(Any, invalid_input)) is None
-
-
-# --------------------------------------------------------------------------------------------- #
-
-
-def test_datetime_helpers_reject_invalid_inputs():
-    """ Datetime helper methods should reject invalid values without exceptions. """
-
-    # 1. Prepares helper...
-    dt = DateEnc()
-
-    # 2. Prepares dynamic helper...
-    inner = cast(Any, dt)
-
-    # 3. Validates encode defensive branches...
-    assert getattr(inner, "_encode_date")(cast(Any, "bad")) is None
-    assert getattr(inner, "_encode_datetime")(cast(Any, "bad")) is None
-    assert getattr(inner, "_encode_time")(cast(Any, "bad")) is None
-
-    # 4. Covers datetime offset-only attach...
-    out_dt = getattr(inner, "_decode_datetime")(
-        {
-            EConst.TYPE: SupportedTypes.DATETIME.value,
-            EConst.DATA: "2025-01-01T10:00:00",
-            EConst.AUX1: {EConst.TZ_OFFSET: "+01:15"},
-        }
-    )
-    assert out_dt is not None and out_dt.utcoffset() == timedelta(hours=1, minutes=15)
-
-    # 5. Covers time encode branch...
-    out_time = getattr(inner, "_encode_time")(datetime.now(timezone.utc).timetz())
-    assert isinstance(out_time, dict) and EConst.AUX1 in out_time
-
-    # 6. Covers time decode branch...
-    dec_time = getattr(inner, "_decode_time")(
-        {
-            EConst.TYPE: SupportedTypes.TIME.value,
-            EConst.DATA: "10:00:00",
-            EConst.AUX1: {EConst.TZ_OFFSET: "-02:00"},
-        }
-    )
-    assert dec_time is not None and dec_time.utcoffset() == timedelta(hours=-2)
-
-    # 7. Covers fallback on invalid fold...
-    getattr(inner, "_decode_datetime")(
-        {
-            EConst.TYPE: SupportedTypes.DATETIME.value,
-            EConst.DATA: "2025-01-01T10:00:00",
-            EConst.AUX1: {EConst.TZ_OFFSET: "+00:00", EConst.TZ_FOLD: 9},
-        }
-    )
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -429,80 +242,10 @@ def test_file_remaining_branches(tmp_path, monkeypatch):
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_base_encoder_requires_encoder_instance():
-    """ BaseEncoder must reject missing encoder dependency. """
-
-    with pytest.raises(ValueError, match="Invalid Pyon Encoder"):
-        BaseEncoder(None)
-
-
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_collection_invalid_encode_paths():
-    """ Collection helper methods should reject wrong input types. """
-
-    # 1. Prepares helper...
-    col = ColEnc(PyonEncoder())
-    inner = cast(Any, col)
-
-    # 2. Validates simple collections...
-    _assert_helpers_return_none(
-        inner,
-        [
-            ("_encode_bytearray", "x"),
-            ("_encode_bytes", "x"),
-            ("_encode_chainmap", "x"),
-            ("_encode_counter", "x"),
-            ("_encode_defaultdict", "x"),
-            ("_encode_deque", "x"),
-        ],
-    )
-
-    # 3. Validates remaining collections...
-    _assert_helpers_return_none(
-        inner,
-        [
-            ("_encode_frozenset", "x"),
-            ("_encode_list", "x"),
-            ("_encode_namedtuple", ("x", 1)),
-            ("_encode_set", "x"),
-            ("_encode_tuple", "x"),
-        ],
-    )
-
-
 # --------------------------------------------------------------------------------------------- #
-
-
-def test_specialized_internal_fallback_and_errors():
-    """ Specialized internals should fail safely on reshape/offset edge cases. """
-
-    spec = SpecEnc(PyonEncoder())
-
-    # 1. Forces ndarray reshape failure branch...
-    assert getattr(cast(Any, spec), "_decode_ndarray")(
-        {EConst.DATA: [1, 2, 3], EConst.AUX1: (2, 2)}
-    ) is None
-
-    # 2. Builds broken index...
-    class _BrokenIndex:
-        tz = None
-
-        def __len__(self):
-            return 1
-
-        def __getitem__(self, _):
-            raise TypeError("bad access")
-
-    # 3. Validates metadata fallback...
-    assert getattr(spec, "_SpecEnc__build_tz_meta_from_index")(_BrokenIndex()) is None
-    assert getattr(spec, "_SpecEnc__format_offset")(object()) is None
-
-    # 4. Validates timezone fallback...
-    assert getattr(spec, "_SpecEnc__tzinfo_from_meta")(
-        {EConst.TZ_ZONE: "Invalid/Zone", EConst.TZ_OFFSET: "+00:00"}
-    ) is not None
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -540,107 +283,10 @@ def test_file_temp_keep_branch_and_folder_cleanup(tmp_path, monkeypatch):
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_collection_decode_invalid_payload_logs_and_returns_none():
-    """ Invalid decode payloads should be rejected for chainmap and namedtuple. """
-
-    # 1. Prepares encoder...
-    col = ColEnc(PyonEncoder())
-
-    # 2. Validates malformed decode payloads...
-    assert getattr(cast(Any, col), "_decode_chainmap")({}) is None
-    assert getattr(cast(Any, col), "_decode_namedtuple")({}) is None
+# --------------------------------------------------------------------------------------------- #
 
 
 # --------------------------------------------------------------------------------------------- #
 
 
-def test_datetime_decode_attach_zone_when_input_is_naive():
-    """ Decoding with valid TZ zone should attach tzinfo on naive datetime payloads. """
-
-    # 1. Prepares naive datetime payload with region metadata...
-    payload = {
-        EConst.TYPE: SupportedTypes.DATETIME.value,
-        EConst.DATA: "2025-01-01T10:00:00",
-        EConst.AUX1: {EConst.TZ_ZONE: "UTC"},
-    }
-
-    # 2. Decodes and validates zone attachment...
-    output = getattr(cast(Any, DateEnc()), "_decode_datetime")(payload)
-    assert output is not None
-    assert output.tzinfo is not None
-
-
 # --------------------------------------------------------------------------------------------- #
-
-
-def test_datetime_decode_ignores_invalid_fold_replace(monkeypatch):
-    """ Fold replace failures must not break decode flow. """
-
-    # 1. Builds fake datetime object...
-    class _FakeDateTimeValue:  # pylint: disable=too-few-public-methods
-        tzinfo = None
-
-        def replace(self, **kwargs):
-            """Mimics datetime.replace with fold failure."""
-            if "fold" in kwargs:
-                raise ValueError("invalid fold")
-            return self
-
-        def astimezone(self, _zone):
-            """Mimics astimezone without conversion."""
-            return self
-
-    # 2. Builds fake datetime class...
-    class _FakeDateTimeClass:  # pylint: disable=too-few-public-methods
-        @staticmethod
-        def fromisoformat(_value):
-            """Returns fake datetime object."""
-            return _FakeDateTimeValue()
-
-    # 3. Patches datetime class...
-    monkeypatch.setattr(dt_module, "datetime", _FakeDateTimeClass)
-
-    # 4. Prepares fold payload...
-    payload = {
-        EConst.TYPE: SupportedTypes.DATETIME.value,
-        EConst.DATA: "2025-01-01T10:00:00",
-        EConst.AUX1: {EConst.TZ_OFFSET: "+00:00", EConst.TZ_FOLD: 1},
-    }
-    # 5. Decodes payload...
-    output = getattr(cast(Any, DateEnc()), "_decode_datetime")(payload)
-
-    # 6. Validates graceful handling...
-    assert output is not None
-
-
-# --------------------------------------------------------------------------------------------- #
-
-
-def test_datetime_time_zone_metadata_roundtrip_paths(monkeypatch):
-    """ Time encode/decode should preserve zone metadata and fallback to offset when needed. """
-
-    # 1. Encodes aware time...
-    value = time(10, 20, 30, tzinfo=ZoneInfo("UTC"))
-    encoded = getattr(cast(Any, DateEnc()), "_encode_time")(value)
-
-    # 2. Validates zone metadata...
-    assert isinstance(encoded, dict)
-    assert EConst.TZ_ZONE in encoded[EConst.AUX1]
-
-    # 3. Prepares offset fallback payload...
-    payload = {
-        EConst.TYPE: SupportedTypes.TIME.value,
-        EConst.DATA: "10:00:00",
-        EConst.AUX1: {EConst.TZ_ZONE: "Invalid/Zone", EConst.TZ_OFFSET: "+03:00"},
-    }
-
-    def _raise_zoneinfo(_):
-        raise ZoneInfoNotFoundError("zone missing")
-
-    # 4. Forces zone lookup failure...
-    monkeypatch.setattr("pyon.encoders.datetime_types.ZoneInfo", _raise_zoneinfo)
-    decoded = getattr(cast(Any, DateEnc()), "_decode_time")(payload)
-
-    # 5. Validates offset fallback...
-    assert decoded is not None
-    assert decoded.utcoffset() == timedelta(hours=3)

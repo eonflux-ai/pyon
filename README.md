@@ -326,10 +326,16 @@ Pyon/
 |       |-- types.py               # Public File typing aliases and TypedDicts
 |-- tests/                         # Test suite
 |   |-- encoders/                  # Encoder-specific tests
+|   |   |-- test_base_types.py
+|   |   |-- test_collection_types.py
+|   |   |-- test_datetime_types.py
+|   |   |-- test_mapping_types.py
+|   |   |-- test_numeric_types.py
+|   |   |-- test_specialized_types.py
 |   |-- test_api.py                # Public API coverage
 |   |-- test_file.py               # File wrapper coverage
 |   |-- test_typing_contract.py    # Consumer-facing typing contracts
-|   |-- test_resilience_contracts.py
+|   |-- test_resilience_contracts.py # Cross-cutting resilience contracts
 ```
 
 ---
@@ -355,7 +361,8 @@ Pyon/
 
 4. **Testing Structure**:
 
-   - The `tests/` directory covers public API behavior, encoder behavior, resilience contracts, file behavior, and typing contracts.
+   - The `tests/` directory covers public API behavior, file behavior, typing contracts, and cross-cutting resilience contracts.
+   - The `tests/encoders/` directory keeps direct encoder helper and edge-case coverage next to the matching encoder category.
    - `examples/` contains executable examples that are validated during audit workflows.
 
 ---
