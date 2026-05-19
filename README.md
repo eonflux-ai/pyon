@@ -386,6 +386,8 @@ To run the tests locally:
 
 ```bash
 cd Pyon
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev,debug]"
 pytest
 ```
 
