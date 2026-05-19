@@ -48,12 +48,19 @@ debug = [
   "radon",
   "vulture",
   "mypy",
+  "build",
   "pandas-stubs"
 ]
 
 [tool.setuptools]
-packages = { find = { where = ["."] } }
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyon*"]
+
+[tool.setuptools.package-data]
+pyon = ["py.typed"]
 
 [tool.pyright]
 include = ["pyon", "tests", "examples"]
