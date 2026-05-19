@@ -194,12 +194,12 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_dict(self, value):  # pylint: disable=too-many-nested-blocks
+    def _encode_dict(self, value):
         """ Encodes the value """
 
         # 1. Prepare encoded mapping...
         encoded = None
-        if self._is_dict(value):  # pylint: disable=too-many-nested-blocks
+        if self._is_dict(value):
 
             # 1.1 Annotations...
             exp_info = ann.get_export_flags(value)
@@ -209,43 +209,10 @@ class MapEnc(BaseEncoder):
             enc_protected = exp_info[1] or self.enc_protected
 
             # 1.3 Serializes items...
+            export_policy = (enc_private, enc_protected)
             serialized_dict = {}
             for key, val in vars(value).items() if hasattr(value, EConst.DICT) else value.items():
-
-                # 2.1 Validates...
-                if not (isinstance(key, str) and key.startswith("___")):
-                    mangled_name = ut.get_mangled_name(value)
-
-                    # 3.1 Private and Protected...
-                    process = True
-                    if isinstance(key, str):
-
-                        # 4.1 Private key...
-                        if key.startswith("__") or key.startswith(mangled_name):
-
-                            # 5.1 Apply private policy...
-                            if not enc_private:
-                                process = False
-
-                        # 4.2 Protected key...
-                        elif key.startswith("_") and not enc_protected:
-                            process = False
-
-                        # 4.3 Mask hidden key...
-                        if not process:
-
-                            # 5.1 Encode masked key...
-                            enc_key = self._encode_as_str(key)
-
-                            # 5.2 Store masked value...
-                            serialized_dict[enc_key] = None
-
-                    # 3.2 Encode visible key...
-                    if process:
-
-                        # 4.1 Encode item...
-                        enc_key = self._encode_as_str(key)
-                        serialized_dict[enc_key] = self._encode_as_dict(val)
+                self.__encode_dict_item(serialized_dict, value, (key, val), export_policy)
 
             # 1.4 Build output...
             encoded = {
@@ -256,6 +223,66 @@ class MapEnc(BaseEncoder):
 
         # 2. Return encoded mapping...
         return encoded
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __encode_dict_item(self, serialized_dict, value, item, export_policy):
+        """Encodes one dictionary/object item according to export visibility."""
+
+        # 1. Unpack item...
+        key, val = item
+
+        # 2. Skip internal key...
+        if isinstance(key, str) and key.startswith("___"):
+            return
+
+        # 3. Resolve visibility...
+        enc_private, enc_protected = export_policy
+        process = self.__can_encode_dict_key(value, key, enc_private, enc_protected)
+
+        # 4. Encode key...
+        enc_key = self._encode_as_str(key)
+
+        # 5. Store item...
+        serialized_dict[enc_key] = self._encode_as_dict(val) if process else None
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __can_encode_dict_key(self, value, key, enc_private, enc_protected):
+        """Checks whether a dictionary/object key should expose its value."""
+
+        # 1. Prepare visible flag...
+        process = True
+
+        # 2. Validate string key...
+        if isinstance(key, str):
+            process = self.__can_encode_string_key(value, key, enc_private, enc_protected)
+
+        # 3. Return decision...
+        return process
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __can_encode_string_key(self, value, key, enc_private, enc_protected):
+        """Checks string key visibility against private/protected policies."""
+
+        # 1. Prepare private marker...
+        mangled_name = ut.get_mangled_name(value)
+
+        # 2. Check private key...
+        if key.startswith("__") or key.startswith(mangled_name):
+            process = enc_private
+
+        # 3. Check protected key...
+        elif key.startswith("_"):
+            process = enc_protected
+
+        # 4. Keep public key...
+        else:
+            process = True
+
+        # 5. Return decision...
+        return process
 
     # ----------------------------------------------------------------------------------------- #
 

@@ -653,53 +653,88 @@ class SpecEnc(BaseEncoder):
         # 2. Validates the index type...
         if index_type in self._DF_INDEXES:
             freq = to_offset(freq) if freq else None
-
-            # 1.1 MultiIndex...
-            if index_type == "MultiIndex":
-                output = pandas.MultiIndex.from_tuples(index_data, names=index_names)
-
-            # 1.2 RangeIndex...
-            elif (index_type == "RangeIndex") and self.__is_arithmetic_range(index_data):
-                output = self.__build_range_index(index_data, index_name)
-
-            # 1.3 DatetimeIndex...
-            elif index_type == "DatetimeIndex":
-                tzinfo = self.__tzinfo_from_meta(tz_meta)
-
-                # 2.1 If no tz meta but data is tz-aware (from pre-decode UTC normalization),
-                # reuse that tz to avoid incompatibility with tz=None.
-                if tzinfo is None:
-                    tzinfo = getattr(index_data, "tz", None)
-
-                # 2.2 Checks step...
-                output = pandas.DatetimeIndex(
-                    index_data,
-                    name=index_name,
-                    tz=tzinfo,  # type: ignore
-                    freq=freq  # type: ignore
-                )
-
-            # 1.4 PeriodIndex...
-            elif index_type == "PeriodIndex":
-                output = pandas.PeriodIndex(index_data, name=index_name, freq=freq)
-
-            # 1.5 TimedeltaIndex...
-            elif index_type == "TimedeltaIndex":
-                output = pandas.TimedeltaIndex(index_data, name=index_name)  # type: ignore
-
-            # 1.6 CategoricalIndex...
-            elif index_type == "CategoricalIndex":
-                output = pandas.CategoricalIndex(index_data, name=index_name)
-
-            # 1.7 Generic fallback...
-            else:
-                output = pandas.Index(index_data, name=index_name)
+            output = self.__rebuild_valid_index(
+                index_data, index_names, index_name, index_type, freq, tz_meta
+            )
 
         # 3. Invalid type...
         else:
             logger.error("Invalid index type: %s", index_type)
 
         # 4. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __rebuild_valid_index(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self, index_data, index_names, index_name, index_type, freq, tz_meta
+    ):
+        """Builds a supported pandas index type."""
+
+        # 1. MultiIndex...
+        if index_type == "MultiIndex":
+            output = pandas.MultiIndex.from_tuples(index_data, names=index_names)
+
+        # 2. RangeIndex...
+        elif (index_type == "RangeIndex") and self.__is_arithmetic_range(index_data):
+            output = self.__build_range_index(index_data, index_name)
+
+        # 3. DatetimeIndex...
+        elif index_type == "DatetimeIndex":
+            output = self.__rebuild_datetime_index(index_data, index_name, freq, tz_meta)
+
+        # 4. Specialized indexes...
+        else:
+            output = self.__rebuild_non_datetime_index(index_data, index_name, index_type, freq)
+
+        # 5. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __rebuild_datetime_index(self, index_data, index_name, freq, tz_meta):
+        """Rebuilds a DatetimeIndex while preserving timezone metadata."""
+
+        # 1. Resolve timezone...
+        tzinfo = self.__tzinfo_from_meta(tz_meta)
+
+        # 2. Reuse data timezone...
+        if tzinfo is None:
+            tzinfo = getattr(index_data, "tz", None)
+
+        # 3. Build datetime index...
+        output = pandas.DatetimeIndex(
+            index_data,
+            name=index_name,
+            tz=tzinfo,  # type: ignore
+            freq=freq  # type: ignore
+        )
+
+        # 4. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __rebuild_non_datetime_index(self, index_data, index_name, index_type, freq):
+        """Rebuilds non-datetime pandas index variants."""
+
+        # 1. PeriodIndex...
+        if index_type == "PeriodIndex":
+            output = pandas.PeriodIndex(index_data, name=index_name, freq=freq)
+
+        # 2. TimedeltaIndex...
+        elif index_type == "TimedeltaIndex":
+            output = pandas.TimedeltaIndex(index_data, name=index_name)  # type: ignore
+
+        # 3. CategoricalIndex...
+        elif index_type == "CategoricalIndex":
+            output = pandas.CategoricalIndex(index_data, name=index_name)
+
+        # 4. Generic fallback...
+        else:
+            output = pandas.Index(index_data, name=index_name)
+
+        # 5. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #

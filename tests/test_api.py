@@ -24,6 +24,14 @@ import pandas as pd
 # --------------------------------------------------------------------------------------------- #
 
 import pytest
+
+# --------------------------------------------------------------------------------------------- #
+
+from _api_helpers import (
+    assert_datetime_frame_round_trip,
+    assert_datetime_index_metadata,
+    assert_default_round_trip,
+)
 import pyon
 
 # --------------------------------------------------------------------------------------------- #
@@ -530,59 +538,14 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         df_in = pd.DataFrame({"v": range(periods)}, index=idx)
 
         # 2. Act
-        df_out = pyon.decode(pyon.encode(df_in))
+        df_out = cast("pd.DataFrame", pyon.decode(pyon.encode(df_in)))
 
-        # 3. Assert basic type...
+        # 3. Assert frame contract...
+        assert_datetime_frame_round_trip(df_in, df_out)
+
+        # 4. Assert index metadata...
         assert isinstance(df_out, pd.DataFrame)
-
-        # 4. Assert shape and columns...
-        assert list(df_out.columns) == list(df_in.columns)
-        assert df_out.shape == df_in.shape
-
-        # 5. Compare aligned timezones...
-        if (
-            isinstance(df_in.index, pd.DatetimeIndex)
-            and isinstance(df_out.index, pd.DatetimeIndex)
-            and (df_in.index.tz is not None)
-        ):
-
-            # 1.1 Prepare aligned frames...
-            df_in_aligned = df_in.copy()
-            df_out_aligned = df_out.copy()
-
-            # 1.2 Normalize timezones...
-            df_in_aligned.index = df_in.index.tz_convert("UTC")
-            df_out_aligned.index = df_out.index.tz_convert("UTC")
-
-            # 1.3 Assert aligned equality...
-            assert df_out_aligned.equals(df_in_aligned)
-
-        # 6. Compare plain result...
-        else:
-            assert df_out.equals(df_in)
-
-        # 7. Check timezone and frequency...
-        if isinstance(df_out.index, pd.DatetimeIndex) and isinstance(df_in.index, pd.DatetimeIndex):
-
-            # 1.1 Read timezone key...
-            tz_key = getattr(df_out.index.tz, "key", None) or getattr(df_out.index.tz, "zone", None)
-
-            # 1.2 Assert named timezone...
-            if tz_key is not None:
-                assert tz_key == tz
-
-            # 1.3 Assert offset fallback...
-            else:
-
-                # 2.1 Prepare timestamps...
-                out_ts = cast("pd.Timestamp", df_out.index[0])
-                in_ts = cast("pd.Timestamp", df_in.index[0])
-
-                # 2.2 Compare offsets...
-                assert out_ts.utcoffset() == in_ts.utcoffset()
-
-            # 1.4 Assert frequency...
-            assert (df_out.index.freqstr or None) == (df_in.index.freqstr or None)
+        assert_datetime_index_metadata(df_in.index, df_out.index, tz)
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -944,40 +907,7 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
 
         # 1. Valid case...
         if isinstance(clazz, type) and isinstance(value, clazz):
-
-            # 1.1 Encode, Decode...
-            encoded = pyon.encode(value)
-            decoded = pyon.decode(encoded)
-
-            # 1.2 Asserts: encoded...
-            assert encoded != value
-            assert isinstance(encoded, str)
-
-            # 1.3 If not builtins, checks name in type...
-            if not self._is_builtins(clazz) or isinstance(clazz, dict):
-                assert clazz.__name__.lower() in encoded.lower()
-
-            # 1.4 Asserts: decoded...
-            if not (hasattr(decoded, "__dict__") and isinstance(decoded.__dict__, dict)):
-                assert decoded == value
-
-            # 1.5 Asserts: decode dict...
-            elif hasattr(value, "__dict__") and isinstance(value.__dict__, dict):
-                for key, val in value.__dict__.items():
-
-                    # 3.1 Both must have the same key and value...
-                    assert key in decoded.__dict__
-                    assert decoded.__dict__[key] == val
-
-            # 1.6 Fails...
-            else:
-                pytest.fail(
-                    (
-                        f"Fail. Expected: {clazz}. "
-                        f"Value: {type(value)}. "
-                        f"Result: {type(decoded)}."
-                    )
-                )
+            assert_default_round_trip(value, clazz)
 
         # 2. None, Other...
         else:

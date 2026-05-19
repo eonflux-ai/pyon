@@ -233,51 +233,7 @@ class DateEnc():
             # 1.2 Apply timezone identity if provided...
             tz_meta = value.get(EConst.AUX1)
             if isinstance(tz_meta, dict):
-
-                # 2.1 Extracts TZ...
-                tz_zone = tz_meta.get(EConst.TZ_ZONE)
-                tz_offset_str = tz_meta.get(EConst.TZ_OFFSET)
-                tz_fold = tz_meta.get(EConst.TZ_FOLD)
-
-                # 2.2 If zone name available and ZoneInfo supported, converts...
-                if tz_zone and ZoneInfo is not None:
-                    try:
-
-                        # 4.1 Prefer attach tz when naive to avoid ValueError in astimezone
-                        zone = ZoneInfo(tz_zone)
-
-                        # 4.2 Attach tz directly...
-                        if output.tzinfo is None:
-                            output = output.replace(tzinfo=zone)
-
-                        # 4.3 Convert between timezones
-                        else:
-                            output = output.astimezone(zone)
-
-                    # 3.1 Applies zone...
-                    except ZoneInfoNotFoundError:
-
-                        # 4.1 Fallback to offset if zone lookup fails...
-                        if tz_offset_str and (output.tzinfo is None):
-                            output = output.replace(tzinfo=self.__parse_offset(tz_offset_str))
-
-                # 2.3 Applies offset...
-                else:
-
-                    # 3.1 If only offset is available and dt is naive, attach fixed offset...
-                    if tz_offset_str and (output.tzinfo is None):
-                        output = output.replace(tzinfo=self.__parse_offset(tz_offset_str))
-
-                # 2.4 Apply fold flag when provided...
-                if tz_fold in (0, 1):
-                    try:
-
-                        # 4.1 Marks fold...
-                        output = output.replace(fold=int(tz_fold))
-
-                    # 3.1 Applies fallback...
-                    except ValueError:
-                        pass
+                output = self.__apply_datetime_tz_meta(output, tz_meta)
 
         # 2. Log invalid payload...
         else:
@@ -290,6 +246,84 @@ class DateEnc():
             )
 
         # 3. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_datetime_tz_meta(self, output, tz_meta):
+        """Applies serialized timezone metadata to a decoded datetime."""
+
+        # 1. Extract metadata...
+        tz_zone = tz_meta.get(EConst.TZ_ZONE)
+        tz_offset_str = tz_meta.get(EConst.TZ_OFFSET)
+
+        # 2. Apply zone or offset...
+        output = self.__apply_datetime_zone_or_offset(output, tz_zone, tz_offset_str)
+
+        # 3. Apply fold...
+        output = self.__apply_datetime_fold(output, tz_meta.get(EConst.TZ_FOLD))
+
+        # 4. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_datetime_zone_or_offset(self, output, tz_zone, tz_offset_str):
+        """Applies a zone name when possible, otherwise applies a fixed offset."""
+
+        # 1. Prefer named zone...
+        if tz_zone and ZoneInfo is not None:
+            try:
+
+                # 2.1 Load zone...
+                zone = ZoneInfo(tz_zone)
+
+                # 2.2 Attach or convert...
+                if output.tzinfo is None:
+                    output = output.replace(tzinfo=zone)
+
+                # 2.3 Convert aware value...
+                else:
+                    output = output.astimezone(zone)
+
+            # 1.1 Fallback to offset...
+            except ZoneInfoNotFoundError:
+                output = self.__apply_datetime_offset(output, tz_offset_str)
+
+        # 2. Apply fixed offset...
+        else:
+            output = self.__apply_datetime_offset(output, tz_offset_str)
+
+        # 3. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_datetime_offset(self, output, tz_offset_str):
+        """Attaches a fixed offset when the decoded datetime is naive."""
+
+        # 1. Apply offset...
+        if tz_offset_str and (output.tzinfo is None):
+            output = output.replace(tzinfo=self.__parse_offset(tz_offset_str))
+
+        # 2. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_datetime_fold(self, output, tz_fold):
+        """Applies a valid PEP 495 fold value."""
+
+        # 1. Apply valid fold...
+        if tz_fold in (0, 1):
+            try:
+                output = output.replace(fold=int(tz_fold))
+
+            # 1.1 Preserve decoded value...
+            except ValueError:
+                pass
+
+        # 2. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -350,31 +384,7 @@ class DateEnc():
             # 1.2 Apply timezone identity if provided...
             tz_meta = value.get(EConst.AUX1)
             if isinstance(tz_meta, dict):
-
-                # 2.1 Extracts TZ...
-                tz_zone = tz_meta.get(EConst.TZ_ZONE)
-                tz_offset_str = tz_meta.get(EConst.TZ_OFFSET)
-
-                # 2.2 If zone name available and ZoneInfo supported, prefer it...
-                if tz_zone and ZoneInfo is not None:
-                    try:
-
-                        # 4.1 Applies zone...
-                        output = output.replace(tzinfo=ZoneInfo(tz_zone))
-
-                    # 3.1 Applies offset...
-                    except ZoneInfoNotFoundError:
-
-                        # 4.1 Fallback to offset if zone lookup fails...
-                        if tz_offset_str and (output.tzinfo is None):
-                            output = output.replace(tzinfo=self.__parse_offset(tz_offset_str))
-
-                # 2.3 Otherwise attach fixed offset...
-                else:
-
-                    # 3.1 If only offset is available and time is naive, attach fixed offset...
-                    if tz_offset_str and (output.tzinfo is None):
-                        output = output.replace(tzinfo=self.__parse_offset(tz_offset_str))
+                output = self.__apply_time_tz_meta(output, tz_meta)
 
         # 2. Log invalid payload...
         else:
@@ -387,6 +397,54 @@ class DateEnc():
             )
 
         # 3. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_time_tz_meta(self, output, tz_meta):
+        """Applies serialized timezone metadata to a decoded time."""
+
+        # 1. Extract metadata...
+        tz_zone = tz_meta.get(EConst.TZ_ZONE)
+        tz_offset_str = tz_meta.get(EConst.TZ_OFFSET)
+
+        # 2. Apply zone or offset...
+        output = self.__apply_time_zone_or_offset(output, tz_zone, tz_offset_str)
+
+        # 3. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_time_zone_or_offset(self, output, tz_zone, tz_offset_str):
+        """Applies a named time zone or an offset fallback to a time value."""
+
+        # 1. Prefer named zone...
+        if tz_zone and ZoneInfo is not None:
+            try:
+                output = output.replace(tzinfo=ZoneInfo(tz_zone))
+
+            # 1.1 Fallback to offset...
+            except ZoneInfoNotFoundError:
+                output = self.__apply_time_offset(output, tz_offset_str)
+
+        # 2. Apply fixed offset...
+        else:
+            output = self.__apply_time_offset(output, tz_offset_str)
+
+        # 3. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __apply_time_offset(self, output, tz_offset_str):
+        """Attaches a fixed offset when the decoded time is naive."""
+
+        # 1. Apply offset...
+        if tz_offset_str and (output.tzinfo is None):
+            output = output.replace(tzinfo=self.__parse_offset(tz_offset_str))
+
+        # 2. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #

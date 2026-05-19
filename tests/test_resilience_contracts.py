@@ -256,6 +256,10 @@ def test_base_and_numeric_and_mapping_helpers_reject_invalid_inputs():
     # 5. Validates mapping helper contracts...
     assert getattr(cast(Any, mapping), "_encode_enum")(cast(Any, "bad")) is None
 
+    # 6. Validates internal mapping key filtering...
+    encoded = getattr(cast(Any, mapping), "_encode_dict")({"___internal": "x", "public": "y"})
+    assert len(encoded[EConst.DICT]) == 1
+
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -270,15 +274,25 @@ def test_specialized_helpers_reject_invalid_inputs():
     inner = cast(Any, spec)
 
     # 3. Validates simple encoders...
-    assert getattr(inner, "_encode_bitarray")(cast(Any, "bad")) is None
-    assert getattr(inner, "_encode_file")(cast(Any, "bad")) is None
-    assert getattr(inner, "_decode_file")(cast(Any, None)) is None
+    _assert_helpers_return_none(
+        inner,
+        [
+            ("_encode_bitarray", "bad"),
+            ("_encode_file", "bad"),
+            ("_decode_file", None),
+        ],
+    )
 
     # 4. Validates array/data encoders...
-    assert getattr(inner, "_encode_ndarray")(cast(Any, "bad")) is None
-    assert getattr(inner, "_encode_uuid")(cast(Any, "bad")) is None
-    assert getattr(inner, "_encode_dataframe")(cast(Any, "bad")) is None
-    assert getattr(inner, "_encode_series")(cast(Any, "bad")) is None
+    _assert_helpers_return_none(
+        inner,
+        [
+            ("_encode_ndarray", "bad"),
+            ("_encode_uuid", "bad"),
+            ("_encode_dataframe", "bad"),
+            ("_encode_series", "bad"),
+        ],
+    )
 
     # 5. Validates index helpers...
     assert getattr(spec, "_SpecEnc__decode_index")({}) is None
@@ -289,6 +303,17 @@ def test_specialized_helpers_reject_invalid_inputs():
     assert getattr(spec, "_SpecEnc__tzinfo_from_meta")(
         {EConst.TZ_OFFSET: "+00:00"}
     ) is not None
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def _assert_helpers_return_none(target, method_inputs):
+    """Checks that invalid helper calls return None."""
+
+    # 1. Validate helper contracts...
+    for method_name, invalid_input in method_inputs:
+        assert getattr(target, method_name)(cast(Any, invalid_input)) is None
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -417,19 +442,34 @@ def test_base_encoder_requires_encoder_instance():
 def test_collection_invalid_encode_paths():
     """ Collection helper methods should reject wrong input types. """
 
+    # 1. Prepares helper...
     col = ColEnc(PyonEncoder())
     inner = cast(Any, col)
-    assert getattr(inner, "_encode_bytearray")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_bytes")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_chainmap")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_counter")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_defaultdict")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_deque")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_frozenset")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_list")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_namedtuple")(cast(Any, ("x", 1))) is None
-    assert getattr(inner, "_encode_set")(cast(Any, "x")) is None
-    assert getattr(inner, "_encode_tuple")(cast(Any, "x")) is None
+
+    # 2. Validates simple collections...
+    _assert_helpers_return_none(
+        inner,
+        [
+            ("_encode_bytearray", "x"),
+            ("_encode_bytes", "x"),
+            ("_encode_chainmap", "x"),
+            ("_encode_counter", "x"),
+            ("_encode_defaultdict", "x"),
+            ("_encode_deque", "x"),
+        ],
+    )
+
+    # 3. Validates remaining collections...
+    _assert_helpers_return_none(
+        inner,
+        [
+            ("_encode_frozenset", "x"),
+            ("_encode_list", "x"),
+            ("_encode_namedtuple", ("x", 1)),
+            ("_encode_set", "x"),
+            ("_encode_tuple", "x"),
+        ],
+    )
 
 
 # --------------------------------------------------------------------------------------------- #

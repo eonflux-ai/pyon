@@ -34,7 +34,6 @@ TEMP_FOLDER = "pyon_file"
 
 # --------------------------------------------------------------------------------------------- #
 
-
 class File:
     """ File class """
 
@@ -443,49 +442,75 @@ class File:
             If written to a new `file_path` updates the file `self.path`.
         """
 
-        # 1. Process loaded content...
-        if self.content:
-            done = False
+        # 1. Prepare unload flag...
+        done = False
 
-            # 1.1 Normalizes path...
+        # 2. Process loaded content...
+        if self.content:
+
+            # 1.1 Normalize explicit path...
             file_path = self.__clean_path(file_path)
             if file_path:
 
-                # 2.1 Writes explicit path...
+                # 2.1 Write explicit path...
                 if self.write(outpath=file_path):
-
-                    # 3.1 Stores path...
                     self.path = file_path
                     done = True
 
-            # 1.2 Handles current path...
+            # 1.2 Use current path...
             elif self.path:
+                done = self.__unload_to_current_path(update)
 
-                # 2.1 Writes current path...
-                if update or not os.path.isfile(self.path):
-                    done = self.write()
-
-                # 2.2 Keeps existing file...
-                else:
-                    done = True
-
-            # 1.3 Handles temp path...
+            # 1.3 Use temp path...
             else:
+                done = self.__unload_to_temp_path(update)
 
-                # 2.1 Writes temp path...
-                if update or not (self._tmp_path and os.path.isfile(self._tmp_path)):
-                    done = self._write_temp()
-
-                # 2.2 Keeps temp file...
-                else:
-                    done = True
-
-            # 1.4 Unloads content...
+            # 1.4 Clear memory...
             if done:
                 self.content = None
 
-        # 2. Return unloaded state...
+        # 3. Return unloaded state...
         return self.content is None
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __unload_to_current_path(self, update: bool) -> bool:
+
+        # 1. Prepare status...
+        done = False
+
+        # 2. Read current path...
+        current_path = self.path
+        if current_path is not None:
+
+            # 1.1 Write current path...
+            if update or not os.path.isfile(current_path):
+                done = self.write()
+
+            # 1.2 Keep existing file...
+            else:
+                done = True
+
+        # 3. Return status...
+        return done
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __unload_to_temp_path(self, update: bool) -> bool:
+
+        # 1. Prepare status...
+        done = False
+
+        # 2. Write temp path...
+        if update or not (self._tmp_path and os.path.isfile(self._tmp_path)):
+            done = self._write_temp()
+
+        # 3. Keep existing temp...
+        else:
+            done = True
+
+        # 4. Return status...
+        return done
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -558,62 +583,83 @@ class File:
         output = False
 
         # 2. Resolve target path...
-        path: str = (
-            outpath.strip()
-            if isinstance(outpath, str)
-            else (self.path.strip() if self.path else "")
-        )
+        path = self.__resolve_write_path(outpath)
 
         # 3. Write target...
         if len(path) > 0:
-            check = False
+            path = self.__prepare_write_path(path)
+            check = self.__write_or_copy_content(path)
 
-            # 1.1 Prepares path...
-            out_dir = os.path.dirname(path)
-            file_name = self._get_file_name()
-
-            # 1.2 Creates folder...
-            if not os.path.exists(out_dir):
-                os.makedirs(out_dir, exist_ok=True)
-
-            # 1.3 Handles directory...
-            if os.path.isdir(path):
-                path = self.__clean_path(os.path.join(path, file_name)) # type: ignore
-
-            # 1.4 Writes content...
-            if self.content:
-
-                # 2.1 Opens target...
-                with open(path, 'wb') as f:
-                    f.write(self.content)
-
-                # 2.2 Marks success...
-                check = True
-
-            # 1.5 Copies source...
-            elif self.path and (path != self.path) and os.path.exists(self.path):
-
-                # 2.1 Copies file...
-                if path != self.path:
-                    shutil.copy(self.path, path)
-
-                    # 3.1 Marks success...
-                    check = True
-
-            # 1.6 Reports missing source...
-            else:
-                raise FileNotFoundError(f"Source file not found: {self.path}")
-
-            # 1.7 Logs write...
+            # 1.1 Log write...
             if verbose:
                 logger.info("File.write(): data saved at %s", path)
 
-            # 1.8 Verifies output...
+            # 1.2 Verify output...
             if check:
                 output = os.path.isfile(path)
 
         # 4. Return write status...
         return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __resolve_write_path(self, outpath: str | None) -> str:
+
+        # 1. Resolve explicit path...
+        path = outpath.strip() if isinstance(outpath, str) else ""
+
+        # 2. Fallback to current path...
+        if (not path) and self.path:
+            path = self.path.strip()
+
+        # 3. Return path...
+        return path
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __prepare_write_path(self, path: str) -> str:
+
+        # 1. Prepare path metadata...
+        out_dir = os.path.dirname(path)
+        file_name = self._get_file_name()
+
+        # 2. Create folder...
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir, exist_ok=True)
+
+        # 3. Resolve directory target...
+        if os.path.isdir(path):
+            path = self.__clean_path(os.path.join(path, file_name)) # type: ignore
+
+        # 4. Return path...
+        return path
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __write_or_copy_content(self, path: str) -> bool:
+
+        # 1. Prepare status...
+        check = False
+
+        # 2. Write memory content...
+        if self.content is not None:
+            with open(path, 'wb') as f:
+                f.write(self.content)
+            check = True
+
+        # 3. Copy source file...
+        elif self.path and (path != self.path) and os.path.exists(self.path):
+            source_path = self.path
+            if source_path is not None:
+                shutil.copy(source_path, path)
+                check = True
+
+        # 4. Report missing source...
+        else:
+            raise FileNotFoundError(f"Source file not found: {self.path}")
+
+        # 5. Return status...
+        return check
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -951,6 +997,4 @@ class File:
         return decoded_content
 
     # ----------------------------------------------------------------------------------------- #
-
-
 # --------------------------------------------------------------------------------------------- #
