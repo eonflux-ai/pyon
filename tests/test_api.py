@@ -97,28 +97,11 @@ class _TestClass:  # pylint: disable=too-few-public-methods
         # 2. Store private value...
         self.__private = 3  # pylint: disable=unused-private-member
 
+    def private_value(self):
+        """Returns the private test value."""
 
-# --------------------------------------------------------------------------------------------- #
-
-
-class ModelConfig:  # pylint: disable=too-few-public-methods
-    """ A class with post-init logic """
-
-    def __init__(self, name):
-        # 1. Store configuration...
-        self.name = name
-        self._model = None
-
-        # 2. Initialize model...
-        self.__init()
-
-    def __init(self):
-        # 1. Run post init...
-        self.__pyon_post_init__()
-
-    def __pyon_post_init__(self):
-        # 1. Store model...
-        self._model = f"Loaded model: {self.name}"
+        # 1. Return private value...
+        return self.__private
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -640,7 +623,10 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
 
     # ----------------------------------------------------------------------------------------- #
 
-    @pytest.mark.parametrize("value", [Color.RED, None, "invalid", 10, 3.14])
+    @pytest.mark.parametrize(
+        "value",
+        [Color.RED, Color.GREEN, Color.BLUE, None, "invalid", 10, 3.14],
+    )
 
     def test_enum(self, value: None | Color | str | int | float):
         """ Test encoding and decoding for Enum. """
@@ -895,6 +881,7 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         # 3. Validate public value...
         assert isinstance(decoded, _TestClass)
         assert decoded.public == 1
+        assert obj.private_value() == 3
 
         # 4. Validate hidden values...
         assert getattr(decoded, "_protected", None) == expected_protected  # pylint: disable=protected-access
@@ -915,14 +902,6 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
             # 1.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
             assert decoded == value
-
-    # ----------------------------------------------------------------------------------------- #
-
-    def _is_builtins(self, clazz):
-        """ Checks if a class is builtins """
-
-        # 1. Checks...
-        return isinstance(clazz, type) and clazz in {int, float, bool, str, type}
 
     # ----------------------------------------------------------------------------------------- #
 
