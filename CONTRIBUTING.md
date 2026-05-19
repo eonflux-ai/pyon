@@ -93,6 +93,21 @@ For private contact, use:
 
 **Email**: [pyon@eonflux.ai](mailto:pyon@eonflux.ai)
 
+## Funded Development
+
+Pyon is independently developed. If Pyon has value for your organization, or if
+your team would benefit from accelerated work on interoperability, adapter
+registries, storage-oriented features, formal specifications, or production
+hardening, funded development can be discussed.
+
+The current roadmap is documented in [ROADMAP.md](doc/ROADMAP.md). Roadmap items
+are natural candidates for funded development, but funded work is not limited to
+the current roadmap when there is a clear project fit.
+
+For sponsorship or funded development inquiries, contact:
+
+**Email**: [eduardo@eonflux.ai](mailto:eduardo@eonflux.ai)
+
 ## Future Direction
 
 As the project matures, we plan to:

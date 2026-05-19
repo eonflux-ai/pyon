@@ -423,6 +423,8 @@ The extended audit also uses `mypy`, `ruff`, `bandit`, `radon`, `vulture`, `buil
 
 For detailed plans, phased expansions, and future directions, see the [ROADMAP.md](doc/ROADMAP.md) file.
 
+The roadmap also documents exploratory directions such as cross-runtime interoperability, adapter registries, and storage-oriented evolution.
+
 ---
 <br>
 
@@ -475,6 +477,7 @@ We will welcome contributions of all kinds:
 - **Issues**: Report bugs or suggest enhancements via GitHub issues.  
 - **Pull Requests**: Submit patches or new features.  
 - **Feedback**: Share your use cases to help guide future development.
+- **Funded Development**: Discuss support for focused roadmap or project-aligned work.
 
 Please check our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
