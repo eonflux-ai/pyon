@@ -297,9 +297,12 @@ The agent must not invent package metadata when the information is unknown.
 
 If package metadata is unclear, the agent may use conservative placeholders only when necessary and must clearly report what should be reviewed by the user.
 
-The agent must ensure that `pytest`, `pylint`, and `pyright` are declared in the `pyproject.toml` file under `[project.optional-dependencies]`.
+The agent must ensure that validation dependencies are declared in the `pyproject.toml` file under `[project.optional-dependencies]`.
 
-The recommended optional dependency group is `dev`.
+The recommended optional dependency groups are:
+
+- `dev` for the primary development trio.
+- `debug` for extended audit and diagnostic tools.
 
 Example:
 
@@ -308,7 +311,15 @@ Example:
 dev = [
     "pytest",
     "pylint",
+]
+debug = [
     "pyright",
+    "ruff",
+    "bandit",
+    "radon",
+    "vulture",
+    "mypy",
+    "build",
 ]
 ```
 
@@ -320,7 +331,7 @@ When creating or preparing the project virtual environment, the agent must:
 
 - create the virtual environment at `.venv`;
 - update the virtual environment's `pip` before installing packages;
-- install `pytest`, `pylint`, and `pyright` into the virtual environment.
+- install the project with its development and debug extras into the virtual environment.
 
 The agent must use the `.venv` environment for project validation commands.
 

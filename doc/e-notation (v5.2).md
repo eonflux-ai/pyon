@@ -3,12 +3,13 @@
 **Author**: Luiz Eduardo M. Rodrigues  
 **A personal programming style for high readability, logical control, and dynamic scanning.**
 
-**Version**: 5.0 consolidated  
-**Basis**: v4 preserved and expanded with the agreed v5 rules.
+**Version**: 5.2 consolidated  
+**Basis**: v5.1 preserved and expanded with validated v5.2 rules for agents, docstrings, and audits.
 
 ---
 
 ## 📋 Table of Contents
+
 1. <a href="#purpose">Purpose</a>
 2. <a href="#principles-of-notation-e">Principles of Notation E</a>
    - 2.1 <a href="#21-single-point-of-return">Single point of return</a>
@@ -17,7 +18,7 @@
    - 2.2 <a href="#22-numbered-comments-per-block">Numbered comments per block</a>
      - <a href="#canonical-numbering-rule">Canonical numbering rule</a>
      - <a href="#comment-voice">Comment voice</a>
-     - <a href="#example">Example</a>
+     - <a href="#numbering-example">Example</a>
      - <a href="#indentation">Indentation</a>
      - <a href="#limits">Limits</a>
      - <a href="#experimental-branch-labels">Experimental branch labels</a>
@@ -35,28 +36,28 @@
      - <a href="#horizontal-limit">Horizontal limit</a>
      - <a href="#class-method-separators">Class method separators</a>
    - 2.5 <a href="#25-docstring-style">Docstring style</a>
-     - <a href="#docstring-example">Example</a>
+     - <a href="#public-docstrings">Public docstrings</a>
+     - <a href="#internal-protected-and-private-docstrings">Internal, protected, and private docstrings</a>
+     - <a href="#pep-8-and-pep-257-compatibility">PEP 8 and PEP 257 compatibility</a>
+     - <a href="#docstring-position">Docstring position</a>
+     - <a href="#docstring-structure">Docstring structure</a>
+     - <a href="#docstring-signature-consistency">Docstring signature consistency</a>
+     - <a href="#docstring-return-and-raises-consistency">Docstring return and raises consistency</a>
+     - <a href="#docstring-examples">Examples</a>
    - 2.6 <a href="#26-no-continue-in-loops">No `continue` in loops</a>
    - 2.7 <a href="#27-english-only-comments-and-identifiers">English-only comments and identifiers</a>
    - 2.8 <a href="#28-modular-and-unambiguous-style">Modular and unambiguous style</a>
 3. <a href="#practical-example">Practical Example</a>
 4. <a href="#focused-examples">Focused Examples</a>
-   - 4.1 <a href="#example-1-tryfinallyand-semantic-splitting">Example 1: `try/finally` and semantic splitting</a>
+   - 4.1 <a href="#example-1-tryfinally-and-semantic-splitting">Example 1: `try/finally` and semantic splitting</a>
    - 4.2 <a href="#example-2-attributes-and-multiline-calls">Example 2: attributes and multiline calls</a>
    - 4.3 <a href="#example-3-compact-two-line-block">Example 3: compact two-line block</a>
    - 4.4 <a href="#example-4-simple-return-helper">Example 4: simple return helper</a>
    - 4.5 <a href="#example-5-cache-loading-with-semantic-grouping">Example 5: cache loading with semantic grouping</a>
    - 4.6 <a href="#example-6-loop-body-without-redundant-comments">Example 6: loop body without redundant comments</a>
 5. <a href="#full-module-example">Full Module Example</a>
-6. <a href="#agent-audit-checklist">Agent Audit Checklist</a>
-   - 6.1 <a href="#numbering">Numbering</a>
-   - 6.2 <a href="#comments">Comments</a>
-   - 6.3 <a href="#block-size">Block size</a>
-   - 6.4 <a href="#semantic-grouping">Semantic grouping</a>
-   - 6.5 <a href="#control-flow">Control flow</a>
-   - 6.6 <a href="#horizontal-limit-checklist">Horizontal limit</a>
-7. <a href="#applicability">Applicability</a>
-8. <a href="#universal-standards">Universal Standards</a>
+6. <a href="#applicability">Applicability</a>
+7. <a href="#universal-standards">Universal Standards</a>
 
 ---
 
@@ -79,29 +80,37 @@ numbered intentions.
 <a id="principles-of-notation-e"></a>
 ## ✏️ Principles of Notation E
 
+<a id="21-single-point-of-return"></a>
 ### 2.1 Single point of return
-Every function must have **a single `return` at the end**, regardless of internal conditional branches.
+Every non-trivial function should have a single `return` at the end, regardless
+of internal conditional branches.
 
-> Prevents fragmented flow and simplifies debugging, logging, and logical analysis.
+This prevents fragmented flow and simplifies debugging, logging, review, and
+agent-based reasoning.
+
+Exceptions are allowed for invalid public input contracts when an explicit
+exception is clearer than continuing into an invalid state.
 
 <a id="validation-and-output-flow"></a>
 #### Validation and output flow
 
 Notation E distinguishes public validation from internal processing flow.
 
-For public methods or public constructors:
+For public functions, public methods, and public constructors:
 
 - validate input parameters first;
-- raise explicit exceptions when the input contract is invalid;
-- only continue into the method body after the public contract is valid.
+- raise explicit exceptions when the public input contract is invalid;
+- only continue into the method body after the public contract is valid;
+- document public validation exceptions when they are part of the contract.
 
-For internal or private methods:
+For internal, protected, or private functions:
 
 - initialize output variables with safe default values near the beginning;
 - use `if` blocks to decide whether processing should continue;
-- progressively fill the output variables as conditions are satisfied;
+- progressively fill output variables as conditions are satisfied;
 - return once, at the end of the method.
 
+<a id="trivial-one-line-functions"></a>
 #### Trivial one-line functions
 
 Very small functions may omit numbered comments when all of these are true:
@@ -136,19 +145,19 @@ def _calculate_result(values: np.ndarray) -> dict:
         dict: Result dictionary.
     """
 
-    # 1. Outputs...
+    # 1. Prepares outputs...
     result = {}
     status = "skipped"
 
-    # 2. Validation flags...
+    # 2. Checks validation flags...
     flags = series_flags(values)
     if not flags:
 
-        # 1.1 Process...
+        # 1.1 Processes values...
         result = run_processing(values)
         status = "computed"
 
-    # 3. Return...
+    # 3. Returns result...
     return {
         "status": status,
         "result": result,
@@ -161,12 +170,15 @@ jumps. Exceptions remain appropriate for invalid public input contracts.
 
 ---
 
+<a id="22-numbered-comments-per-block"></a>
 ### 2.2 Numbered comments per block
 Each functional block is introduced by a **numbered comment** with two levels:
 
-- Comments are numbered sequentially, e.g., `1, 2, 3, 4, 5, 6, 7, 8, 9`.
-- Well-scoped functions stay within nine numbered blocks.
+- Comments are numbered sequentially inside the current visible scope.
+- Well-scoped functions stay within nine numbered blocks per scope.
 - The base structure is ```# {comment number}. {short description}...```
+- Every numbered comment must contain meaningful English text after the number.
+- Empty comments such as `# 1. ...`, `# 1.1 ...`, and `# 2.2 ...` are invalid.
 
 A numbered comment must contain meaningful text after the number.
 
@@ -249,25 +261,25 @@ Avoid vague, imperative, or overly compressed comments:
 The comment should describe the semantic action, not explain implementation
 details. Keep descriptions short, usually two to six words after the number.
 
-<a id="example"></a>
+<a id="numbering-example"></a>
 #### Example:
 ```python
 # 1. Fetches image...
 if isinstance(img, str):
     ...
 
-# 2. Initialize result...
+# 2. Initializes result...
 outlier = False
 
-# 3. Get black/white percentage...
+# 3. Gets black/white percentage...
 if bw_range is not None:
     ...
 
-# 4. Continues...
+# 4. Checks entropy range...
 if not outlier and (entropy_range is not None):
     ...
 
-# 5. Return decision...
+# 5. Returns decision...
 return outlier
 ```
 
@@ -285,10 +297,10 @@ In the example above the code contains five numbered blocks, growing from 1 to 5
 if isinstance(img, str):
     img = Image.open(img)
 
-# 2. Initialize result...
+# 2. Initializes result...
 outlier = False
 
-# 3. Get black/white percentage...
+# 3. Gets black/white percentage...
 if bw_range is not None:
     black_pct, white_pct = image.calculate_black_white_ratio(img)
 
@@ -296,7 +308,7 @@ if bw_range is not None:
     b_min, b_max = bw_range[0]
     w_min, w_max = bw_range[1]
 
-    # 1.2 BW: If outside of the range, is an outlier...
+    # 1.2 Checks black/white bounds...
     if (
         (black_pct < b_min)
         or (black_pct > b_max)
@@ -304,21 +316,21 @@ if bw_range is not None:
         or (white_pct > w_max)
     ):
         
-        # 2.1 Sets...
+        # 2.1 Marks outlier...
         outlier = True
 
-# 4. Continues...
+# 4. Checks entropy range...
 if not outlier and (entropy_range is not None):
 
     # 1.1 Entropy...
     entropy = image.calculate_entropy(img)
     e_min, e_max = entropy_range
 
-    # 1.2 Check entropy if still valid...
+    # 1.2 Checks entropy bounds...
     if (entropy < e_min) or (entropy > e_max):
         outlier = True
 
-# 5. Return decision...
+# 5. Returns decision...
 return outlier
 ```
 
@@ -326,10 +338,11 @@ In this example:
 - Level-zero comments follow the structure ```# {comment number}. {short description}...```
 - Indented comments follow ```# {indentation level}.{comment number} {short description}...```
 - Up to indentation level 2 is shown.
-- Example level 0: ```# 4. Continues...```
+- Example level 0: ```# 4. Checks entropy range...```
 - Example level 1: ```# 1.1 Entropy...```
-- Example level 2: ```# 2.1 Sets...```
+- Example level 2: ```# 2.1 Marks outlier...```
 
+<a id="limits"></a>
 #### Limits
 
 - Neither indentation level nor block numbers should exceed 9.
@@ -337,7 +350,7 @@ In this example:
     - The function has too many responsibilities.
     - The function is too long.
     - Helper functions are missing.
-- Comments like ```# 10. ...``` or ```# 10.1 ...``` are a signal to refactor.
+- Comments like ```# 10. ...```, ```# 7.10 ...```, or ```# 10.1 ...``` are invalid in approved code. They are signals to refactor.
 - Do not resolve an over-limit sequence by deleting comments, duplicating a
   previous number, or converting numbered comments into ordinary comments while
   leaving the same oversized block in place. The code should be reorganized so
@@ -353,12 +366,12 @@ reset sequences usually indicate refactor drift.
 #### Experimental branch labels
 
 Letter-based variants such as `# 1.A` and `# 1.B` are experimental and are not
-part of official E-Notation yet.
+part of official Notation E yet.
 
 They may become useful for cases where multiple nearby blocks share the same
 semantic step, such as related `if` / `else` branches, sequential validations,
 or repeated variants of the same logical operation. Until that rule is adopted
-formally, official E-Notation audits should treat normal numeric sequencing as
+formally, official Notation E audits must treat normal numeric sequencing as
 the canonical style.
 
 <a id="complexity-and-orchestrator-methods"></a>
@@ -399,15 +412,15 @@ def _regular_peak_count(lags: List[int], acf_values: List[float], sig: List[bool
         int: Regular significant peak count.
     """
 
-    # 1. Peak lags...
+    # 1. Collects peak lags...
     peak_lags = _local_peak_lags(lags=lags, acf_values=acf_values, sig=sig)
     output = 0
 
-    # 2. Count regular spacings...
+    # 2. Counts regular spacings...
     if _has_regular_spacing(peak_lags=peak_lags):
         output = len(peak_lags)
 
-    # 3. Return...
+    # 3. Returns count...
     return output
 ```
 
@@ -600,6 +613,7 @@ def generate_datapoints(
 
 ---
 
+<a id="23-two-line-logical-blocks"></a>
 ### 2.3 Two-line logical blocks
 Each numbered block should represent a **small semantic unit**, preferably with two strongly related lines. The goal is not to force every physical group to have exactly two lines, but to avoid noisy one-line numbered blocks and avoid mixing unrelated operations under the same comment.
 
@@ -629,11 +643,11 @@ entries = _prepare_uopeople_for_save(uopeople=uopeople)
 Prefer:
 
 ```python
-# 1. It prepares path...
+# 1. Prepares path...
 pyon_path = _uopeople_pyon_path(unit=unit)
 pyon_path.parent.mkdir(parents=True, exist_ok=True)
 
-# 2. It prepares cache...
+# 2. Prepares cache...
 entries = _prepare_uopeople_for_save(uopeople=uopeople)
 ```
 
@@ -641,6 +655,7 @@ A wrapped multiline call counts as one logical statement. This means a block may
 have more than two physical lines when the extra lines are only formatting for a
 single statement.
 
+<a id="multiline-statements"></a>
 #### Multiline statements
 
 A statement split across multiple physical lines still counts as **one logical
@@ -652,7 +667,7 @@ horizontal limit.
 Valid:
 
 ```python
-# 3. It replaces storage path...
+# 3. Replaces storage path...
 if isinstance(uopeople.storage_state_path, Path):
     _remember_attr(
         entries=entries,
@@ -673,7 +688,7 @@ numbered block.
 Prefer:
 
 ```python
-# 1. It replaces storage path...
+# 1. Replaces storage path...
 _remember_attr(
     entries=entries,
     obj=uopeople,
@@ -681,7 +696,7 @@ _remember_attr(
     value=str(uopeople.storage_state_path),
 )
 
-# 2. It returns entries...
+# 2. Returns entries...
 return entries
 ```
 
@@ -708,7 +723,7 @@ A multiline condition is also one logical statement.
 Valid:
 
 ```python
-# 1. It validates range...
+# 1. Validates range...
 if (
     (value < min_value)
     or (value > max_value)
@@ -719,7 +734,7 @@ if (
 If the body becomes complex, use nested comments.
 
 ```python
-# 1. It validates range...
+# 1. Validates range...
 if (
     (value < min_value)
     or (value > max_value)
@@ -730,6 +745,7 @@ if (
     reason = "out_of_range"
 ```
 
+<a id="control-flow-clauses"></a>
 #### Control-flow clauses
 
 Control-flow clauses such as `try`, `except`, `else`, `finally`, `if`, `elif`,
@@ -749,11 +765,11 @@ For `try` / `except` / `else` / `finally`:
 Prefer:
 
 ```python
-# 3. It saves object...
+# 3. Saves object...
 try:
     pyon.to_file(uopeople, str(pyon_path), enc_protected=True)
 
-# 4. It restores attributes...
+# 4. Restores attributes...
 finally:
     _restore_attrs(entries=entries)
 ```
@@ -774,15 +790,15 @@ during vertical scanning.
 Example with `except`:
 
 ```python
-# 2. It reads file...
+# 2. Reads file...
 try:
     content = path.read_text(encoding="utf-8")
 
-# 3. It handles missing file...
+# 3. Handles missing file...
 except FileNotFoundError:
     content = ""
 
-# 4. It returns content...
+# 4. Returns content...
 return content
 ```
 
@@ -800,7 +816,7 @@ For `if` / `elif` / `else`:
 Acceptable:
 
 ```python
-# 1. It creates fallback...
+# 1. Creates fallback...
 if output is None:
     output = UoPeople()
 ```
@@ -808,7 +824,7 @@ if output is None:
 Preferred when the branch contains multiple actions:
 
 ```python
-# 2. It loads cache...
+# 2. Loads cache...
 pyon_path = _uopeople_pyon_path(unit=unit)
 if pyon_path.is_file():
 
@@ -824,11 +840,11 @@ if pyon_path.is_file():
 Example with `else`:
 
 ```python
-# 2. It validates mode...
+# 2. Validates mode...
 if mode in valid_modes:
     output = mode
 
-# 3. It handles invalid mode...
+# 3. Handles invalid mode...
 else:
     output = default_mode
 ```
@@ -852,15 +868,16 @@ When deciding whether to create, remove, or merge numbered comments, prioritize 
 
 The two-line rule is therefore a **grouping rule**, not a mechanical line-count rule. A one-line body can be correct when adding a numbered comment would only repeat the obvious. A three-line block can be acceptable only when the three lines form one indivisible semantic step. However, if a block contains three independent statements, or if it grows beyond two or three tightly related lines, review whether it should be split or extracted.
 
+<a id="preferred-loop-body-without-redundant-comments"></a>
 #### Preferred loop body without redundant comments
 
 Prefer:
 
 ```python
-# 1. Print title...
+# 1. Prints title...
 print(f"{title}:")
 
-# 2. Print paths...
+# 2. Prints paths...
 for path in paths:
     print(f"- {path}")
 ```
@@ -880,15 +897,16 @@ for path in paths:
 
 The inner comment is redundant because the parent block already says that the loop prints paths. The loop body is a trivial direct action, so the extra numbered block harms scanning instead of helping it.
 
+<a id="preferred-orchestration-grouping"></a>
 #### Preferred orchestration grouping
 
 Prefer:
 
 ```python
-# 1. Configure mode...
+# 1. Configures mode...
 mock = True
 
-# 2. Build client and run checks...
+# 2. Builds client and runs checks...
 uopeople = build_uopeople(mock=mock)
 run_all_uopeople_checks(uopeople=uopeople)
 ```
@@ -925,10 +943,10 @@ run_all_uopeople_checks(uopeople=uopeople)
 Prefer:
 
 ```python
-# 1. Configure mode...
+# 1. Configures mode...
 mock = True
 
-# 2. Build client...
+# 2. Builds client...
 uopeople = build_uopeople(mock=mock)
 run_all_uopeople_checks(uopeople=uopeople)
 ```
@@ -1020,10 +1038,10 @@ class Example:
         Return a value.
         """
 
-        # 1. Build output...
+        # 1. Builds output...
         output = "value"
 
-        # 2. Return output...
+        # 2. Returns output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -1035,42 +1053,276 @@ class Example:
 
 <a id="25-docstring-style"></a>
 ### 2.5 Docstring style
-- Written in **English**.
-- Follows the structure: brief description + `Args` + `Returns`.
-- Always compact and to the point.
 
-<a id="docstring-example"></a>
-#### Example:
+Docstrings are part of the observable contract of public code.
+
+Notation E docstrings are:
+
+- written in English;
+- compact and direct;
+- compatible with PEP 8 and PEP 257 conventions;
+- placed before any E-Notation numbered comment inside the scope;
+- consistent with the function signature and actual behavior;
+- proportional to the visibility and complexity of the callable.
+
+<a id="public-docstrings"></a>
+#### Public docstrings
+
+Public modules, public classes, public functions, public methods, public
+properties, public static methods, public class methods, and public constructors
+must have complete docstrings when they are part of the observable project API.
+
+A callable is normally public when its name does not start with `_`, unless the
+project explicitly marks it as internal.
+
+A complete public docstring includes:
+
+- a short description;
+- `Args` when parameters exist;
+- `Returns` when the callable returns a value;
+- `Returns` for public callables returning `None`, except constructors;
+- `Raises` when exceptions are part of the public contract;
+- result shape details when dictionaries, flags, statuses, modes, or enum values
+  are observable outputs.
+
+Public docstrings must be compact, but not underspecified.
+
+<a id="internal-protected-and-private-docstrings"></a>
+#### Internal, protected, and private docstrings
+
+Internal, protected, and private functions may use compact docstrings.
+
+A protected or internal callable is normally identified by a single leading
+underscore, such as `_load_cache`.
+
+A private callable is normally identified by name-mangling syntax, such as
+`__load_cache`.
+
+A compact internal docstring may contain only a short description when the
+callable is small, local, and obvious from its name, signature, and E-Notation
+blocks.
+
+Internal callables should use complete docstrings when they have:
+
+- non-trivial branching;
+- I/O;
+- mutation;
+- caching;
+- serialization;
+- external side effects;
+- public-like result shapes;
+- meaningful exceptions;
+- contract-sensitive return values.
+
+Compact does not mean careless. Internal docstrings must still be correct.
+
+<a id="pep-8-and-pep-257-compatibility"></a>
+#### PEP 8 and PEP 257 compatibility
+
+Notation E follows PEP 8-compatible Python style and PEP 257-compatible
+docstring placement.
+
+The project-specific Notation E visual separator may define a wider horizontal
+limit than the default PEP 8 line-length recommendation. The separator limit
+must still be applied consistently and intentionally.
+
+Use:
+
+- four spaces per indentation level;
+- spaces instead of tabs;
+- triple double quotes for docstrings;
+- decorators above the callable definition;
+- docstrings immediately after the `def`, `class`, or module start;
+- E-Notation numbered comments after the docstring, never before it.
+
+<a id="docstring-position"></a>
+#### Docstring position
+
+A docstring must be the first statement inside a module, class, function, or
+method body.
+
+Correct:
+
 ```python
-"""
-Calculates the entropy of a grayscale image.
+def calculate_score(values: list[float]) -> float:
+    """
+    Calculate the average score.
 
-Args:
-    img (Image.Image): The image to process.
+    Args:
+        values (list[float]): Input values.
 
-Returns:
-    float: Entropy value.
-"""
+    Returns:
+        float: Average score.
+    """
+
+    # 1. Prepares output...
+    output = 0.0
+
+    # 2. Calculates score...
+    if values:
+        output = sum(values) / len(values)
+
+    # 3. Returns output...
+    return output
+```
+
+Wrong:
+
+```python
+def calculate_score(values: list[float]) -> float:
+
+    # 1. Prepares output...
+    output = 0.0
+
+    """
+    Calculate the average score.
+    """
+
+    return output
+```
+
+Problems:
+
+- the docstring is not the first statement;
+- the E-Notation comment appears before the docstring;
+- the public function lacks complete `Args` and `Returns` sections;
+- Python will not assign that string to the function `__doc__` attribute.
+
+<a id="docstring-structure"></a>
+#### Docstring structure
+
+A complete Notation E docstring uses this structure:
+
+1. one short description paragraph;
+2. blank line;
+3. `Args:` section when parameters exist;
+4. blank line;
+5. `Returns:` section when the callable returns a value or documents public
+   `None` behavior;
+6. blank line;
+7. `Raises:` section when public exceptions are part of the contract.
+
+The docstring must describe contract and intent. It must not repeat every
+E-Notation numbered block.
+
+<a id="docstring-signature-consistency"></a>
+#### Docstring signature consistency
+
+The docstring must match the callable signature.
+
+The agent must report:
+
+- missing parameters in `Args`;
+- extra parameters in `Args` that do not exist in the signature;
+- parameter spelling mismatches;
+- type descriptions that contradict clear annotations;
+- missing `Returns` sections for public callables;
+- obsolete behavior descriptions;
+- obsolete result keys, statuses, or modes;
+- public result shapes not documented.
+
+<a id="docstring-return-and-raises-consistency"></a>
+#### Docstring return and raises consistency
+
+The docstring must match return annotation and actual return behavior.
+
+Rules:
+
+- public callables returning a value must document the returned value;
+- public callables returning `None` should document `None`, except constructors;
+- internal `None` helpers may omit `Returns` when the absence of a return value
+  is obvious;
+- public validation exceptions should be documented in `Raises`;
+- internal exceptions are documented only when meaningful to the caller.
+
+Dunder methods are public Python protocol methods, but trivial dunder methods may
+follow the trivial one-line function exception. Non-trivial dunder methods should
+follow normal Notation E structure.
+
+<a id="docstring-examples"></a>
+#### Examples
+
+Public function:
+
+```python
+def save_report(path: Path, content: str) -> None:
+    """
+    Save report content to disk.
+
+    Args:
+        path (Path): Output file path.
+        content (str): Report content.
+
+    Returns:
+        None: This function writes content to disk.
+    """
+
+    # 1. Writes report...
+    path.write_text(content, encoding="utf-8")
+```
+
+Internal compact helper:
+
+```python
+def _save_report(path: Path, content: str) -> None:
+    """
+    Save report content to disk.
+    """
+
+    # 1. Writes report...
+    path.write_text(content, encoding="utf-8")
 ```
 
 ---
 
 <a id="26-no-continue-in-loops"></a>
 ### 2.6 No `continue` in loops
-The use of `continue` is avoided. Flow control is handled using `if` statements to keep logic self-contained and predictable.
+
+The use of `continue` is avoided. Flow control is handled using `if` statements
+to keep logic self-contained and predictable.
+
+Avoid:
+
+```python
+# 1. Processes items...
+for item in items:
+    if not item.enabled:
+        continue
+
+    process_item(item)
+```
+
+Prefer:
+
+```python
+# 1. Processes items...
+for item in items:
+    if item.enabled:
+        process_item(item)
+```
 
 ---
 
 <a id="27-english-only-comments-and-identifiers"></a>
 ### 2.7 English-only comments and identifiers
-All variable names, function names, docstrings, and comments are written in English to facilitate global collaboration and LLM compatibility.
+
+All variable names, function names, class names, docstrings, comments, and
+code-facing text are written in English to facilitate global collaboration and
+LLM compatibility.
+
+Renaming public API requires explicit review because names may be public
+contracts.
 
 ---
 
 <a id="28-modular-and-unambiguous-style"></a>
 ### 2.8 Modular and unambiguous style
-- Highly reusable and modular code.
-- Auxiliary functions have precise and descriptive names.
+
+Notation E favors highly reusable, modular, and unambiguous code.
+
+Auxiliary functions must have precise names. A helper is good when its name
+captures a real concept. A helper is bad when it only hides a line to satisfy a
+metric.
 
 ---
 
@@ -1091,43 +1343,39 @@ def analyze_entropy_range(folder: str, prefix: str = "Scanning") -> Tuple[float,
         Tuple[float, float]: `(min_entropy, max_entropy)`.
     """
 
-    # 1. List image files...
+    # 1. Lists image files...
     files = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
 
-    # 2. Initialize...
+    # 2. Initializes range tracking...
     min_entropy, max_entropy = float("inf"), float("-inf")
     pb = PB(total=len(files), prefix=prefix)
 
-    # 3. Iterate through images...
+    # 3. Iterates through images...
     for fname in files:
 
-        # 1.1 Path...
+        # 1.1 Builds image path...
         img_path = os.path.join(folder, fname)
         try:
 
-            # 2.1 Open and validate...
+            # 2.1 Opens and validates image...
             img = Image.open(img_path)
             if img.mode == "L":
 
-                # 2.1 Calculate entropy...
+                # 3.1 Calculates entropy...
                 entropy = calculate_entropy(img)
 
-                # 2.2 Update range...
+                # 3.2 Updates range...
                 min_entropy = min(min_entropy, entropy)
                 max_entropy = max(max_entropy, entropy)
 
-            # 2.2 Not grayscale...
-            else:
-                pb.update()
-
-        # 1.2 Error handling...
+        # 1.2 Handles read errors...
         except (OSError, ValueError, IOError):
             pass
 
-        # 1.3 Update progress...
+        # 1.3 Updates progress...
         pb.update()
 
-    # 4. Return range...
+    # 4. Returns range...
     return min_entropy, max_entropy
 
 # --------------------------------------------------------------------------------------------- #
@@ -1139,7 +1387,7 @@ def analyze_entropy_range(folder: str, prefix: str = "Scanning") -> Tuple[float,
 <a id="focused-examples"></a>
 ## 🧩 Focused Examples
 
-<a id="example-1-tryfinallyand-semantic-splitting"></a>
+<a id="example-1-tryfinally-and-semantic-splitting"></a>
 ### Example 1: `try/finally` and semantic splitting
 
 Preferred:
@@ -1160,22 +1408,22 @@ def _save_uopeople(uopeople: UoPeople, unit: int) -> Path:
         Path: UoPeople cache file path.
     """
 
-    # 1. It prepares path...
+    # 1. Prepares path...
     pyon_path = _uopeople_pyon_path(unit=unit)
     pyon_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 2. It prepares cache...
+    # 2. Prepares cache...
     entries = _prepare_uopeople_for_save(uopeople=uopeople)
 
-    # 3. It saves object...
+    # 3. Saves object...
     try:
         pyon.to_file(uopeople, str(pyon_path), enc_protected=True)
 
-    # 4. It restores attributes...
+    # 4. Restores attributes...
     finally:
         _restore_attrs(entries=entries)
 
-    # 5. It returns path...
+    # 5. Returns path...
     return pyon_path
 
 
@@ -1225,13 +1473,13 @@ def _prepare_uopeople_for_save(uopeople: UoPeople) -> list[_RestoreEntry]:
         list[_RestoreEntry]: Entries needed to restore the object graph.
     """
 
-    # 1. It prepares entries...
+    # 1. Prepares entries...
     entries: list[_RestoreEntry] = []
 
-    # 2. It replaces manager...
+    # 2. Replaces manager...
     _remember_attr(entries=entries, obj=uopeople, attr="manager", value=None)
 
-    # 3. It replaces storage path...
+    # 3. Replaces storage path...
     if isinstance(uopeople.storage_state_path, Path):
         _remember_attr(
             entries=entries,
@@ -1240,7 +1488,7 @@ def _prepare_uopeople_for_save(uopeople: UoPeople) -> list[_RestoreEntry]:
             value=str(uopeople.storage_state_path),
         )
 
-    # 4. It returns entries...
+    # 4. Returns entries...
     return entries
 
 
@@ -1290,7 +1538,7 @@ def _remember_attr(entries: list[_RestoreEntry], obj: Any, attr: str, value: Any
         value (Any): Temporary attribute value.
     """
 
-    # 1. It remembers and replaces value...
+    # 1. Remembers and replaces value...
     entries.append((obj, attr, getattr(obj, attr, None)))
     object.__setattr__(obj, attr, value)
 
@@ -1333,7 +1581,7 @@ def _uopeople_pyon_path(unit: int) -> Path:
         Path: Unit cache file path.
     """
 
-    # 1. It builds and returns path...
+    # 1. Builds and returns path...
     return PYON_OUTPUT_ROOT / f"uopeople_u{unit}.pyon"
 
 
@@ -1383,10 +1631,10 @@ def _get_uopeople(unit: int) -> UoPeople:
         UoPeople: Cached or new UoPeople object.
     """
 
-    # 1. It prepares output...
+    # 1. Prepares output...
     output: UoPeople | None = None
 
-    # 2. It loads cache...
+    # 2. Loads cache...
     pyon_path = _uopeople_pyon_path(unit=unit)
     if pyon_path.is_file():
 
@@ -1398,11 +1646,11 @@ def _get_uopeople(unit: int) -> UoPeople:
             output = cast(UoPeople, loaded)
             output.restore_runtime_clients()
 
-    # 3. It creates fallback...
+    # 3. Creates fallback...
     if output is None:
         output = UoPeople()
 
-    # 4. It returns object...
+    # 4. Returns object...
     return output
 
 
@@ -1439,10 +1687,10 @@ def _print_paths(title: str, paths: list[Path]) -> None:
         paths (list[Path]): Generated paths.
     """
 
-    # 1. It prints title...
+    # 1. Prints title...
     print(f"{title}:")
 
-    # 2. It prints paths...
+    # 2. Prints paths...
     for path in paths:
         print(f"- {path}")
 
@@ -1538,14 +1786,14 @@ def pipeline(
         delete_temp (bool): If should delete temp folders.
     """
 
-    # 1. Pipeline Start...
-    print( f"\n\n{LINE}✅ Pipeline Start!{LINE}\n\n")
+    # 1. Starts pipeline...
+    print(f"\n\n{LINE}✅ Pipeline Start!{LINE}\n\n")
 
-    # 2. Images...
+    # 2. Loads image list...
     files = image.list_images(input_folder)
     if vl.is_valid(files) and fl.create_folder(output_folder):
 
-        # 1.1 Corrupted Files...
+        # 1.1 Checks corrupted files...
         status = _get_status(output_folder)
         if (status[STATUS_NUM] == 0):
 
@@ -1554,69 +1802,71 @@ def pipeline(
                 input_folder=input_folder, output_folder=output_folder, show_progress=True
             )
 
-            # 2.2 Corrupted log....
+            # 2.2 Updates status and log...
             status = _update_status(output_folder, status)
             print(
                 f"Moved {corrupted[0]} corrupted images to {corrupted[1]}"
                 f"\n\n{LINE}✅ Corrupted Files Check Done!{LINE}\n\n"
             )
 
-        # 1.2 Preprocess...
+        # 1.2 Runs preprocessing...
         if (status[STATUS_NUM] == 1):
+
+            # 2.1 Initializes image count...
             pre_img_count = 0
 
-            # 2.1 Progress Bar...
+            # 2.2 Initializes progress...
             pb = PB(len(files), "Preprocessing")
 
-            # 2.2 Iterates images...
+            # 2.3 Iterates images...
             output_tmp_pre = fl.get_path(output_folder, 'tmp_pre')
             for fname in files:
 
-                # 3.1 Preprocess...
+                # 3.1 Preprocesses and saves images...
                 imgs = _preprocess(input_folder=input_folder, file_name=fname, confs=confs)
                 _save_to(imgs=imgs, output_folder=output_tmp_pre, start_index=pre_img_count + 1)
 
-                # 3.2 Updates count...
+                # 3.2 Updates image count...
                 pre_img_count += len(imgs)
 
-                # 3.3 Update progress...
+                # 3.3 Updates progress...
                 pb.update()
 
-            # 2.3 Preprocess log...
+            # 2.4 Builds label size...
             label_size = len(str(pre_img_count))
 
-            # 2.4 Set Status...
+            # 2.5 Stores preprocessing status...
             status[STATUS_LABEL_SIZE] = label_size
             status[STATUS_PRE_IMG_COUNT] = pre_img_count
             status[STATUS_TMP_PRE] = output_tmp_pre
 
-            # 2.5 Update Status...
+            # 2.6 Updates status and log...
             status = _update_status(output_folder, status)
             print(
                 f"{pre_img_count} images saved to: {output_tmp_pre}"
                 f"\n\n{LINE}✅ Preprocess Done!{LINE}\n\n"
             )
 
-        # 1.3 Hash Filter...
+        # 1.3 Filters hashes...
         if (status[STATUS_NUM] == 2) and (STATUS_TMP_PRE in status):
 
-            # 2.1 Filters...
+            # 2.1 Runs hash filter...
             output_tmp_hash = fl.get_path(output_folder, 'tmp_hash')
             _filter_hash(input_folder=status[STATUS_TMP_PRE], output_folder=output_tmp_hash)
 
-            # 2.2 Update Status....
+            # 2.2 Updates status and log...
             status[STATUS_TMP_HASH] = output_tmp_hash
             status = _update_status(output_folder, status)
-            print( f"\n\n{LINE}✅ Hash Filter Done!{LINE}\n\n")
+            print(f"\n\n{LINE}✅ Hash Filter Done!{LINE}\n\n")
 
-        # 1.4 Classification...
+        # 1.4 Classifies images...
         if (
             (status[STATUS_NUM] == 3)
             and (STATUS_LABEL_SIZE in status)
             and (STATUS_TMP_HASH in status)
         ):
 
-            # 2.1 Classifies...
+            # 2.1 Runs classification...
             output_tmp_class = fl.get_path(output_folder, 'tmp_class')
             _classify(
                 input_folder=status[STATUS_TMP_HASH],
@@ -1625,15 +1875,15 @@ def pipeline(
                 confs=confs
             )
 
-            # 2.2 Update Status....
+            # 2.2 Updates status and log...
             status[STATUS_TMP_CLASS] = output_tmp_class
             status = _update_status(output_folder, status)
-            print( f"\n\n{LINE}✅ Classification Done!{LINE}\n\n")
+            print(f"\n\n{LINE}✅ Classification Done!{LINE}\n\n")
 
-        # 1.7 Class separation...
+        # 1.5 Separates classes...
         if (status[STATUS_NUM] == 4) and (STATUS_TMP_CLASS in status):
 
-            # 2.1 Separation...
+            # 2.1 Runs class separation...
             output_classes = fl.get_path(output_folder, 'classes')
             _class_separation(
                 input_folder=status[STATUS_TMP_CLASS],
@@ -1641,55 +1891,55 @@ def pipeline(
                 confs=confs,
             )
 
-            # 2.2 Update Status....
+            # 2.2 Updates status and log...
             status[STATUS_CLASSES] = output_classes
             status = _update_status(output_folder, status)
-            print( f"\n\n{LINE}✅ Class Separation Done!{LINE}\n\n")
+            print(f"\n\n{LINE}✅ Class Separation Done!{LINE}\n\n")
 
-        # 1.8 Class balancing...
+        # 1.6 Balances classes...
         if (
             (status[STATUS_NUM] == 5)
             and (STATUS_LABEL_SIZE in status)
             and (STATUS_CLASSES in status)
         ):
 
-            # 2.1 Balances...
+            # 2.1 Runs class balancing...
             _class_balancing(
                 input_folder=status[STATUS_CLASSES], size=status[STATUS_LABEL_SIZE], confs=confs
             )
 
-            # 2.2 Updates..
+            # 2.2 Updates status and log...
             status = _update_status(output_folder, status)
-            print( f"\n\n{LINE}✅ Class Balancing Done!{LINE}\n\n")
+            print(f"\n\n{LINE}✅ Class Balancing Done!{LINE}\n\n")
 
-        # 1.9 Cleans temp folders...
+        # 1.7 Cleans temp folders...
         if (status[STATUS_NUM] == 6):
 
-            # 2.1 Deletes...
+            # 2.1 Collects and deletes folders...
             if delete_temp:
                 folders = set()
 
-                # 3.1 Add temp folder...
+                # 3.1 Adds preprocess folder...
                 if STATUS_TMP_PRE in status:
                     folders.add(status[STATUS_TMP_PRE])
 
-                # 3.2 Add hash folder...
+                # 3.2 Adds hash folder...
                 if STATUS_TMP_HASH in status:
                     folders.add(status[STATUS_TMP_HASH])
 
-                # 3.3 Add class folder...
+                # 3.3 Adds class folder...
                 if STATUS_TMP_CLASS in status:
                     folders.add(status[STATUS_TMP_CLASS])
 
-                # 3.4 Delete temp folders...
+                # 3.4 Deletes temp folders...
                 fl.delete_folders(folders)
 
-            # 2.2 Updates...
+            # 2.2 Updates status and log...
             status = _update_status(output_folder, status)
-            print( f"\n\n{LINE}✅ Cleans Temp Folders Done!{LINE}\n\n")
+            print(f"\n\n{LINE}✅ Cleans Temp Folders Done!{LINE}\n\n")
 
-    # 3. Pipeline End...
-    print( f"\n\n{LINE}✅ Pipeline End!{LINE}\n\n")
+    # 3. Ends pipeline...
+    print(f"\n\n{LINE}✅ Pipeline End!{LINE}\n\n")
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -1717,31 +1967,31 @@ def _preprocess(
         the input ROIs.
     """
 
-    # 1. Output...
+    # 1. Prepares output...
     output = []
 
-    # 2. Constants...
+    # 2. Loads ROI configuration...
     rois = confs.get_rois()
 
-    # 3. File...
+    # 3. Checks input file...
     file_path = fl.get_file_path(input_folder, file_name)
     if vl.is_valid(file_path) and vl.is_valid(rois):
 
-        # 1.1 Open and resize image...
+        # 1.1 Opens and resizes image...
         img = Image.open(file_path)
         img = image.resize_image(img=img, resolution=confs.res)
 
-        # 1.2 Process safely...
+        # 1.2 Processes safely...
         try:
 
-            # 2.1 Crops the regions...
+            # 2.1 Crops regions...
             regions = [img.crop(roi) for roi in rois]
             if vl.is_valid(regions):
 
-                # 3.1 Iterate regions...
+                # 3.1 Iterates regions...
                 for region in regions:
 
-                    # 4.1 Apply preprocessing pipeline...
+                    # 4.1 Applies preprocessing pipeline...
                     processed = api.preprocess_image(
                         region,
                         resize_to=confs.resize_to,
@@ -1750,7 +2000,7 @@ def _preprocess(
                         threshold=confs.binary_threshold
                     )
 
-                    # 4.2 Outlier?
+                    # 4.2 Checks outlier...
                     if not api.is_outlier(
                         img=processed,
                         entropy_range=confs.entropy_range,
@@ -1760,11 +2010,11 @@ def _preprocess(
                         # 5.1 Adds valid image...
                         output.append(processed)
 
-        # 1.3 Handle I/O errors...
+        # 1.3 Handles I/O errors...
         except OSError as e:
             print(f"Error processing {file_path}: {e}")
 
-    # 4. Returns...
+    # 4. Returns output...
     return output
 
 
@@ -1788,19 +2038,19 @@ def _save_to(
         verbose (bool, optional): If True, prints a summary message after saving.
     """
 
-    # 1. Save images...
+    # 1. Saves images...
     if vl.is_valid(imgs) and fl.create_folder(output_folder):
         for img in imgs:
 
-            # 2.1 Build image path...
+            # 2.1 Builds image path...
             img_name = f'pre_{start_index}.png'
             img_path = fl.get_path(output_folder, img_name)
 
-            # 2.2 Save image...
+            # 2.2 Saves image...
             img.save(img_path)
             start_index += 1
 
-    # 2. Print summary...
+    # 2. Prints summary...
     if verbose:
         print(f"✅ {len(imgs)} images saved to: {output_folder}")
 
@@ -1820,35 +2070,35 @@ def _classify(input_folder: str, output_folder: str, size: int, confs: DSConf):
         None
     """
 
-    # 1. List images...
+    # 1. Lists images...
     files = image.list_images(input_folder)
     if vl.is_valid(files) and fl.create_folder(output_folder):
 
-        # 1.1 Initialize progress...
-        pb = PB(total=len(files), prefix="Classifing")
+        # 1.1 Initializes progress...
+        pb = PB(total=len(files), prefix="Classifying")
         for image_file in files:
 
-            # 2.1 Load image...
+            # 2.1 Loads image...
             img = image.get_image(input_folder=input_folder, file_name=image_file)
             if img is not None:
 
-                # 3.1 Predict class...
+                # 3.1 Predicts class...
                 img_class = api.get_img_class(
                     img=img, classes=confs.classes, model=confs.model
                 )
 
-                # 3.2 Resolve outlier...
+                # 3.2 Resolves outlier...
                 if not vl.is_valid(img_class):
                     img_class = confs.outlier_label
 
-                # 3.3 Build output path...
+                # 3.3 Builds output path...
                 img_name = image.get_img_name(category=img_class, size=size)
                 img_path = fl.get_path(output_folder, img_name)
 
-                # 3.4 Save image...
+                # 3.4 Saves image...
                 img.save(img_path)
 
-            # 2.2 Update progress...
+            # 2.2 Updates progress...
             pb.update()
 
 
@@ -1868,7 +2118,7 @@ def _filter_hash(input_folder: str, output_folder: str):
         None
     """
 
-    # 1. Run hash filter...
+    # 1. Runs hash filter...
     result = image.filter_images_by_hash(input_folder=input_folder, output_folder=output_folder)
     print(f"\n✅ {result} unique images saved to: {output_folder}")
 
@@ -1882,27 +2132,27 @@ def _class_separation(
     confs: DSConf
 ):
 
-    # 1. Validate folders...
+    # 1. Validates folders...
     if fl.is_folder(input_folder) and fl.create_folder(output_folder):
 
-        # 1.1 Classify filenames...
+        # 1.1 Classifies filenames...
         class_dict = api.classify_by_filename(
             input_folder=input_folder,
             outlier_label=confs.outlier_label,
             classes=confs.classes,
         )
 
-        # 1.2 Validate classes...
+        # 1.2 Validates classes...
         if vl.is_valid_dict(class_dict):
 
-            # 2.1 Initialize progress...
+            # 2.1 Initializes progress...
             pb = PB(total=len(class_dict), prefix="Class Separation")
 
-            # 2.2 Iterate classes...
+            # 2.2 Iterates classes...
             for key, value in class_dict.items():
-                out_folder=fl.get_path(output_folder, key)
+                out_folder = fl.get_path(output_folder, key)
 
-                # 3.1 Copy class files...
+                # 3.1 Copies class files...
                 for fname in value:
                     fl.copy_file(
                         input_folder=input_folder,
@@ -1910,7 +2160,7 @@ def _class_separation(
                         output_folder=out_folder,
                     )
 
-                # 3.2 Update progress...
+                # 3.2 Updates progress...
                 pb.update()
 
 
@@ -1935,35 +2185,35 @@ def _class_balancing(
         None
     """
 
-    # 1. Classify images...
+    # 1. Classifies images...
     class_images = api.classify_by_filename(
-            input_folder=input_folder,
-            outlier_label=confs.outlier_label,
-            classes=confs.classes,
-            all_images=True
-        )
+        input_folder=input_folder,
+        outlier_label=confs.outlier_label,
+        classes=confs.classes,
+        all_images=True
+    )
 
-    # 2. Validate classes...
+    # 2. Validates classes...
     if vl.is_valid_dict(class_images):
 
-        # 1.1 Get class counts...
+        # 1.1 Gets class counts...
         counts = [len(imgs) for imgs in class_images.values() if len(imgs) > 0]
         if vl.is_valid_list(counts):
 
-            # 2.1 Determine target size...
+            # 2.1 Determines target size...
             target_size = max(counts) if (mode == 'add') else min(counts)
             if vl.is_valid_int(target_size):
 
-                # 3.1 Initialize progress...
+                # 3.1 Initializes progress...
                 pb = PB(total=len(class_images), prefix="Class Balancing")
                 for rank, images in class_images.items():
                     imgs = images[:]
 
-                    # 4.1 Count images...
+                    # 4.1 Counts images...
                     current_size = len(imgs)
                     if vl.is_valid_int(current_size):
 
-                        # 5.1 Balance class...
+                        # 5.1 Balances class...
                         _balance_by_mode(
                             imgs=imgs,
                             rank=rank,
@@ -1974,10 +2224,10 @@ def _class_balancing(
                             last=max(counts)
                         )
 
-                    # 4.2 Update progress...
+                    # 4.2 Updates progress...
                     pb.update()
 
-                # 3.2 Print summary...
+                # 3.2 Prints summary...
                 print(f"✅ Dataset balanced: {target_size} items per class (mode: '{mode}') 📊")
 
 
@@ -1994,15 +2244,15 @@ def _balance_by_mode(
     last: int = 0
 ):
 
-    # 1. Add samples...
+    # 1. Adds samples...
     if (mode == 'add') and (current_size < target_size):
         needed = target_size - current_size
 
-        # 1.1 Sample additions...
+        # 1.1 Selects additions...
         samples = PUtils.sample_n(imgs, needed)
         for sample in samples:
 
-            # 2.1 Copy sample...
+            # 2.1 Copies sample...
             img_name = image.get_img_name(category=rank, size=size, last=last)
             ok = fl.copy_to(
                 input_file=sample,
@@ -2011,19 +2261,19 @@ def _balance_by_mode(
                 )
             )
 
-            # 2.2 Report failure...
+            # 2.2 Reports failure...
             if not ok:
                 print(f"Failed to move sample '{sample}'")
 
-    # 2. Remove samples...
+    # 2. Removes samples...
     elif (mode == 'remove') and (current_size > target_size):
         excess = current_size - target_size
 
-        # 1.1 Sample removals...
+        # 1.1 Selects removals...
         to_delete = PUtils.sample_n(imgs, excess, distinct=True)
         for sample in to_delete:
 
-            # 2.1 Delete sample...
+            # 2.1 Deletes sample...
             if not fl.delete_file(sample):
                 print(f"Failed to remove sample '{sample}'")
 
@@ -2042,17 +2292,17 @@ def _get_status(output_folder: str) -> dict:
         int: Parsed status code (default: 0 if file didn't exist).
     """
 
-    # 1. Output...
+    # 1. Prepares output...
     status = {STATUS_NUM: 0}
 
-    # 2. Build file path...
+    # 2. Builds file path...
     file_path = fl.get_path(output_folder, STATUS_FILE)
     if not fl.is_file(file_path):
 
-        # 1.1 Create file if missing...
+        # 1.1 Creates file if missing...
         pyon.to_file(status, file_path)
 
-    # 3. Read and parse status...
+    # 3. Reads and parses status...
     content = pyon.from_file(file_path)
     return content if isinstance(content, dict) else status
 
@@ -2069,18 +2319,18 @@ def _update_status(output_folder: str, status: dict) -> dict:
         status (int): Status value to persist.
     """
 
-    # 1. Checks...
+    # 1. Checks status...
     if not (isinstance(status, dict) and STATUS_NUM in status):
         status = {STATUS_NUM: 0}
 
-    # 2. Updates...
+    # 2. Updates status...
     status[STATUS_NUM] += 1
 
-    # 3. Saves...
+    # 3. Saves status...
     file_path = fl.get_path(output_folder, STATUS_FILE)
     pyon.to_file(status, file_path)
 
-    # 4. Returns...
+    # 4. Returns status...
     return status
 
 
@@ -2091,70 +2341,7 @@ def _update_status(output_folder: str, status: dict) -> dict:
 ---
 
 
-<a id="agent-audit-checklist"></a>
-## ✅ Agent Audit Checklist
 
-When an agent writes or rewrites code into Notation E, it must check every
-function with this checklist.
-
-<a id="numbering"></a>
-### Numbering
-
-1. Does each scope start numbering correctly?
-2. Are top-level blocks numbered `# 1`, `# 2`, `# 3`, and so on?
-3. Is the level-zero prefix `0.` omitted correctly?
-4. Do nested blocks use indentation level, such as `# 1.1` and `# 2.1`, not parent inheritance?
-5. Are there duplicated, skipped, or unordered numbers?
-6. Does any scope exceed nine numbered blocks?
-7. Does any indentation level exceed nine?
-
-### Comments
-
-1. Does each numbered comment describe a real semantic unit?
-2. Does each numbered comment use neutral third-person voice when possible?
-3. Is the comment short and meaningful?
-4. Are there vague comments such as `# 1. ...`?
-5. Are comments explaining implementation details instead of semantic intent?
-6. Are comments written in English?
-
-<a id="block-size"></a>
-### Block size
-
-1. Does any numbered block contain three independent logical statements?
-2. Can adjacent one-line blocks be merged without mixing unrelated concerns?
-3. Would merging lines mix configuration and execution?
-4. Does a multiline statement hide a following independent action?
-5. After a multiline statement, does the next independent statement start a new numbered block?
-6. Does each block support fast vertical scanning?
-
-<a id="semantic-grouping"></a>
-### Semantic grouping
-
-1. Is each line grouped with the closest semantic dependency?
-2. Is output initialization separated from later operational preparation?
-3. Is construction grouped with immediate use when appropriate?
-4. Are unrelated semantic categories kept apart?
-5. Is the code grouped for scanning, not merely for line counting?
-
-<a id="control-flow"></a>
-### Control flow
-
-1. Does `try` have its own numbered comment?
-2. Does `except`, `else`, or `finally` receive a new numbered comment when it performs a different action?
-3. Are cleanup, restore, rollback, logging, and fallback behavior visible?
-4. Are complex branch bodies split with nested numbered comments?
-5. Is `continue` avoided?
-6. Are `if` / `elif` / `else` branches numbered according to semantic responsibility?
-
-<a id="horizontal-limit-checklist"></a>
-### Horizontal limit
-
-1. Does code stay inside the visual separator width?
-2. Are long statements wrapped using normal Python formatting?
-3. Does each wrapped statement still behave as one logical statement?
-4. Is the next independent statement after a wrapped call placed in a new block?
-
----
 
 <a id="applicability"></a>
 ## 🔄 Applicability
@@ -2187,7 +2374,8 @@ For LLM application, follow the style strictly:
 - avoid flow jumps;
 - avoid hidden control-flow responsibilities;
 - split ambiguous blocks;
-- preserve semantic grouping over mechanical compactness.
+- preserve semantic grouping over mechanical compactness;
+- validate docstrings as part of the code contract.
 
 > "Code is readable when the mind that writes it respects the time of the mind that will read it."
 

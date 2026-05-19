@@ -19,10 +19,18 @@ This document contains a structured list of tasks organized by version for the d
 - `freq` preserved when available
 
 ### IANA
-- [x] `docs/other/iana-registration-v2.md`:
+- [x] `doc/other/iana/iana-registration (v2).md`:
 - Security: explicitly note controlled constructors for temporal/scientific types
 - Interoperability: JSON syntax + Pyon semantics;
 - Clipboard/Pasteboard: generic wording for Windows; UTI/macOS without repeating “media type”
+
+
+### Packaging, Typing, and Operational Documentation
+- [x] Consolidate runtime and audit dependencies in `pyproject.toml`
+- [x] Remove legacy `requirements.txt`
+- [x] Include `pyon/py.typed` in package data for typed consumers
+- [x] Add public typing contract tests
+- [x] Update operational documentation for current project taxonomy and setup commands
 
 ---
 
@@ -80,7 +88,7 @@ This document contains a structured list of tasks organized by version for the d
 - [x] Define MIME type as `application/vnd.pyon+json`
 - [x] Add section to README specifying MIME type and usage
 - [x] Prepare full registration form for IANA media type registry
-- [x] Archive registration info in `docs/other/iana-registration.md`
+- [x] Archive registration info in `doc/other/iana/iana-registration (v1).md`
 
 ### ✅ Modularization and Isolation
 - [x] Create `pyon.file` as its own module directory
@@ -138,7 +146,7 @@ This document contains a structured list of tasks organized by version for the d
 ## Version 0.1.3-alpha — PyPI Release
 
 ### Packaging
-- `[x]` Create `setup.py`, finalize project metadata
+- `[x]` Create initial packaging metadata for PyPI release
 - `[x]` First release on [PyPI](https://pypi.org/project/pyon-core/) as `pyon-core`
 
 ---

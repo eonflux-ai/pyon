@@ -9,12 +9,12 @@ This document outlines the future direction of **Pyon**, a serialization/deseria
 1. [Introduction](#introduction)  
 2. [Detecting Cyclical References](#detecting-cyclical-references)  
 3. [Handling Shared References](#handling-shared-references)  
-4. [New Types: Phased Expansions](#new-types-phased-expansions)  
+4. [Binary Output](#4-binary-output)  
+5. [Encryption](#5-encryption)  
+6. [New Types: Phased Expansions](#6-new-types-phased-expansions)  
    - [Phase 1](#phase-1)  
-   - [Phase-2](#phase-2)  
-   - [Phase-3](#phase-3)  
-5. [Binary Output](#binary-output)  
-6. [Encryption](#encryption)  
+   - [Phase 2](#phase-2)  
+   - [Phase 3](#phase-3)  
 7. [Additional Potential Features](#additional-potential-features)  
 8. [Contributing](#contributing)  
 9. [Related Documents](#related-documents)  
@@ -159,7 +159,7 @@ We welcome contributions of any kind—whether it’s code, documentation, or si
 3. **Submit a Pull Request**: Fork the repo and propose your changes.  
 4. **Discuss & Collaborate**: Join our community discussions to help shape the roadmap.
 
-Please read our [CONTRIBUTING.md](CONTRIBUTING.md) (if available) for detailed guidelines.
+Please read [CONTRIBUTING.md](../CONTRIBUTING.md) for setup, validation, and pull request guidelines.
 
 ---
 

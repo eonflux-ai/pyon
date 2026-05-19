@@ -13,12 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Support for **timezone region metadata** (IANA TZDB) in `datetime` and pandas indexes, enabling exact round-trip restoration.
 - Extended encode/decode logic to include `TZ_OFFSET` and `TZ_FOLD` (PEP 495).
 - Tests covering timezone-aware datetimes, ambiguous DST folds, and pandas `DatetimeIndex` with tz and freq.
+- Inline typing coverage for the public package, including `pyon/py.typed`, typed public APIs, and consumer-facing typing contract tests.
 - Documentation updates (`README.md`, `SECURITY.md`) with notes on timezone handling and controlled constructor usage.
 - Expanded **Security Considerations** in IANA registration (`iana-registration-v2.md`) to align with the security audit and the `SECURITY.md`.
 
 ### Changed
 - Decode pipeline hardened: naïve `datetime` handled safely before applying `astimezone`.
 - Offset parser corrected to accept canonical formats (`+HH:MM`, `-HH:MM`).
+- Packaging consolidated around `pyproject.toml`, including runtime dependencies, optional development/debug dependencies, build metadata, tool configuration, and typed package data.
+- Documentation taxonomy aligned with the current `doc/`, `examples/`, `pyon/file/`, and `tests/` layout.
 - Terminology in documentation and IANA registration updated to consistently use **media type** instead of legacy “MIME type”.
 
 ### Added (IANA registration)
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Removed
 - Redundant implementation details from IANA registration (encode/decode internals and low-level notes).
+- Legacy `requirements.txt`; cloned development installs now use `pip install -e ".[dev,debug]"`.
 
 ---
 

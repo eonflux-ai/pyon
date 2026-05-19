@@ -108,17 +108,28 @@ Pyon supports a broad array of Python types out-of-the-box:
 
 ## 4. Installation
 
-Pyon is released on PyPI. You can install it via:
+Pyon is released on PyPI. You can install the runtime package with:
 
 ```bash
 pip install pyon-core
 ```
 
-Alternatively, you can install directly from the source:
+To install directly from the source repository:
 
 ```bash
 pip install git+https://github.com/eonflux-ai/pyon.git
 ```
+
+For local development from a cloned repository, use the project metadata in `pyproject.toml`:
+
+```bash
+git clone https://github.com/eonflux-ai/pyon.git
+cd Pyon
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev,debug]"
+```
+
+The package is distributed as a typed package. The wheel includes `pyon/py.typed`, so type checkers can read the inline annotations directly from the installed package.
 
 ---
 <br>
@@ -235,7 +246,7 @@ These types are handled within modules such as `collection_types.py` and `specia
 
 For a full audit and analysis of risks (including `Enum`, `defaultdict`, and tampering scenarios), see:
 
-**[SECURITY.md](docs/SECURITY.md)**
+**[SECURITY.md](doc/SECURITY.md)**
 
 ---
 <br>
@@ -283,45 +294,42 @@ While the file format conforms to JSON in syntax:
 
 ## 10. Project Structure
 
-Here’s the project structure for Pyon:
+Here is the current project structure for Pyon:
 
-```
+```text
 Pyon/
-├── LICENSE                         	    # License details
-├── README.md                       	    # Project overview and instructions
-├── setup.py                        	    # Build and packaging configuration
-├── pyon/                           	    # Main source code
-│   ├── __init__.py                 	    # Package initialization
-│   ├── api.py                      	    # Public API for encoding/decoding
-│   ├── encoder.py                  	    # Public interface for encoding logic
-│   ├── encoders/                   	    # Submodules for encoding specific data types
-│   │   ├── __init__.py             	    # Initialization of the encoders package
-│   │   ├── base_types.py           	    # Encoding/decoding for base types
-│   │   ├── numeric_types.py        	    # Encoding/decoding for numeric types
-│   │   ├── collection_types.py     	    # Encoding/decoding for collections
-│   │   ├── datetime_types.py       	    # Encoding/decoding for datetime types
-│   │   ├── specialized_types.py    	    # Encoding/decoding for specialized types
-│   │   ├── mapping_types.py        	    # Encoding/decoding for key-value types
-│   ├── file.py                     	    # File-related utilities
-│   ├── supported_types.py          	    # Definitions of supported types and constants
-│   ├── utils.py                    	    # General helper functions
-├── tests/                          	    # Tests for the project
-│   ├── __init__.py                 	    # Test package initialization
-│   ├── test_api.py                 	    # Tests for the API module
-│   ├── test_encoder/               	    # Tests for encoding submodules
-│   │   ├── test_base_types.py      	    # Tests for base types encoding
-│   │   ├── test_numeric_types.py   	    # Tests for numeric types encoding
-│   │   ├── test_collection_types.py	    # Tests for collections encoding
-│   │   ├── test_datetime_types.py  	    # Tests for datetime types encoding
-│   │   ├── test_specialized_types.py	    # Tests for specialized types encoding
-│   │   ├── test_mapping_types.py   	    # Tests for key-value types encoding
-│   ├── test_file.py                	    # Tests for file utilities
-│   ├── test_supported_types.py     	    # Tests for supported types and constants
-│   ├── test_utils.py               	    # Tests for general utilities
-├── docs/                           	    # Documentation
-│   ├── ROADMAP.md                  	    # Development roadmap
-│   ├── TASKS.md                    	    # Task breakdown by version
-│   ├── VERSION.md                  	    # Version details and changelog
+|-- pyproject.toml                 # Build, package metadata, dependencies, and tool config
+|-- README.md                      # Project overview and user-facing instructions
+|-- CHANGELOG.md                   # Version history
+|-- CONTRIBUTING.md                # Contribution workflow
+|-- LICENSE                        # License details
+|-- agents/                        # Local agent instructions used by project workflows
+|-- doc/                           # Project documentation
+|   |-- ROADMAP.md                 # Development roadmap
+|   |-- TASKS.md                   # Task breakdown by version
+|   |-- VERSION.md                 # Current version details
+|   |-- SECURITY.md                # Security model and decode caveats
+|   |-- releases/                  # Historical release notes
+|   |-- other/                     # Auxiliary audit and registration documents
+|-- examples/                      # Executable usage examples and example documentation
+|-- pyon/                          # Main source package
+|   |-- __init__.py                # Public package exports
+|   |-- api.py                     # Public encode/decode file API
+|   |-- encoder.py                 # Main encoder orchestration
+|   |-- py.typed                   # PEP 561 typed-package marker
+|   |-- supported_types.py         # Supported type markers
+|   |-- utils.py                   # Utility helpers and constants
+|   |-- annotations/               # Export-policy annotations
+|   |-- encoders/                  # Type-specific encoders
+|   |-- file/                      # File wrapper package
+|       |-- api.py                 # File implementation
+|       |-- types.py               # Public File typing aliases and TypedDicts
+|-- tests/                         # Test suite
+|   |-- encoders/                  # Encoder-specific tests
+|   |-- test_api.py                # Public API coverage
+|   |-- test_file.py               # File wrapper coverage
+|   |-- test_typing_contract.py    # Consumer-facing typing contracts
+|   |-- test_resilience_contracts.py
 ```
 
 ---
@@ -330,20 +338,25 @@ Pyon/
 
 1. **Public Interface**:
 
-   - The `api.py` file provides a high-level interface for users, exposing key methods like `encode`, `decode`, `to_file`, and `from_file` for seamless serialization and deserialization.
+   - `pyon/api.py` exposes `encode`, `decode`, `to_file`, and `from_file`.
+   - `pyon/encoder.py` coordinates the specialized encoder modules.
+   - `pyon/file/api.py` exposes the `File` abstraction through `pyon.File` and `pyon.file.File`.
 
-   - The `encoder.py` file in the root directory serves as the public interface for encoding/decoding logic, while the internal logic is delegated to submodules in `encoders/`.
+2. **Packaging and Typing**:
 
-2. **Encoders Modularization**:
+   - `pyproject.toml` is the single source for runtime dependencies, optional development dependencies, package metadata, build configuration, and tool configuration.
+   - `pyon/py.typed` marks the package as typed for consumers using Pyright, Pylance, Mypy, or other PEP 561-aware tools.
+   - `pyon/file/types.py` defines public typing helpers such as `ExportMode` and `FileDict`.
 
-   - The `encoders/` directory contains submodules for handling specific types of data (e.g., basic types, collections, numeric types).
-   - This improves scalability and separates the encoding logic from the main `encoder.py` file.
+3. **Encoders Modularization**:
 
-3. **Testing Structure**:
+   - The `encoders/` directory contains submodules for handling specific categories of Python data.
+   - This keeps the main encoder orchestration small and makes future type support easier to review.
 
-   - The `tests/` directory mirrors the project’s modular structure, with subtests for each encoder submodule.
+4. **Testing Structure**:
 
-This structure ensures clarity, scalability, and ease of maintenance as the project evolves. If you have any questions or suggestions, feel free to contribute!
+   - The `tests/` directory covers public API behavior, encoder behavior, resilience contracts, file behavior, and typing contracts.
+   - `examples/` contains executable examples that are validated during audit workflows.
 
 ---
 <br>
@@ -378,25 +391,30 @@ As the building blocks for other types, the base types don't require encoding an
 
 Pyon uses **pytest** for automated testing. The test suite covers:
 
-- Serialization and deserialization for all supported types.  
-- Validation of valid, invalid, and null inputs.  
+- Serialization and deserialization for all supported types.
+- Validation of valid, invalid, malformed, and null inputs.
 - Logging of errors with `caplog` and temporary file handling with `tmp_path`.
+- Public API contracts and consumer-facing typing contracts.
 
-To run the tests locally:
+To run the primary validation locally:
 
 ```bash
 cd Pyon
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev,debug]"
-pytest
+.venv\Scripts\python -m pytest --cov=pyon --cov-report=term-missing
+.venv\Scripts\python -m pyright
+.venv\Scripts\python -m pylint pyon tests
 ```
+
+The extended audit also uses `mypy`, `ruff`, `bandit`, `radon`, `vulture`, `build`, and the executable examples under `examples/`.
 
 ---
 <br>
 
 ## 13. Roadmap
 
-For detailed plans, phased expansions, and future directions, see the [ROADMAP.md](docs/ROADMAP.md) file.
+For detailed plans, phased expansions, and future directions, see the [ROADMAP.md](doc/ROADMAP.md) file.
 
 ---
 <br>
@@ -432,12 +450,12 @@ These identifiers enable consistent copy-paste and drag-and-drop behavior betwee
 
 ## 15. Additional Documentation
 
-- [ROADMAP.md](docs/ROADMAP.md): Detailed plans and future directions for Pyon.  
-- [VERSION.md](docs/VERSION.md): Current version details and key features.  
-- [TASKS.md](docs/TASKS.md): Progress tracking and specific tasks for each version.
+- [ROADMAP.md](doc/ROADMAP.md): Detailed plans and future directions for Pyon.  
+- [VERSION.md](doc/VERSION.md): Current version details and key features.  
+- [TASKS.md](doc/TASKS.md): Progress tracking and specific tasks for each version.
 - [CHANGELOG.md](./CHANGELOG.md): History of changes between versions.
 - [FILE.md](pyon/file/README.md): `File` module documentation.
-- [SECURITY.md](docs/SECURITY.md): Analysis of security guarantees and risks.
+- [SECURITY.md](doc/SECURITY.md): Analysis of security guarantees and risks.
 
 ---
 <br>

@@ -4,7 +4,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/eonflux-ai/pyon?style=social)](https://github.com/eonflux-ai/pyon/tree/main/pyon/file)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/eonflux-ai/pyon/blob/main/LICENSE)
 
-The `File` class encapsulates both in-memory and filesystem-based file representations, allowing unified interaction with file content and metadata. This module supports encoding/decoding to/from `.pyon` format, including base64 serialization.
+The `pyon.file` package contains the `File` class and its public typing helpers.
+`File` represents either a filesystem reference, in-memory bytes, or both, and it
+can be serialized through the normal `pyon.encode()` / `pyon.decode()` pipeline.
 
 ---
 
@@ -19,27 +21,40 @@ The `File` class encapsulates both in-memory and filesystem-based file represent
 7. [Temp File Support](#7-temp-file-support)
 8. [Export Modes](#8-export-modes)
 9. [MIME Detection](#9-mime-detection)
-10. [Integration with Pyon](#10-integration-with-pyon)
-11. [Static Utilities](#11-static-utilities)
-12. [Future Ideas](#12-future-ideas)
-13. [License](#13-license)
-14. [Project Links](#14-project-links)
+10. [Typing Helpers](#10-typing-helpers)
+11. [Integration with Pyon](#11-integration-with-pyon)
+12. [Static Utilities](#12-static-utilities)
+13. [Future Ideas](#13-future-ideas)
+14. [License](#14-license)
+15. [Project Links](#15-project-links)
 
 ---
 
 ## 1. Overview
 
-The `File` class provides a robust abstraction over files, allowing them to be loaded from disk, manipulated in memory, serialized to Pyon, and saved or moved as needed.
+`File` is a lightweight wrapper for file content and file metadata. It can keep a
+path reference, embedded bytes, MIME information, export policy, and temporary
+runtime state.
+
+The public package exports:
+
+```python
+from pyon import File
+from pyon.file import File
+from pyon.file.types import ExportMode, FileDict
+```
 
 ## 2. Features
 
-- Accepts `path` or `content` (or both)
-- MIME detection via filename, path, or content
-- File size calculation and human-readable formatting
-- Load/unload memory content
-- Temporary file support with automatic cleanup
-- Equality and hashing based on content or path
-- Seamless integration with `pyon.encode()` / `pyon.decode()`
+- Accepts `path`, `content`, or both.
+- Detects MIME from explicit value, `.pyon` extension, file path, content, name,
+  or fallback.
+- Supports reference export and embedded data export.
+- Supports optional path reset when exporting embedded data.
+- Tracks memory and temporary-file runtime state.
+- Supports equality and ordering comparisons based on file size or content/path
+  fallback behavior.
+- Provides a typed serialized shape through `FileDict`.
 
 ## 3. Constructor
 
@@ -48,88 +63,121 @@ File(
     path: str | None = None,
     content: bytes | None = None,
     mime: str | None = None,
-    export_mode: Literal["data", "reference"] = "reference"
-)
+    export_mode: Literal["data", "reference"] = "reference",
+    export_reset: bool = False,
+) -> None
 ```
+
+At least one of `path` or `content` must be provided.
 
 ## 4. Properties
 
-| Property     | Description                                  |
-|--------------|----------------------------------------------|
-| `name`       | Filename with extension                      |
-| `extension`  | File extension                               |
-| `directory`  | Parent directory (if available)              |
-| `size`       | Human-readable file size                     |
-| `mime`       | MIME type                                    |
-| `loaded`     | Indicates if `content` is in memory          |
-| `temp`       | Whether it’s a temporary file                |
+| Property | Type | Description |
+|----------|------|-------------|
+| `path` | `str | None` | Preferred available path, using the main path or temp path. |
+| `size` | `str` | Human-readable size. |
+| `name` | `str` | Filename with extension when a path is available. |
+| `extension` | `str` | File extension without the dot. |
+| `directory` | `str` | Parent directory when a path is available. |
+| `loaded` | `bool` | Whether `content` is currently in memory. |
+| `temp` | `bool` | Whether a temporary file path is currently associated. |
+
+The raw byte length is available through `len(file)`.
 
 ## 5. Public Methods
 
-| Method           | Description                                             |
-|------------------|---------------------------------------------------------|
-| `load()`         | Loads file content into memory                          |
-| `unload(path)`   | Writes to disk and removes from memory                  |
-| `write(path)`    | Writes file (via `content` or `path`) to destination    |
-| `to_dict()`      | Converts file to dictionary (optionally encoded)        |
-| `from_dict()`    | Reconstructs `File` from dictionary                     |
+| Method | Description |
+|--------|-------------|
+| `to_dict(encode=True)` | Converts the file to a `FileDict` shape. |
+| `from_dict(data)` | Reconstructs a `File` from `FileDict` or compatible mapping data. |
+| `load()` | Loads content from the selected path into memory. |
+| `unload(file_path=None, update=False)` | Writes content to a target path, current path, or temp path and clears memory on success. |
+| `clean()` | Removes the current temporary file when one exists. |
+| `write(outpath=None, verbose=False)` | Writes or copies content to a resolved destination. |
 
 ## 6. Equality & Comparison
 
-`File` supports comparison operators (`==`, `<`, `>`, etc.) based on either path or content.
+`File` supports equality and ordering operators (`==`, `<`, `<=`, `>`, `>=`).
+Comparison is based on file size when both operands are `File` instances. Equality
+also supports comparison with non-`File` values through path/content fallback
+behavior defined in the implementation.
 
 ## 7. Temp File Support
 
-- Temporary files are written inside a subfolder of `tempfile.gettempdir()` using `pyon_file` prefix.
-- Automatically deleted after use via `__clean_tmp()`.
+- Temporary files are written inside a `pyon_file` subfolder under
+  `tempfile.gettempdir()`.
+- `_write_temp()` creates or reuses a temp path for in-memory content.
+- `clean()` removes the current temp file when one exists.
+- `load()` can load content from a temp path and then clean that temp file.
 
 ## 8. Export Modes
 
-| Mode         | Behavior                                   |
-|--------------|--------------------------------------------|
-| `reference`  | Saves file as path only (default)          |
-| `data`       | Embeds base64-encoded content in `.pyon`   |
+| Mode | Behavior |
+|------|----------|
+| `reference` | Serializes the path and metadata without embedding content by default. |
+| `data` | Embeds base64-encoded content in the serialized payload. |
+
+When `export_reset=True` and `export_mode="data"`, `to_dict()` clears the
+serialized path so the exported object is data-only.
 
 ## 9. MIME Detection
 
-Order of resolution:
+MIME resolution order:
 
-1. Manual
-2. Extension-based
-3. File content (`python-magic`)
-4. Filename
-5. Fallback: `application/octet-stream`
+1. Explicit `mime` argument.
+2. Pyon extension check for `.pyon`.
+3. File path detection through `python-magic-bin`.
+4. Content detection through `python-magic-bin`.
+5. Filename detection through `mimetypes`.
+6. Fallback to `application/octet-stream`.
 
-## 10. Integration with Pyon
+## 10. Typing Helpers
+
+`pyon.file.types` defines:
+
+- `ExportMode`: `Literal["data", "reference"]`
+- `FileDict`: serialized dictionary shape used by `File.to_dict()` and
+  `File.from_dict()`
+
+The package includes `pyon/py.typed`, so these annotations are visible to
+consumer type checkers.
+
+## 11. Integration with Pyon
 
 ```python
 import pyon
+from pyon import File
 
-encoded = pyon.encode(file_obj)
+file = File("data/img.jpg", export_mode="reference")
+encoded = pyon.encode(file)
 decoded = pyon.decode(encoded)
 ```
 
-## 11. Static Utilities
+## 12. Static Utilities
 
-- `get_mime_from_name(filename)`
-- `get_mime_from_path(filepath)`
-- `get_mime_from_content(content)`
-- `get_size(bytes)`
-- `_encode_content(content)`
-- `_decode_content(content)`
+Public static helpers:
 
-## 12. Future Ideas
+- `get_mime_from_name(filename: str) -> str`
+- `get_mime_from_path(filepath: str) -> str`
+- `get_mime_from_content(content: bytes) -> str`
+- `get_size(bytes_size: int) -> str`
 
-| Feature        | Description |
-|----------------|-------------|
-| `from_url()`   | Create `File` from a URL with optional headers. |
-| `audit_log()`  | Log and track all load/write/unload operations. |
+Internal helpers such as `_encode_content()`, `_decode_content()`, `_encode()`,
+and `_status()` are implementation details and should not be treated as public
+API.
 
-## 13. License
+## 13. Future Ideas
+
+| Feature | Description |
+|---------|-------------|
+| `from_url()` | Create `File` from a URL with optional headers. |
+| `audit_log()` | Track load/write/unload operations. |
+
+## 14. License
 
 MIT License. See [LICENSE](https://github.com/eonflux-ai/pyon/blob/main/LICENSE).
 
-## 14. Project Links
+## 15. Project Links
 
 - [📦 PyPI: pyon-core](https://pypi.org/project/pyon-core/)
 - [📁 GitHub: pyon.file](https://github.com/eonflux-ai/pyon/tree/main/pyon/file)

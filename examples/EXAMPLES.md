@@ -312,17 +312,18 @@ This example shows pyon encoding and decoding for files.
 
 ```python
 import pyon
+from pathlib import Path
 from pyon import File
 
-FILE_PATH = "./data/img.jpg"
+FILE_PATH = str(Path(__file__).resolve().parent / "data" / "img.jpg")
 
 # 1. Test Objects...
 example_data = {
 
     # 1.1 File Reference: Does not fetch the data. Just saves filesystem references.
-    "File-1": File(FILE_PATH),
+    "File-1": File(FILE_PATH, export_mode="reference"),
 
-    # 1.2 File Data: Fetchs the data and encodes it.
+    # 1.2 File Data: Fetches the data and encodes it.
     "File-2": File(FILE_PATH, export_mode="data")
 
 }
@@ -362,6 +363,10 @@ This example showcases Pyon's ability to encode and decode a wide variety of Pyt
    - **File representation**: Using `File` object for file handling.
 
 ```python
+from pathlib import Path
+
+FILE_PATH = str(Path(__file__).resolve().parent / "data" / "img.jpg")
+
 # 1. Data...
 example_data = {
 
@@ -418,9 +423,7 @@ example_data = {
     "dataclass": Person("John", 30),
 
     # 1.11 Testing files...
-    "File": File(
-        "D:/Desenv/Source/Python/src/metrics/Pyon/tests/data/img.jpg"
-    )
+    "File": File(FILE_PATH)
 
 }
 ```
