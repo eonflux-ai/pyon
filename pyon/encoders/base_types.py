@@ -6,6 +6,10 @@ import logging
 
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any
+
+# --------------------------------------------------------------------------------------------- #
+
 from ..utils import EConst
 
 # --------------------------------------------------------------------------------------------- #
@@ -24,11 +28,11 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode(self, value: object | None) -> Any | None:
         """ Encodes the Entity object """
 
         # 1. Prepare encoded value...
-        encoded = None
+        encoded: Any | None = None
         if self.is_encode(value):
 
             # 1.1 Encode type...
@@ -44,11 +48,11 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode(self, value: object | None) -> Any | None:
         """ Decodes the value """
 
         # 1. Prepare decoded value...
-        decoded = None
+        decoded: Any | None = None
         if self.is_decode(value):
 
             # 1.1 Decode type...
@@ -64,7 +68,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_encode(self, value):
+    def is_encode(self, value: object | None) -> bool:
         """ 
             Checks if Base Types:
             - `bool`, `float`, `int`, `str`, `type`, `None`
@@ -75,7 +79,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_decode(self, value):
+    def is_decode(self, value: object | None) -> bool:
         """ 
             Checks if Base Types:
             - `bool`, `float`, `int`, `str`, `type`, `None`
@@ -93,7 +97,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _is_decode_type(self, value):
+    def _is_decode_type(self, value: object | None) -> bool:
         """ 
             Checks if Base Types:
             - `bool`, `float`, `int`, `str`, `type`, `None`
@@ -104,7 +108,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_type(self, value: type):
+    def _encode_type(self, value: object | None) -> dict[str, str] | None:
         """ Encodes a type object. """
 
         # 1. Checks input...
@@ -126,7 +130,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_type(self, value: dict):
+    def _decode_type(self, value: object | None) -> type[Any] | None:
         """ Decodes a type object. """
 
         # 1. Checks input...

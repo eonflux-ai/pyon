@@ -8,6 +8,7 @@ import logging
 
 from dataclasses import is_dataclass
 from enum import Enum
+from typing import Any, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -309,7 +310,7 @@ class MapEnc(BaseEncoder):
             if decoded and cls:
 
                 # 2.1 Instance and Update...
-                obj = cls.__new__(cls)
+                obj = cast(Any, cls).__new__(cls)
                 if hasattr(obj, EConst.DICT):
 
                     # 3.1 Sets...

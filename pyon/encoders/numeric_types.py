@@ -7,6 +7,7 @@ import logging
 # --------------------------------------------------------------------------------------------- #
 
 from decimal import Decimal
+from typing import Any
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -29,7 +30,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode(self, value: object | None) -> dict[str, Any] | None:
         """ Encodes the Entity object """
 
         # 1. Prepare encoded value...
@@ -49,11 +50,11 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode(self, value: object | None) -> complex | Decimal | None:
         """ Decodes the value """
 
         # 1. Prepare decoded value...
-        decoded = None
+        decoded: complex | Decimal | None = None
 
         # 2. Check numeric payload...
         if ut.is_decode_able(value):
@@ -72,7 +73,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_encode(self, value):
+    def is_encode(self, value: object | None) -> bool:
         """ 
             Checks if Numeric Types:
             - `complex`, `decimal.Decimal`
@@ -83,7 +84,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_decode(self, value):
+    def is_decode(self, value: object | None) -> bool:
         """ 
             Checks if Numeric Types:
             - `complex`, `decimal.Decimal`
@@ -110,7 +111,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_complex(self, value: complex):
+    def _encode_complex(self, value: object | None) -> dict[str, Any] | None:
         """ Encodes the Complex Number """
 
         # 1. Checks input...
@@ -137,7 +138,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_complex(self, value: dict):
+    def _decode_complex(self, value: object | None) -> complex | None:
         """ Decodes to Complex number """
 
         # 1. Prepare output...
@@ -150,7 +151,7 @@ class NumEnc():
             and (EConst.AUX1 in value)
             and (EConst.AUX2 in value)
         )
-        if has_payload:
+        if has_payload and isinstance(value, dict):
 
             # 1.1 Decode complex...
             output = complex(value[EConst.AUX1], value[EConst.AUX2])
@@ -171,7 +172,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_decimal(self, value: Decimal):
+    def _encode_decimal(self, value: object | None) -> dict[str, str] | None:
         """ Encodes a Decimal object to a string representation. """
 
         # 1. Checks input...
@@ -193,7 +194,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_decimal(self, value: dict):
+    def _decode_decimal(self, value: object | None) -> Decimal | None:
         """ Decodes a string representation back to a Decimal object. """
 
         # 1. Checks input...

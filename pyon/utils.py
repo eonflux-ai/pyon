@@ -9,6 +9,10 @@ from datetime import timedelta, timezone
 
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any, TypeGuard
+
+# --------------------------------------------------------------------------------------------- #
+
 MAX_ATTEMPTS = 1000
 
 # --------------------------------------------------------------------------------------------- #
@@ -45,7 +49,7 @@ class EConst:  # pylint: disable=too-few-public-methods
 # --------------------------------------------------------------------------------------------- #
 
 
-def is_decode_able(value):
+def is_decode_able(value: object) -> TypeGuard[dict[str, Any]]:
     """ Checks if `value` can be decoded. """
 
     # 1. Check decode marker...
@@ -55,7 +59,7 @@ def is_decode_able(value):
 # --------------------------------------------------------------------------------------------- #
 
 
-def get_class_name(obj):
+def get_class_name(obj: object) -> str:
     """
     Retrieve the fully qualified class name of an object or class.
 
@@ -84,7 +88,7 @@ def get_class_name(obj):
 # --------------------------------------------------------------------------------------------- #
 
 
-def get_class(obj):
+def get_class(obj: object) -> type[Any] | None:
     """
     Retrieve the class object referenced by a serialized representation.
 
@@ -150,7 +154,7 @@ def lstrip(s: str, char: str) -> str:
 # --------------------------------------------------------------------------------------------- #
 
 
-def get_mangled_name(obj):
+def get_mangled_name(obj: object) -> str:
     """
     Returns the Python name-mangled prefix for private attributes of the given object's class.
 
@@ -224,7 +228,7 @@ def generate_unique_filename(
 # --------------------------------------------------------------------------------------------- #
 
 
-def parse_utc_offset(s: str):
+def parse_utc_offset(s: str) -> timezone | None:
     """Parses a string like +HH:MM/-HH:MM into a fixed-offset tzinfo."""
 
     # 1. Prepare output...
