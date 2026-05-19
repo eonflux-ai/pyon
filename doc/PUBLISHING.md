@@ -323,6 +323,11 @@ Verify publication:
 .\.venv\Scripts\python -m pip index versions pyon-core --pre
 ```
 
+The PyPI JSON API and `pip index` are the authoritative post-upload checks.
+Badge services may lag behind because of CDN/cache behavior. If PyPI and
+`pip index` show the target version but the badge still shows the previous
+version, wait for the badge cache to expire before changing version again.
+
 For alpha releases, users may need:
 
 ```powershell
