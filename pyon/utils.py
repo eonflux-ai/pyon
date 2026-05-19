@@ -2,7 +2,7 @@
 # --------------------------------------------------------------------------------------------- #
 
 import os
-import random
+import secrets
 import string
 import importlib
 from datetime import timedelta, timezone
@@ -201,7 +201,8 @@ def generate_unique_filename(
     while attempts < MAX_ATTEMPTS:
 
         # 1.1 Generate suffix...
-        suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=size))
+        alphabet = string.ascii_lowercase + string.digits
+        suffix = ''.join(secrets.choice(alphabet) for _ in range(size))
         filename = f"{base}_{suffix}{ext}"
 
         # 1.2 Check if unique or skip folder check...
