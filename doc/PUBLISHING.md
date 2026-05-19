@@ -175,6 +175,18 @@ commit and push it to `github/main`, but do not move the release tag unless the
 published artifact itself changes. If the PyPI page must also be corrected, a
 new package version is required because uploaded release files are immutable.
 
+For alpha polishing releases, use the next PEP 440 alpha suffix instead of
+trying to replace an uploaded artifact:
+
+```text
+0.2.7a0 -> 0.2.7a1 -> 0.2.7a2
+```
+
+If the project convention is to keep a human release tag such as
+`v0.2.7-alpha`, recreate that tag only when the intended meaning is "latest
+published alpha for this version line." Do not recreate tags for routine
+documentation commits that are not part of the published artifact.
+
 ---
 
 ## 7. Create Or Refresh The Release Tag
@@ -328,6 +340,16 @@ Badge services may lag behind because of CDN/cache behavior. If PyPI and
 `pip index` show the target version but the badge still shows the previous
 version, wait for the badge cache to expire before changing version again.
 
+Check the PyPI JSON API directly:
+
+```powershell
+$json = Invoke-RestMethod -Uri "https://pypi.org/pypi/pyon-core/json"
+$json.info.version
+$json.releases.PSObject.Properties.Name -contains "0.2.7a2"
+```
+
+Use the actual target version in the release check.
+
 For alpha releases, users may need:
 
 ```powershell
@@ -348,6 +370,8 @@ pip install --pre pyon-core
 - [ ] `dist/` contains only the target version artifacts.
 - [ ] `twine check dist/*` passed.
 - [ ] PyPI upload succeeded.
-- [ ] PyPI index shows the target version.
-- [ ] README badges reflect the published version.
+- [ ] PyPI JSON API shows the target version.
+- [ ] `pip index` shows the target version.
+- [ ] README badges use the approved endpoint.
+- [ ] Badge cache state was reviewed, but stale badge cache did not drive a version bump.
 - [ ] Working tree is clean.
