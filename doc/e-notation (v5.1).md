@@ -224,15 +224,17 @@ parent block `# 2`.
 #### Comment voice
 
 Numbered comments describe what the code does. Prefer a neutral third-person
-form using `It`.
+voice. This means the comment should read as if it refers to the code block as
+the implicit subject. It does not mean the literal word `It` must be written in
+the comment.
 
 Prefer:
 
 ```python
-# 1. It prepares output...
-# 2. It loads cache...
-# 3. It restores attributes...
-# 4. It returns output...
+# 1. Prepares output...
+# 2. Loads cache...
+# 3. Restores attributes...
+# 4. Returns output...
 ```
 
 Avoid vague, imperative, or overly compressed comments:
@@ -245,7 +247,7 @@ Avoid vague, imperative, or overly compressed comments:
 ```
 
 The comment should describe the semantic action, not explain implementation
-details. Keep descriptions short, usually two to six words after `It`.
+details. Keep descriptions short, usually two to six words after the number.
 
 <a id="example"></a>
 #### Example:
@@ -336,6 +338,12 @@ In this example:
     - The function is too long.
     - Helper functions are missing.
 - Comments like ```# 10. ...``` or ```# 10.1 ...``` are a signal to refactor.
+- Do not resolve an over-limit sequence by deleting comments, duplicating a
+  previous number, or converting numbered comments into ordinary comments while
+  leaving the same oversized block in place. The code should be reorganized so
+  the visible semantic scope is smaller, usually by extracting a real helper,
+  splitting test data into named groups, or turning a long branch chain into a
+  dispatch structure. In other words, it may also require refactors.
 
 After refactors, always re-check that the top-level sequence remains ordered
 as `# 1`, `# 2`, `# 3`, and so on. Duplicated numbers, skipped numbers, or
@@ -717,7 +725,7 @@ if (
     or (value > max_value)
 ):
 
-    # 1.1 It updates output...
+    # 1.1 Updates output...
     output = False
     reason = "out_of_range"
 ```
@@ -804,11 +812,11 @@ Preferred when the branch contains multiple actions:
 pyon_path = _uopeople_pyon_path(unit=unit)
 if pyon_path.is_file():
 
-    # 1.1 It reads object...
+    # 1.1 Reads object...
     loaded = pyon.from_file(str(pyon_path))
     if isinstance(loaded, UoPeople):
 
-        # 2.1 It restores runtime...
+        # 2.1 Restores runtime...
         output = cast(UoPeople, loaded)
         output.restore_runtime_clients()
 ```
@@ -1382,11 +1390,11 @@ def _get_uopeople(unit: int) -> UoPeople:
     pyon_path = _uopeople_pyon_path(unit=unit)
     if pyon_path.is_file():
 
-        # 1.1 It reads object...
+        # 1.1 Reads object...
         loaded = pyon.from_file(str(pyon_path))
         if isinstance(loaded, UoPeople):
 
-            # 2.1 It restores runtime...
+            # 2.1 Restores runtime...
             output = cast(UoPeople, loaded)
             output.restore_runtime_clients()
 
@@ -1448,7 +1456,7 @@ Avoid:
 # 2. It prints paths...
 for path in paths:
 
-    # 1.1 It prints path...
+    # 1.1 Prints path...
     print(f"- {path}")
 ```
 
@@ -2103,7 +2111,7 @@ function with this checklist.
 ### Comments
 
 1. Does each numbered comment describe a real semantic unit?
-2. Does each numbered comment use the neutral `It` voice when possible?
+2. Does each numbered comment use neutral third-person voice when possible?
 3. Is the comment short and meaningful?
 4. Are there vague comments such as `# 1. ...`?
 5. Are comments explaining implementation details instead of semantic intent?

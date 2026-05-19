@@ -48,7 +48,7 @@ class EConst:  # pylint: disable=too-few-public-methods
 def is_decode_able(value):
     """ Checks if `value` can be decoded. """
 
-    # 1. It prepares output...
+    # 1. Check decode marker...
     return isinstance(value, dict) and (EConst.TYPE in value)
 
 
@@ -66,18 +66,18 @@ def get_class_name(obj):
         str: A string representing the fully qualified class name, including the module name.
     """
 
-    # 1. It processes block...
+    # 1. Prepare name parts...
     module, name = None, None
 
-    # 2. It processes block...
+    # 2. Read class reference...
     if isinstance(obj, type):
         module, name = f"{obj.__module__}", f"{obj.__qualname__}"
 
-    # 3. It processes block...
+    # 3. Read object class...
     else:
         module, name = f"{obj.__class__.__module__}", f"{obj.__class__.__name__}"
 
-    # 4. It processes block...
+    # 4. Return qualified name...
     return f"{module}.{name}"
 
 
@@ -95,29 +95,29 @@ def get_class(obj):
         type or None: The class object if it exists and can be imported; otherwise, None.
     """
 
-    # 1. It processes block...
+    # 1. Prepare class output...
     cls = None
     if isinstance(obj, dict) and (EConst.CLASS in obj):
 
-        # 1.1 It reads class name...
+        # 1.1 Reads class name...
         class_name = obj[EConst.CLASS]
         if "." in class_name:
 
-            # 2.1 It imports class...
+            # 2.1 Imports class...
             try:
 
-                # 3.1 It loads module...
+                # 3.1 Loads module...
                 module_name, class_name = class_name.rsplit(".", 1)
                 module = importlib.import_module(module_name)
 
-                # 3.2 It resolves class...
+                # 3.2 Resolves class...
                 cls = getattr(module, class_name)
 
-            # 2.2 It handles missing class...
+            # 2.2 Handles missing class...
             except (ModuleNotFoundError, AttributeError):
                 cls = None
 
-    # 2. It returns class...
+    # 2. Return class...
     return cls
 
 
@@ -139,11 +139,11 @@ def lstrip(s: str, char: str) -> str:
     # 1. Initialize index
     i = 0
 
-    # 1.1 Iterate until a different character is found
+    # 2. Iterate until a different character is found
     while i < len(s) and s[i] == char:
         i += 1
 
-    # 2. Return the trimmed string
+    # 3. Return the trimmed string
     return s[i:]
 
 
@@ -161,11 +161,11 @@ def get_mangled_name(obj):
         str: The mangled name prefix (e.g., '_ClassName__').
     """
 
-    # 1. It processes block...
+    # 1. Normalize class name...
     mangled_name = type(obj).__name__
     mangled_name = lstrip(mangled_name, '_')
 
-    # 2. It processes block...
+    # 2. Return prefix...
     return f"_{mangled_name}__"
 
 
@@ -209,7 +209,7 @@ def generate_unique_filename(
         if not folder_path:
             break
 
-        # 1.3 It checks path...
+        # 1.3 Checks path...
         file_path = os.path.join(folder_path, filename)
         if not os.path.exists(file_path):
             break
@@ -227,27 +227,27 @@ def generate_unique_filename(
 def parse_utc_offset(s: str):
     """Parses a string like +HH:MM/-HH:MM into a fixed-offset tzinfo."""
 
-    # 1. It prepares output...
+    # 1. Prepare output...
     output = None
     try:
 
-        # 1.1 It validates text...
+        # 1.1 Validates text...
         if isinstance(s, str) and (len(s) >= 6) and (s[3] == ":"):
             sign = 1 if s[0] == "+" else -1
 
-            # 2.1 It parses parts...
+            # 2.1 Parses parts...
             hours = int(s[1:3])
             minutes = int(s[4:6])
             delta = timedelta(hours=hours, minutes=minutes) * sign
 
-            # 2.2 It builds timezone...
+            # 2.2 Builds timezone...
             output = timezone(delta)
 
-    # 2. It handles invalid text...
+    # 2. Handle invalid text...
     except (TypeError, ValueError, IndexError):
         pass
 
-    # 3. It returns output...
+    # 3. Return output...
     return output
 
 

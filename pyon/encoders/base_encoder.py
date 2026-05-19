@@ -16,11 +16,11 @@ class BaseEncoder(ABC):
     def __init__(self, encoder):
         """ Initializes a Base Encoder """
 
-        # . ...
+        # 1. Validate encoder...
         if encoder is None:
             raise ValueError("Invalid Pyon Encoder")
 
-        # . ...
+        # 2. Store encoder...
         self.__encoder = encoder
 
     # ----------------------------------------------------------------------------------------- #

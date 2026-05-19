@@ -32,19 +32,19 @@ class NumEnc():
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. It processes block...
+        # 1. Prepare encoded value...
         encoded = None
         if self.is_encode(value):
 
-            # 1.1 Complex...
+            # 1.1 Encode complex...
             if isinstance(value, complex):
                 encoded = self._encode_complex(value)
 
-            # 1.2 Decimal...
+            # 1.2 Encode decimal...
             elif isinstance(value, Decimal):
                 encoded = self._encode_decimal(value)
 
-        # 2. It processes block...
+        # 2. Return encoded value...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -52,22 +52,22 @@ class NumEnc():
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. It processes block...
+        # 1. Prepare decoded value...
         decoded = None
 
-        # 2. It processes block...
+        # 2. Check numeric payload...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
-            # 1.1 Complex...
+            # 1.1 Decode complex...
             if _type == SupportedTypes.COMPLEX.value:
                 decoded = self._decode_complex(value)
 
-            # 1.2 Decimal...
+            # 1.2 Decode decimal...
             elif _type == SupportedTypes.DECIMAL.value:
                 decoded = self._decode_decimal(value)
 
-        # 3. It processes block...
+        # 3. Return decoded value...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -78,7 +78,7 @@ class NumEnc():
             - `complex`, `decimal.Decimal`
         """
 
-        # 1. It processes block...
+        # 1. Check numeric value...
         return isinstance(value, (Decimal, complex))
 
     # ----------------------------------------------------------------------------------------- #
@@ -89,23 +89,23 @@ class NumEnc():
             - `complex`, `decimal.Decimal`
         """
 
-        # 1. It processes block...
+        # 1. Prepare decode flag...
         is_decode = False
 
-        # 2. It processes block...
+        # 2. Check numeric payload...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
-            # 1.1 Checks...
-            if _type in (
-                SupportedTypes.COMPLEX.value,
-                SupportedTypes.DECIMAL.value
-            ):
+            # 1.1 Prepare type set...
+            numeric_types = (SupportedTypes.COMPLEX.value, SupportedTypes.DECIMAL.value)
 
-                # 2.1 It validates type...
+            # 1.2 Check type marker...
+            if _type in numeric_types:
+
+                # 2.1 Accept numeric type...
                 is_decode = True
 
-        # 3. It processes block...
+        # 3. Return decode flag...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -117,18 +117,22 @@ class NumEnc():
         output = None
         if (value is not None) and isinstance(value, complex):
 
-            # 1.1 Encodes...
+            # 1.1 Prepare components...
+            real = value.real
+            imag = value.imag
+
+            # 1.2 Build payload...
             output = {
                 EConst.TYPE: SupportedTypes.COMPLEX.value,
-                EConst.AUX1: value.real,
-                EConst.AUX2: value.imag,
+                EConst.AUX1: real,
+                EConst.AUX2: imag,
             }
 
         # 2. Logs if invalid...
         else:
             logger.error("Invalid input. Expected: complex. Received: %s", type(value))
 
-        # 3. Returns...
+        # 4. Returns...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -136,22 +140,25 @@ class NumEnc():
     def _decode_complex(self, value: dict):
         """ Decodes to Complex number """
 
-        # 1. Checks input...
+        # 1. Prepare output...
         output = None
-        if (
+
+        # 2. Check payload shape...
+        has_payload = (
             (value is not None)
             and isinstance(value, dict)
             and (EConst.AUX1 in value)
             and (EConst.AUX2 in value)
-        ):
+        )
+        if has_payload:
 
-            # 1.1 Decodes...
+            # 1.1 Decode complex...
             output = complex(value[EConst.AUX1], value[EConst.AUX2])
 
-        # 2. If invalid...
+        # 3. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid complex...
             logger.error(
                 "Invalid complex input. Expected: dict with %s and %s. Received: %s",
                 EConst.AUX1,
@@ -162,7 +169,7 @@ class NumEnc():
         # 3. Returns...
         return output
 
-# ----------------------------------------------------------------------------------------- #
+    # ----------------------------------------------------------------------------------------- #
 
     def _encode_decimal(self, value: Decimal):
         """ Encodes a Decimal object to a string representation. """
@@ -171,11 +178,11 @@ class NumEnc():
         output = None
         if (value is not None) and isinstance(value, Decimal):
 
-            # 1.1 Encodes...
-            output = {
-                EConst.TYPE: SupportedTypes.DECIMAL.value,
-                EConst.DATA: str(value)
-            }
+            # 1.1 Prepare decimal text...
+            decimal_text = str(value)
+
+            # 1.2 Build payload...
+            output = {EConst.TYPE: SupportedTypes.DECIMAL.value, EConst.DATA: decimal_text}
 
         # 2. Logs if invalid...
         else:
@@ -199,7 +206,7 @@ class NumEnc():
         # 2. If invalid...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid decimal...
             logger.error(
                 "Invalid decimal input. Expected: dict with %s. Received: %s",
                 EConst.DATA,

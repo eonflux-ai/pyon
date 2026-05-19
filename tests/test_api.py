@@ -82,8 +82,11 @@ class _TestClass:  # pylint: disable=too-few-public-methods
     """ Inner test class """
 
     def __init__(self):
+        # 1. Store public value...
         self.public = 1
         self._protected = 2
+
+        # 2. Store private value...
         self.__private = 3  # pylint: disable=unused-private-member
 
 
@@ -94,18 +97,19 @@ class ModelConfig:  # pylint: disable=too-few-public-methods
     """ A class with post-init logic """
 
     def __init__(self, name):
+        # 1. Store configuration...
         self.name = name
         self._model = None
 
-        # 2.1 Store model...
+        # 2. Initialize model...
         self.__init()
 
-    # 1.2 Initialize model...
     def __init(self):
+        # 1. Run post init...
         self.__pyon_post_init__()
 
-    # 1.3 Post initialize...
     def __pyon_post_init__(self):
+        # 1. Store model...
         self._model = f"Loaded model: {self.name}"
 
 
@@ -114,6 +118,204 @@ class ModelConfig:  # pylint: disable=too-few-public-methods
 
 # Namedtuple for Tests
 Named = namedtuple("Named", ["field1", "field2"])
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+DATAFRAME_INDEX_CASES = [
+    # 1. Standard index...
+    pd.DataFrame(
+        {"col1": [1, 2], "col2": ["a", "b"]},
+        index=pd.Index(["a", "b"])
+    ),
+
+    # 2. Range index...
+    pd.DataFrame({"col1": [1, 2, 3]}, index=pd.RangeIndex(start=10, stop=13, step=1)),
+
+    # 3. MultiIndex index...
+    pd.DataFrame(
+        {"col1": [1.0, 2.0, 3.0]},
+        index=pd.MultiIndex.from_tuples(
+            [("A", 1), ("A", 2), ("B", 1)],
+            names=["group", "id"]
+        )
+    ),
+
+    # 4. Datetime index...
+    pd.DataFrame(
+        {"col1": [10, 20, 30]},
+        index=pd.date_range("2025-01-01", periods=3, freq="D")
+    ),
+
+    # 5. Period index...
+    pd.DataFrame(
+        {"col1": [100, 200]},
+        index=pd.period_range("2024Q1", periods=2, freq="Q")
+    ),
+
+    # 6. Timedelta index...
+    pd.DataFrame(
+        {"col1": [5, 10]},
+        index=pd.to_timedelta(["1 days", "2 days"])
+    ),
+
+    # 7. Categorical index...
+    pd.DataFrame(
+        {"col1": [42, 84]},
+        index=pd.CategoricalIndex(["cat", "dog"], name="animal")
+    ),
+
+    # 8. Float64 index...
+    pd.DataFrame(
+        {"col1": [0.1, 0.2]},
+        index=pd.Index([0.1, 0.2], dtype="float64", name="float_id")
+    ),
+
+    # 9. Int64 index...
+    pd.DataFrame(
+        {"col1": [10, 20]},
+        index=pd.Index([100, 200], dtype="int64", name="int_id")
+    ),
+]
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+DATAFRAME_COLUMN_CASES = [
+
+    # 1. UInt64 index...
+    pd.DataFrame(
+        {"col1": [1, 2]},
+        index=pd.Index([10, 20], dtype="uint64", name="uint_id")
+    ),
+
+    # 2. MultiIndex columns...
+    pd.DataFrame(
+        [[22.5, 60, 24.1], [23.0, 55, 23.8]],
+        index=pd.Index(["row1", "row2"]),
+        columns=pd.MultiIndex.from_tuples(
+            [("sensor1", "temp"), ("sensor1", "humidity"), ("sensor2", "temp")],
+            names=["device", "measurement"]
+        )
+    ),
+
+    # 3. CategoricalIndex columns...
+    pd.DataFrame(
+        [[1, 2]],
+        index=pd.Index(["a"]),
+        columns=pd.CategoricalIndex(["col1", "col2"], name="categorical_col")
+    ),
+
+    # 4. MultiIndex index and columns...
+    pd.DataFrame(
+        [[1, 2], [3, 4]],
+        index=pd.MultiIndex.from_tuples(
+            [("X", "x1"), ("X", "x2")],
+            names=["sample", "sub"]
+        ),
+        columns=pd.MultiIndex.from_tuples(
+            [("A", 1), ("A", 2)],
+            names=["group", "measure"]
+        )
+    ),
+]
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+DATAFRAME_CASES = [*DATAFRAME_INDEX_CASES, *DATAFRAME_COLUMN_CASES, None, "invalid", 10, 3.14]
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+SERIES_INDEX_CASES = [
+
+    # 1. Standard index...
+    pd.Series([1.5, 2.0, 3.1], index=["a", "b", "c"], name="standard_series"),
+
+    # 2. Range index...
+    pd.Series(
+        [100, 200, 300],
+        index=pd.RangeIndex(start=0, stop=3, step=1),
+        name="range_series",
+    ),
+
+    # 3. MultiIndex...
+    pd.Series(
+        [10, 20, 30],
+        index=pd.MultiIndex.from_tuples(
+            [("X", 1), ("X", 2), ("Y", 1)],
+            names=["category", "code"]
+        ),
+        name="multiindex_series"
+    ),
+
+    # 4. Datetime index...
+    pd.Series(
+        [1.1, 1.2, 1.3],
+        index=pd.date_range("2024-01-01", periods=3, freq="D"),
+        name="datetime_series"
+    ),
+
+    # 5. Period index...
+    pd.Series(
+        [11, 22],
+        index=pd.period_range("2024Q1", periods=2, freq="Q"),
+        name="period_series"
+    ),
+
+    # 6. Timedelta index...
+    pd.Series(
+        [5, 10],
+        index=pd.to_timedelta(["1 days", "2 days"]),
+        name="timedelta_series"
+    ),
+
+    # 7. Categorical index...
+    pd.Series(
+        [100, 200],
+        index=pd.CategoricalIndex(["low", "high"], name="risk_level"),
+        name="categorical_series"
+    ),
+
+    # 8. Float64 index...
+    pd.Series(
+        [0.1, 0.2],
+        index=pd.Index([0.1, 0.2], dtype="float64", name="float_id"),
+        name="float_series"
+    ),
+
+    # 9. Int64 index...
+    pd.Series(
+        [10, 20],
+        index=pd.Index([1, 2], dtype="int64", name="int_id"),
+        name="int_series"
+    ),
+]
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+SERIES_EXTRA_CASES = [
+
+    # 1. UInt64 index...
+    pd.Series(
+        [99, 100],
+        index=pd.Index([11, 12], dtype="uint64", name="uint_id"),
+        name="uint_series"
+    ),
+]
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+SERIES_CASES = [*SERIES_INDEX_CASES, *SERIES_EXTRA_CASES, None, "invalid", 42, 3.1415]
 
 
 # --------------------------------------------------------------------------------------------- #
@@ -246,9 +448,11 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         encoded = pyon.encode(dt_in)
         dt_out = pyon.decode(encoded)
 
-        # 3. Assert
+        # 3. Assert object...
         assert isinstance(dt_out, datetime)
         assert dt_out == dt_in
+
+        # 4. Assert timezone...
         assert getattr(dt_out.tzinfo, "key", None) == "America/Sao_Paulo"
 
     # ----------------------------------------------------------------------------------------- #
@@ -260,27 +464,33 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         Uses America/New_York which has DST transitions.
         """
 
-        # 1. Arrange: ambiguous wall time at fall-back (01:30 occurs twice)
-        # Example: 2020-11-01 in America/New_York
+        # 1. Arrange timezone...
         try:
+
+            # 1.1 Load timezone...
             zone = ZoneInfo("America/New_York")
+
+        # 2. Skip missing timezone...
         except ZoneInfoNotFoundError:
             pytest.skip("Timezone data not available for America/New_York")
 
+        # 3. Arrange ambiguous wall time...
         dt_in = datetime(2020, 11, 1, 1, 30, 0, tzinfo=zone).replace(fold=fold)
-
-        # 2. Act
         dt_out = pyon.decode(pyon.encode(dt_in))
 
-        # 3. Assert: preserve wall time and fold flag
+        # 4. Assert wall time...
         assert isinstance(dt_out, datetime)
         assert dt_out.replace(tzinfo=None) == dt_in.replace(tzinfo=None)
+
+        # 5. Assert fold...
         assert getattr(dt_out, "fold", 0) == fold
 
-        # 3.1 Timezone identity when available, else fallback to matching offset
+        # 6. Assert timezone...
         tz_key = getattr(dt_out.tzinfo, "key", None) or getattr(dt_out.tzinfo, "zone", None)
         if tz_key is not None:
             assert tz_key == "America/New_York"
+
+        # 7. Assert offset fallback...
         else:
             assert dt_out.utcoffset() == dt_in.utcoffset()
 
@@ -297,9 +507,11 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         # 2. Act
         dt_out = pyon.decode(pyon.encode(dt_in))
 
-        # 3. Assert
+        # 3. Assert value...
         assert isinstance(dt_out, datetime)
         assert dt_out == dt_in
+
+        # 4. Assert timezone absence...
         assert dt_out.tzinfo is None
 
     # ----------------------------------------------------------------------------------------- #
@@ -320,35 +532,56 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         # 2. Act
         df_out = pyon.decode(pyon.encode(df_in))
 
-        # 3. Assert basic type/shape/columns
+        # 3. Assert basic type...
         assert isinstance(df_out, pd.DataFrame)
+
+        # 4. Assert shape and columns...
         assert list(df_out.columns) == list(df_in.columns)
         assert df_out.shape == df_in.shape
 
-        # 3.1 Compare data with aligned timezones (UTC) to avoid tz-identity mismatches
+        # 5. Compare aligned timezones...
         if (
             isinstance(df_in.index, pd.DatetimeIndex)
             and isinstance(df_out.index, pd.DatetimeIndex)
             and (df_in.index.tz is not None)
         ):
+
+            # 1.1 Prepare aligned frames...
             df_in_aligned = df_in.copy()
             df_out_aligned = df_out.copy()
+
+            # 1.2 Normalize timezones...
             df_in_aligned.index = df_in.index.tz_convert("UTC")
             df_out_aligned.index = df_out.index.tz_convert("UTC")
+
+            # 1.3 Assert aligned equality...
             assert df_out_aligned.equals(df_in_aligned)
+
+        # 6. Compare plain result...
         else:
             assert df_out.equals(df_in)
 
-        # 3.2 Extra checks: timezone identity when available and frequency preserved
+        # 7. Check timezone and frequency...
         if isinstance(df_out.index, pd.DatetimeIndex) and isinstance(df_in.index, pd.DatetimeIndex):
+
+            # 1.1 Read timezone key...
             tz_key = getattr(df_out.index.tz, "key", None) or getattr(df_out.index.tz, "zone", None)
+
+            # 1.2 Assert named timezone...
             if tz_key is not None:
                 assert tz_key == tz
+
+            # 1.3 Assert offset fallback...
             else:
+
+                # 2.1 Prepare timestamps...
                 out_ts = cast("pd.Timestamp", df_out.index[0])
                 in_ts = cast("pd.Timestamp", df_in.index[0])
+
+                # 2.2 Compare offsets...
                 assert out_ts.utcoffset() == in_ts.utcoffset()
 
+            # 1.4 Assert frequency...
             assert (df_out.index.freqstr or None) == (df_in.index.freqstr or None)
 
     # ----------------------------------------------------------------------------------------- #
@@ -370,22 +603,36 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         # 3. Assert
         assert isinstance(s_out, pd.Series)
 
-        # 3.1 Compare data with aligned timezones (UTC) to avoid tz-identity mismatches
+        # 4. Compare aligned timezones...
         s_in_aligned = s_in.copy()
         s_out_aligned = s_out.copy()
+
+        # 5. Assert datetime indexes...
         assert isinstance(s_in.index, pd.DatetimeIndex)
         assert isinstance(s_out.index, pd.DatetimeIndex)
+
+        # 6. Normalize timezones...
         s_in_aligned.index = s_in.index.tz_convert("UTC")
         s_out_aligned.index = s_out.index.tz_convert("UTC")
+
+        # 7. Assert aligned equality...
         assert s_out_aligned.equals(s_in_aligned)
 
-        # 3.2 Region identity when available, else offset equality
+        # 8. Check region or offset...
         tz_key = getattr(s_out.index.tz, "key", None) or getattr(s_out.index.tz, "zone", None)
         if tz_key is not None:
+
+            # 1.1 Assert named timezone...
             assert tz_key == tz
+
+        # 9. Assert offset fallback...
         else:
+
+            # 1.1 Prepare timestamps...
             out_ts = cast("pd.Timestamp", s_out.index[0])
             in_ts = cast("pd.Timestamp", s_in.index[0])
+
+            # 1.2 Compare offsets...
             assert out_ts.utcoffset() == in_ts.utcoffset()
 
     # ----------------------------------------------------------------------------------------- #
@@ -600,101 +847,7 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
 
     @pytest.mark.parametrize(
         "value",
-        [
-
-            # 1.1 Standard Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [1, 2], "col2": ["a", "b"]},
-                index=pd.Index(["a", "b"])
-            ),
-
-            # 1.2 Range Index, Standard Columns...
-            pd.DataFrame({"col1": [1, 2, 3]}, index=pd.RangeIndex(start=10, stop=13, step=1)),
-
-            # 1.3 MultiIndex Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [1.0, 2.0, 3.0]},
-                index=pd.MultiIndex.from_tuples(
-                    [("A", 1), ("A", 2), ("B", 1)],
-                    names=["group", "id"]
-                )
-            ),
-
-            # 1.4 Datetime Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [10, 20, 30]},
-                index=pd.date_range("2025-01-01", periods=3, freq="D")
-            ),
-
-            # 1.5 Period Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [100, 200]},
-                index=pd.period_range("2024Q1", periods=2, freq="Q")
-            ),
-
-            # 1.6 Timedelta Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [5, 10]},
-                index=pd.to_timedelta(["1 days", "2 days"])
-            ),
-
-            # 1.7 Categorical Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [42, 84]},
-                index=pd.CategoricalIndex(["cat", "dog"], name="animal")
-            ),
-
-            # 1.8 Float64 Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [0.1, 0.2]},
-                index=pd.Index([0.1, 0.2], dtype="float64", name="float_id")
-            ),
-
-            # 1.9 Int64 Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [10, 20]},
-                index=pd.Index([100, 200], dtype="int64", name="int_id")
-            ),
-
-            # 1.10 UInt64 Index, Standard Columns...
-            pd.DataFrame(
-                {"col1": [1, 2]},
-                index=pd.Index([10, 20], dtype="uint64", name="uint_id")
-            ),
-
-            # 1.11 Standard Index, MultiIndex Columns...
-            pd.DataFrame(
-                [[22.5, 60, 24.1], [23.0, 55, 23.8]],
-                index=pd.Index(["row1", "row2"]),
-                columns=pd.MultiIndex.from_tuples(
-                    [("sensor1", "temp"), ("sensor1", "humidity"), ("sensor2", "temp")],
-                    names=["device", "measurement"]
-                )
-            ),
-
-            # 1.12 Standard Index, CategoricalIndex Columns...
-            pd.DataFrame(
-                [[1, 2]],
-                index=pd.Index(["a"]),
-                columns=pd.CategoricalIndex(["col1", "col2"], name="categorical_col")
-            ),
-
-            # 1.13 MultiIndex Index and MultiIndex Columns...
-            pd.DataFrame(
-                [[1, 2], [3, 4]],
-                index=pd.MultiIndex.from_tuples(
-                    [("X", "x1"), ("X", "x2")],
-                    names=["sample", "sub"]
-                ),
-                columns=pd.MultiIndex.from_tuples(
-                    [("A", 1), ("A", 2)],
-                    names=["group", "measure"]
-                )
-            ),
-
-            # 1.14 Base Types...
-            None, "invalid", 10, 3.14,
-        ]
+        DATAFRAME_CASES,
     )
     def test_dataframe(self, value: pd.DataFrame | None | float | Literal['invalid'] | Literal[10]):
         """ Test encoding and decoding for Pandas Dataframe. """
@@ -724,80 +877,7 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
 
     @pytest.mark.parametrize(
         "value",
-        [
-
-            # 1.1 Standard Index...
-            pd.Series([1.5, 2.0, 3.1], index=["a", "b", "c"], name="standard_series"),
-
-            # 1.2 Range Index...
-            pd.Series(
-                [100, 200, 300],
-                index=pd.RangeIndex(start=0, stop=3, step=1),
-                name="range_series",
-            ),
-
-            # 1.3 MultiIndex...
-            pd.Series(
-                [10, 20, 30],
-                index=pd.MultiIndex.from_tuples(
-                    [("X", 1), ("X", 2), ("Y", 1)],
-                    names=["category", "code"]
-                ),
-                name="multiindex_series"
-            ),
-
-            # 1.4 Datetime Index...
-            pd.Series(
-                [1.1, 1.2, 1.3],
-                index=pd.date_range("2024-01-01", periods=3, freq="D"),
-                name="datetime_series"
-            ),
-
-            # 1.5 Period Index...
-            pd.Series(
-                [11, 22],
-                index=pd.period_range("2024Q1", periods=2, freq="Q"),
-                name="period_series"
-            ),
-
-            # 1.6 Timedelta Index...
-            pd.Series(
-                [5, 10],
-                index=pd.to_timedelta(["1 days", "2 days"]),
-                name="timedelta_series"
-            ),
-
-            # 1.7 Categorical Index...
-            pd.Series(
-                [100, 200],
-                index=pd.CategoricalIndex(["low", "high"], name="risk_level"),
-                name="categorical_series"
-            ),
-
-            # 1.8 Float64 Index...
-            pd.Series(
-                [0.1, 0.2],
-                index=pd.Index([0.1, 0.2], dtype="float64", name="float_id"),
-                name="float_series"
-            ),
-
-            # 1.9 Int64 Index...
-            pd.Series(
-                [10, 20],
-                index=pd.Index([1, 2], dtype="int64", name="int_id"),
-                name="int_series"
-            ),
-
-            # 1.10 UInt64 Index...
-            pd.Series(
-                [99, 100],
-                index=pd.Index([11, 12], dtype="uint64", name="uint_id"),
-                name="uint_series"
-            ),
-
-            # 2.1 Base Types...
-            None, "invalid", 42, 3.1415,
-        ]
+        SERIES_CASES,
     )
     def test_series(
         self, value: pd.Series | None | float | Literal["invalid"] | Literal[42]
@@ -842,14 +922,18 @@ class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
         Tests encoding/decoding with combinations of `enc_protected` and `enc_private`.
         """
 
-        # 1. Prepare...
+        # 1. Prepare object...
         obj = _TestClass()
+
+        # 2. Round-trip object...
         encoded = pyon.encode(obj, enc_protected=enc_protected, enc_private=enc_private)
         decoded = pyon.decode(encoded)
 
-        # 2. Validate...
+        # 3. Validate public value...
         assert isinstance(decoded, _TestClass)
         assert decoded.public == 1
+
+        # 4. Validate hidden values...
         assert getattr(decoded, "_protected", None) == expected_protected  # pylint: disable=protected-access
         assert getattr(decoded, "_TestClass__private", None) == expected_private
 

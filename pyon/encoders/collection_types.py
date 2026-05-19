@@ -37,55 +37,14 @@ class ColEnc(BaseEncoder):
     def encode(self, value):
         """ Encodes the value """
 
-        # 1. It processes block...
+        # 1. Prepare output...
         encoded = None
+
+        # 2. Select encoder...
         if self.is_encode(value):
+            encoded = self.__encode_collection_value(value)
 
-            # 1.1 Bytearray...
-            if isinstance(value, bytearray):
-                encoded = self._encode_bytearray(value)
-
-            # 1.2 Bytes...
-            elif isinstance(value, bytes):
-                encoded = self._encode_bytes(value)
-
-            # 1.3 ChainMap...
-            elif isinstance(value, ChainMap):
-                encoded = self._encode_chainmap(value)
-
-            # 1.4 Counter...
-            elif isinstance(value, Counter):
-                encoded = self._encode_counter(value)
-
-            # 1.5 Default Dict...
-            elif isinstance(value, defaultdict):
-                encoded = self._encode_defaultdict(value)
-
-            # 1.6 Deque...
-            elif isinstance(value, deque):
-                encoded = self._encode_deque(value)
-
-            # 1.7 Frozenset...
-            elif isinstance(value, frozenset):
-                encoded = self._encode_frozenset(value)
-
-            # 1.8 List...
-            elif isinstance(value, list):
-                encoded = self._encode_list(value)
-
-            # 1.9 NamedTuple...
-            elif self._is_named_tuple(value):
-                encoded = self._encode_namedtuple(value)
-
-            # 1.10 Sets...
-            elif isinstance(value, set):
-                encoded = self._encode_set(value)
-
-            # 1.11 Tuples...
-            elif isinstance(value, tuple):
-                encoded = self._encode_tuple(value)
-
-        # 2. It processes block...
+        # 3. Return encoded...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -93,59 +52,77 @@ class ColEnc(BaseEncoder):
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. It processes block...
+        # 1. Prepare output...
         decoded = None
 
-        # 2. It processes block...
+        # 2. Select decoder...
         if ut.is_decode_able(value):
-            _type = value.get(EConst.TYPE)
+            decoded = self.__decode_collection_value(value)
 
-            # 1.1 Bytearray...
-            if _type == SupportedTypes.BYTEARRAY.value:
-                decoded = self._decode_bytearray(value)
-
-            # 1.2 Bytes...
-            elif _type == SupportedTypes.BYTES.value:
-                decoded = self._decode_bytes(value)
-
-            # 1.3 ChainMap...
-            elif _type == SupportedTypes.CHAINMAP.value:
-                decoded = self._decode_chainmap(value)
-
-            # 1.4 Counter...
-            elif _type == SupportedTypes.COUNTER.value:
-                decoded = self._decode_counter(value)
-
-            # 1.5 Default Dict...
-            elif _type == SupportedTypes.DEFAULTDICT.value:
-                decoded = self._decode_defaultdict(value)
-
-            # 1.6 Deque...
-            elif _type == SupportedTypes.DEQUE.value:
-                decoded = self._decode_deque(value)
-
-            # 1.7 Frozenset...
-            elif _type == SupportedTypes.FROZENSET.value:
-                decoded = self._decode_frozenset(value)
-
-            # 1.8 List...
-            elif _type == SupportedTypes.LIST.value:
-                decoded = self._decode_list(value)
-
-            # 1.9 NamedTuple...
-            elif _type == SupportedTypes.NAMEDTUPLE.value:
-                decoded = self._decode_namedtuple(value)
-
-            # 1.10 Sets...
-            elif _type == SupportedTypes.SET.value:
-                decoded = self._decode_set(value)
-
-            # 1.11  Tuples...
-            elif _type == SupportedTypes.TUPLE.value:
-                decoded = self._decode_tuple(value)
-
-        # 3. It processes block...
+        # 3. Return decoded...
         return decoded
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __encode_collection_value(self, value):
+        """ Encodes a supported collection value through the matching helper. """
+
+        # 1. Prepare output...
+        output = None
+
+        # 2. Prepare dispatch...
+        encoders = (
+            (lambda item: isinstance(item, bytearray), self._encode_bytearray),
+            (lambda item: isinstance(item, bytes), self._encode_bytes),
+            (lambda item: isinstance(item, ChainMap), self._encode_chainmap),
+            (lambda item: isinstance(item, Counter), self._encode_counter),
+            (lambda item: isinstance(item, defaultdict), self._encode_defaultdict),
+            (lambda item: isinstance(item, deque), self._encode_deque),
+            (lambda item: isinstance(item, frozenset), self._encode_frozenset),
+            (lambda item: isinstance(item, list), self._encode_list),
+            (self._is_named_tuple, self._encode_namedtuple),
+            (lambda item: isinstance(item, set), self._encode_set),
+            (lambda item: isinstance(item, tuple), self._encode_tuple),
+        )
+
+        # 3. Match encoder...
+        for matcher, encoder in encoders:
+            if (output is None) and matcher(value):
+                output = encoder(value)
+
+        # 4. Return output...
+        return output
+
+    # ----------------------------------------------------------------------------------------- #
+
+    def __decode_collection_value(self, value):
+        """ Decodes a supported collection payload through the matching helper. """
+
+        # 1. Prepare output...
+        output = None
+
+        # 2. Prepare dispatch...
+        decoders = {
+            SupportedTypes.BYTEARRAY.value: self._decode_bytearray,
+            SupportedTypes.BYTES.value: self._decode_bytes,
+            SupportedTypes.CHAINMAP.value: self._decode_chainmap,
+            SupportedTypes.COUNTER.value: self._decode_counter,
+            SupportedTypes.DEFAULTDICT.value: self._decode_defaultdict,
+            SupportedTypes.DEQUE.value: self._decode_deque,
+            SupportedTypes.FROZENSET.value: self._decode_frozenset,
+            SupportedTypes.LIST.value: self._decode_list,
+            SupportedTypes.NAMEDTUPLE.value: self._decode_namedtuple,
+            SupportedTypes.SET.value: self._decode_set,
+            SupportedTypes.TUPLE.value: self._decode_tuple,
+        }
+
+        # 3. Run decoder...
+        decoder = decoders.get(value.get(EConst.TYPE))
+        if decoder is not None:
+            output = decoder(value)
+
+        # 4. Return output...
+        return output
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -156,7 +133,7 @@ class ColEnc(BaseEncoder):
             - `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple` (from collections)
         """
 
-        # 1. It processes block...
+        # 1. Check collection value...
         return isinstance(
             value,
             (
@@ -174,15 +151,15 @@ class ColEnc(BaseEncoder):
             - `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple` (from collections)
         """
 
-        # 1. It processes block...
+        # 1. Prepare decode flag...
         is_decode = False
 
-        # 2. It processes block...
+        # 2. Check collection payload...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
-            # 1.1 Checks...
-            if _type in (
+            # 1.1 Prepare type set...
+            collection_types = (
                 SupportedTypes.BYTEARRAY.value,
                 SupportedTypes.BYTES.value,
                 SupportedTypes.CHAINMAP.value,
@@ -193,13 +170,16 @@ class ColEnc(BaseEncoder):
                 SupportedTypes.LIST.value,
                 SupportedTypes.NAMEDTUPLE.value,
                 SupportedTypes.SET.value,
-                SupportedTypes.TUPLE.value
-            ):
+                SupportedTypes.TUPLE.value,
+            )
 
-                # 2.1 It validates class...
+            # 1.2 Check type marker...
+            if _type in collection_types:
+
+                # 2.1 Accept collection type...
                 is_decode = True
 
-        # 3. It processes block...
+        # 3. Return decode flag...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -207,7 +187,7 @@ class ColEnc(BaseEncoder):
     def _is_named_tuple(self, value):
         """ If `value` is a named tuple """
 
-        # 1. It processes block...
+        # 1. Check namedtuple protocol...
         return isinstance(value, tuple) and hasattr(value, EConst.FIELDS)
 
     # ----------------------------------------------------------------------------------------- #
@@ -215,21 +195,21 @@ class ColEnc(BaseEncoder):
     def _encode_bytearray(self, value: bytearray):
         """ Encodes a bytearray to a Base64 string """
 
-        # 1. It processes block...
+        # 1. Prepare encoded bytearray...
         output = None
         if (value is not None) and isinstance(value, bytearray):
 
-            # 1.1 It encodes data...
+            # 1.1 Encode data...
             output = {
                 EConst.TYPE: SupportedTypes.BYTEARRAY.value,
                 EConst.DATA: base64.b64encode(value).decode('utf-8')
             }
 
-        # 2. It processes block...
+        # 2. Log invalid bytearray...
         else:
             logger.error("Invalid input. Expected: bytearray. Received: %s", type(value))
 
-        # 3. It processes block...
+        # 3. Return encoded bytearray...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -237,24 +217,24 @@ class ColEnc(BaseEncoder):
     def _decode_bytearray(self, value: dict):
         """ Decodes a Base64 string back to bytearray """
 
-        # 1. It processes block...
+        # 1. Prepare decoded bytearray...
         output = None
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
-            # 1.1 It decodes content...
+            # 1.1 Decode content...
             output = bytearray(base64.b64decode(value[EConst.DATA]))
 
-        # 2. It processes block...
+        # 2. Log invalid bytearray...
         else:
 
-            # 1.1 It decodes text...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid bytearray input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. It processes block...
+        # 3. Return decoded bytearray...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -276,7 +256,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: bytes. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -291,17 +271,17 @@ class ColEnc(BaseEncoder):
             # 1.1 Decodes...
             output = base64.b64decode(value[EConst.DATA])
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid bytes input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -326,7 +306,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: ChainMap. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -347,17 +327,17 @@ class ColEnc(BaseEncoder):
             # 1.2 Decodes...
             output = ChainMap(*maps)
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid chainmap input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -379,7 +359,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: Counter. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -395,17 +375,17 @@ class ColEnc(BaseEncoder):
             decoded_data = {k: self._decode_from_dict(v) for k, v in value[EConst.DATA].items()}
             output = Counter(decoded_data)
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid counter input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -428,7 +408,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: defaultdict. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -451,17 +431,17 @@ class ColEnc(BaseEncoder):
             decoded_data = {k: self._decode_from_dict(v) for k, v in value[EConst.DATA].items()}
             output = defaultdict(default_factory, decoded_data)
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid defaultdict input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -483,7 +463,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: deque. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -498,17 +478,17 @@ class ColEnc(BaseEncoder):
             # 1.1 Decodes...
             output = deque([self._decode_from_dict(item) for item in value[EConst.DATA]])
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid deque input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -530,7 +510,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: frozenset. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -545,17 +525,17 @@ class ColEnc(BaseEncoder):
             # 1.1 Decodes...
             output = frozenset([self._decode_from_dict(item) for item in value[EConst.DATA]])
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid frozenset input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -577,7 +557,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: set. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -592,17 +572,17 @@ class ColEnc(BaseEncoder):
             # 1.1 Decodes...
             output = [self._decode_from_dict(item) for item in value[EConst.DATA]]
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid set input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -636,7 +616,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: namedtuple. Received: %s", type(value))
 
-        # 4. Returns...
+        # 4. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -660,17 +640,17 @@ class ColEnc(BaseEncoder):
                 # 2.2 Creates the namedtuple...
                 output = cls_namedtuple(**decoded_data)
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid namedtuple input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -692,7 +672,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: set. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -707,17 +687,17 @@ class ColEnc(BaseEncoder):
             # 1.1 Decodes...
             output = {self._decode_from_dict(item) for item in value[EConst.DATA]}
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid set input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -739,7 +719,7 @@ class ColEnc(BaseEncoder):
         else:
             logger.error("Invalid input. Expected: tuple. Received: %s", type(value))
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -754,17 +734,17 @@ class ColEnc(BaseEncoder):
             # 1.1 Decodes...
             output = tuple(self._decode_from_dict(item) for item in value[EConst.DATA])
 
-        # 2. If invalid...
+        # 2. Log invalid payload...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid payload...
             logger.error(
                 "Invalid tuple input. Expected: dict with %s. Received: %s",
                 EConst.DATA,
                 type(value),
             )
 
-        # 3. Returns...
+        # 3. Return output...
         return output
 
     # ----------------------------------------------------------------------------------------- #

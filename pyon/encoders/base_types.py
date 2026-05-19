@@ -27,19 +27,19 @@ class BaseEnc():
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. It processes block...
+        # 1. Prepare encoded value...
         encoded = None
         if self.is_encode(value):
 
-            # 1.1 Type...
+            # 1.1 Encode type...
             if isinstance(value, type):
                 encoded = self._encode_type(value)
 
-            # 1.2 Base...
+            # 1.2 Keep base value...
             else:
                 encoded = value
 
-        # 2. It processes block...
+        # 2. Return encoded value...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -47,19 +47,19 @@ class BaseEnc():
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. It processes block...
+        # 1. Prepare decoded value...
         decoded = None
         if self.is_decode(value):
 
-            # 1.1 Type...
+            # 1.1 Decode type...
             if self._is_decode_type(value):
                 decoded = self._decode_type(value)
 
-            # 1.2 Base...
+            # 1.2 Keep base value...
             else:
                 decoded = value
 
-        # 2. It processes block...
+        # 2. Return decoded value...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -70,7 +70,7 @@ class BaseEnc():
             - `bool`, `float`, `int`, `str`, `type`, `None`
         """
 
-        # 1. It processes block...
+        # 1. Check supported value...
         return isinstance(value, (int, float, str, bool, type)) or (value is None)
 
     # ----------------------------------------------------------------------------------------- #
@@ -79,16 +79,16 @@ class BaseEnc():
         """ 
             Checks if Base Types:
             - `bool`, `float`, `int`, `str`, `type`, `None`
-       """
+        """
 
-        # 1. It processes block...
+        # 1. Prepare decode flag...
         is_decode = False
 
-        # 2. It processes block...
+        # 2. Check base payload...
         if self.is_encode(value) or self._is_decode_type(value):
             is_decode = True
 
-        # 3. It processes block...
+        # 3. Return decode flag...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -97,9 +97,9 @@ class BaseEnc():
         """ 
             Checks if Base Types:
             - `bool`, `float`, `int`, `str`, `type`, `None`
-       """
+        """
 
-        # 1. It processes block...
+        # 1. Check type payload...
         return isinstance(value, dict) and (EConst.CLASS in value) and (len(value) == 1)
 
     # ----------------------------------------------------------------------------------------- #
@@ -111,10 +111,11 @@ class BaseEnc():
         output = None
         if (value is not None) and isinstance(value, type):
 
-            # 1.1 Encodes...
-            output = {
-                EConst.CLASS: ut.get_class_name(value)
-            }
+            # 1.1 Resolve class name...
+            class_name = ut.get_class_name(value)
+
+            # 1.2 Build payload...
+            output = {EConst.CLASS: class_name}
 
         # 2. Logs if invalid...
         else:
@@ -138,7 +139,7 @@ class BaseEnc():
         # 2. If invalid...
         else:
 
-            # 1.1 Logs...
+            # 1.1 Log invalid type...
             logger.error(
                 "Invalid type input. Expected: dict with %s. Received: %s",
                 EConst.TYPE,
