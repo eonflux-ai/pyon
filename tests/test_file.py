@@ -241,3 +241,204 @@ def test_magic_helpers_and_sizes(monkeypatch):
     assert File.get_size(1024) == "1.0 KB"
     assert File._encode_content(b"abc") is not None  # pylint: disable=protected-access
     assert File._decode_content(File._encode_content(b"abc")) == b"abc"  # pylint: disable=protected-access
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_size_directory_and_len_from_path(tmp_path: Path):
+    """ Uses file-system backed File object and validates derived properties. """
+
+    # 1. It prepares file...
+    source = tmp_path / "d" / "item.txt"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_bytes(b"12345")
+    value = File(path=str(source))
+
+    # 2. It validates properties...
+    assert len(value) == 5
+    assert value.size == "5.0 bytes"
+    assert value.directory.endswith("/d")
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_repr_and_str_include_runtime_status(tmp_path: Path):
+    """ Validates user-facing representation/status output. """
+
+    # 1. It prepares file...
+    source = tmp_path / "item.bin"
+    source.write_bytes(b"xy")
+    value = File(path=str(source), content=b"xy")
+    value._tmp_path = str(source)  # pylint: disable=protected-access
+
+    # 2. It builds text...
+    view = str(value)
+    debug = repr(value)
+
+    # 3. It validates contract...
+    assert "memory" in view
+    assert "filesystem" in view
+    assert "temp" in view
+    assert "mime" in debug
+    assert "loaded" in debug
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_comparison_protocol_with_file_and_non_file(tmp_path: Path):
+    """ Exercises rich comparisons and NotImplemented behavior. """
+
+    # 1. It prepares values...
+    a_path = tmp_path / "a.bin"
+    b_path = tmp_path / "b.bin"
+    a_path.write_bytes(b"1")
+    b_path.write_bytes(b"123")
+    a = File(path=str(a_path))
+    b = File(path=str(b_path))
+
+    # 2. It compares files...
+    assert (a < b) is True
+    assert (a <= b) is True
+    assert (b > a) is True
+    assert (b >= a) is True
+    assert (a == b) is False
+
+    # 3. It validates non-file protocol...
+    assert type(a).__lt__(a, 1) is NotImplemented
+    assert type(a).__le__(a, 1) is NotImplemented
+    assert type(a).__gt__(a, 1) is NotImplemented
+    assert type(a).__ge__(a, 1) is NotImplemented
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_equality_fallback_uses_content_when_paths_unavailable():
+    """ Equality should fallback to loaded content when no path is available. """
+
+    # 1. It prepares values...
+    a = File(content=b"same")
+    b = File(content=b"same")
+    a.path = None
+    b.path = None
+
+    # 2. It validates content-based equality...
+    assert (a == b) is True
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_unload_keep_existing_path_without_update(tmp_path: Path):
+    """ When target path already exists and update=False, unload keeps file untouched. """
+
+    # 1. It prepares source...
+    source = tmp_path / "source.bin"
+    source.write_bytes(b"old")
+    value = File(path=str(source), content=b"new")
+
+    # 2. It unloads without update...
+    assert value.unload(update=False) is True
+
+    # 3. It validates branch outcome...
+    assert source.read_bytes() == b"old"
+    assert value.content is None
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_unload_reuses_existing_temp_file_without_update(tmp_path: Path):
+    """ Existing temp file should be reused when update=False. """
+
+    # 1. It prepares value...
+    temp_file = tmp_path / "temp.bin"
+    temp_file.write_bytes(b"old")
+    value = File(content=b"new")
+    value._tmp_path = str(temp_file)  # pylint: disable=protected-access
+
+    # 2. It unloads...
+    assert value.unload(update=False) is True
+
+    # 3. It validates no rewrite...
+    assert temp_file.read_bytes() == b"old"
+    assert value.content is None
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_clean_logs_failure_and_returns_false(monkeypatch):
+    """ Clean must fail safely when temp deletion raises OSError. """
+
+    # 1. It prepares value...
+    value = File(content=b"x")
+    value._tmp_path = "/tmp/a.bin"  # pylint: disable=protected-access
+    monkeypatch.setattr("pyon.file.api.os.path.isfile", lambda _: True)
+    monkeypatch.setattr("pyon.file.api.os.remove", lambda _: (_ for _ in ()).throw(OSError("boom")))
+
+    # 2. It validates failure contract...
+    assert value.clean() is False
+    assert value._tmp_path is not None  # pylint: disable=protected-access
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_write_to_directory_and_verbose_path(tmp_path: Path):
+    """ Writing with directory target should resolve output filename and create file. """
+
+    # 1. It prepares value...
+    out_dir = tmp_path / "out"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    value = File(content=b"abc")
+
+    # 2. It writes...
+    assert value.write(str(out_dir), verbose=True) is True
+
+    # 3. It validates output existence...
+    assert any(out_dir.iterdir())
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_get_content_prefers_main_path_when_temp_missing(tmp_path: Path):
+    """ _get_content should read main path when temp path is unavailable. """
+
+    # 1. It prepares file...
+    source = tmp_path / "main.bin"
+    source.write_bytes(b"main")
+    value = File(path=str(source))
+    value.content = None
+    value._tmp_path = str(tmp_path / "missing.bin")  # pylint: disable=protected-access
+
+    # 2. It reads content...
+    assert value._get_content() == b"main"  # pylint: disable=protected-access
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def test_get_mime_prefers_pyon_extension(monkeypatch, tmp_path: Path):
+    """ __get_mime should prioritize PYON extension branch when path ends with .pyon. """
+
+    # 1. It prepares value...
+    source = tmp_path / "item.pyon"
+    source.write_text("{}", encoding="utf-8")
+    value = File(path=str(source))
+
+    # 2. It validates pyon MIME...
+    assert value.mime == "application/vnd.pyon+json"
+
+    # 3. It forces fallback name/content branches...
+    monkeypatch.setattr("pyon.file.api.File.get_mime_from_path", lambda _: "")
+    monkeypatch.setattr("pyon.file.api.File.get_mime_from_content", lambda _: "")
+    monkeypatch.setattr("pyon.file.api.File.get_mime_from_name", lambda _: "")
+    value.path = None
+    value.content = None
+    value.mime = getattr(value, "_File__get_mime")(None)
+    assert value.mime == "application/octet-stream"
