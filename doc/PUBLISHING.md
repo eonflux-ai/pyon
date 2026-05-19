@@ -157,7 +157,7 @@ The PyPI version badge should use Shields, because it reflects `pyon-core`
 pre-release versions correctly:
 
 ```md
-[![PyPI version](https://img.shields.io/pypi/v/pyon-core.svg)](https://pypi.org/project/pyon-core/)
+[![PyPI version](https://img.shields.io/pypi/v/pyon-core?cacheSeconds=300&include_prereleases)](https://pypi.org/project/pyon-core/)
 ```
 
 Avoid Badge Fury for this project unless it is verified to show the current
