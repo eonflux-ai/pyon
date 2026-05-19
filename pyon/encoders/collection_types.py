@@ -8,6 +8,7 @@ import logging
 # --------------------------------------------------------------------------------------------- #
 
 from collections import ChainMap, Counter, deque, defaultdict
+from typing import Any, Callable, TypeAlias, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -28,13 +29,18 @@ logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------------------------- #
 
+_CollectionPayload: TypeAlias = dict[str, Any]
+_CollectionEncoder: TypeAlias = Callable[[object | None], _CollectionPayload | None]
+
+# --------------------------------------------------------------------------------------------- #
+
 
 class ColEnc(BaseEncoder):
     """ Collections Encoder """
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode(self, value: object | None) -> _CollectionPayload | None:
         """ Encodes the value """
 
         # 1. Prepare output...
@@ -49,14 +55,14 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode(self, value: object | None) -> Any | None:
         """ Decodes the value """
 
         # 1. Prepare output...
         decoded = None
 
         # 2. Select decoder...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             decoded = self.__decode_collection_value(value)
 
         # 3. Return decoded...
@@ -64,25 +70,40 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __encode_collection_value(self, value):
+    def __encode_collection_value(self, value: object | None) -> _CollectionPayload | None:
         """ Encodes a supported collection value through the matching helper. """
 
         # 1. Prepare output...
         output = None
 
         # 2. Prepare dispatch...
-        encoders = (
-            (lambda item: isinstance(item, bytearray), self._encode_bytearray),
-            (lambda item: isinstance(item, bytes), self._encode_bytes),
-            (lambda item: isinstance(item, ChainMap), self._encode_chainmap),
-            (lambda item: isinstance(item, Counter), self._encode_counter),
-            (lambda item: isinstance(item, defaultdict), self._encode_defaultdict),
-            (lambda item: isinstance(item, deque), self._encode_deque),
-            (lambda item: isinstance(item, frozenset), self._encode_frozenset),
-            (lambda item: isinstance(item, list), self._encode_list),
-            (self._is_named_tuple, self._encode_namedtuple),
-            (lambda item: isinstance(item, set), self._encode_set),
-            (lambda item: isinstance(item, tuple), self._encode_tuple),
+        encoders: tuple[tuple[Callable[[object | None], bool], _CollectionEncoder], ...] = (
+            (
+                lambda item: isinstance(item, bytearray),
+                cast(_CollectionEncoder, self._encode_bytearray),
+            ),
+            (lambda item: isinstance(item, bytes), cast(_CollectionEncoder, self._encode_bytes)),
+            (
+                lambda item: isinstance(item, ChainMap),
+                cast(_CollectionEncoder, self._encode_chainmap),
+            ),
+            (
+                lambda item: isinstance(item, Counter),
+                cast(_CollectionEncoder, self._encode_counter),
+            ),
+            (
+                lambda item: isinstance(item, defaultdict),
+                cast(_CollectionEncoder, self._encode_defaultdict),
+            ),
+            (lambda item: isinstance(item, deque), cast(_CollectionEncoder, self._encode_deque)),
+            (
+                lambda item: isinstance(item, frozenset),
+                cast(_CollectionEncoder, self._encode_frozenset),
+            ),
+            (lambda item: isinstance(item, list), cast(_CollectionEncoder, self._encode_list)),
+            (self._is_named_tuple, cast(_CollectionEncoder, self._encode_namedtuple)),
+            (lambda item: isinstance(item, set), cast(_CollectionEncoder, self._encode_set)),
+            (lambda item: isinstance(item, tuple), cast(_CollectionEncoder, self._encode_tuple)),
         )
 
         # 3. Match encoder...
@@ -95,7 +116,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __decode_collection_value(self, value):
+    def __decode_collection_value(self, value: _CollectionPayload) -> Any | None:
         """ Decodes a supported collection payload through the matching helper. """
 
         # 1. Prepare output...
@@ -117,7 +138,8 @@ class ColEnc(BaseEncoder):
         }
 
         # 3. Run decoder...
-        decoder = decoders.get(value.get(EConst.TYPE))
+        type_marker = value.get(EConst.TYPE)
+        decoder = decoders.get(type_marker) if isinstance(type_marker, str) else None
         if decoder is not None:
             output = decoder(value)
 
@@ -126,7 +148,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_encode(self, value):
+    def is_encode(self, value: object | None) -> bool:
         """ 
             Checks if Collection Types:
             - `bytearray`, `bytes`, `frozenset`, `list`, `set`, `tuple`
@@ -144,7 +166,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_decode(self, value):
+    def is_decode(self, value: object | None) -> bool:
         """ 
             Checks if Collection Types:
             - `bytearray`, `bytes`, `frozenset`, `list`, `set`, `tuple`
@@ -155,7 +177,7 @@ class ColEnc(BaseEncoder):
         is_decode = False
 
         # 2. Check collection payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Prepare type set...
@@ -184,7 +206,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _is_named_tuple(self, value):
+    def _is_named_tuple(self, value: object | None) -> bool:
         """ If `value` is a named tuple """
 
         # 1. Check namedtuple protocol...
@@ -192,7 +214,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_bytearray(self, value: bytearray):
+    def _encode_bytearray(self, value: bytearray) -> dict[str, str] | None:
         """ Encodes a bytearray to a Base64 string """
 
         # 1. Prepare encoded bytearray...
@@ -214,7 +236,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_bytearray(self, value: dict):
+    def _decode_bytearray(self, value: _CollectionPayload) -> bytearray | None:
         """ Decodes a Base64 string back to bytearray """
 
         # 1. Prepare decoded bytearray...
@@ -239,7 +261,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_bytes(self, value: bytes):
+    def _encode_bytes(self, value: bytes) -> dict[str, str] | None:
         """ Encodes bytes to a Base64 string """
 
         # 1. Checks input...
@@ -261,7 +283,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_bytes(self, value: dict):
+    def _decode_bytes(self, value: _CollectionPayload) -> bytes | None:
         """ Decodes a Base64 string back to bytes """
 
         # 1. Checks input...
@@ -286,7 +308,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_chainmap(self, value: ChainMap):
+    def _encode_chainmap(self, value: ChainMap[Any, Any]) -> dict[str, Any] | None:
         """ Encodes a ChainMap object to a list of dictionaries. """
 
         # 1. Checks input...
@@ -311,7 +333,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_chainmap(self, value: dict):
+    def _decode_chainmap(self, value: _CollectionPayload) -> ChainMap[Any, Any] | None:
         """ Decodes a list of dictionaries back to a ChainMap object. """
 
         # 1. Checks input...
@@ -342,7 +364,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_counter(self, value: Counter):
+    def _encode_counter(self, value: Counter[Any]) -> dict[str, Any] | None:
         """ Encodes a Counter object to a dictionary representation. """
 
         # 1. Checks input...
@@ -364,7 +386,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_counter(self, value: dict):
+    def _decode_counter(self, value: _CollectionPayload) -> Counter[Any] | None:
         """ Decodes a dictionary representation back to a Counter object. """
 
         # 1. Checks input...
@@ -390,7 +412,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_defaultdict(self, value: defaultdict):
+    def _encode_defaultdict(self, value: defaultdict[Any, Any]) -> dict[str, Any] | None:
         """ Encodes a defaultdict object to a dictionary representation. """
 
         # 1. Checks input...
@@ -413,7 +435,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_defaultdict(self, value: dict):
+    def _decode_defaultdict(self, value: _CollectionPayload) -> defaultdict[Any, Any] | None:
         """ Decodes a dictionary representation back to a defaultdict object. """
 
         # 1. Checks input...
@@ -446,7 +468,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_deque(self, value: deque):
+    def _encode_deque(self, value: deque[Any]) -> dict[str, Any] | None:
         """ Encodes a deque object to a list representation. """
 
         # 1. Checks input...
@@ -468,7 +490,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_deque(self, value: dict):
+    def _decode_deque(self, value: _CollectionPayload) -> deque[Any] | None:
         """ Decodes a list representation back to a deque object. """
 
         # 1. Checks input...
@@ -493,7 +515,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_frozenset(self, value: frozenset):
+    def _encode_frozenset(self, value: frozenset[Any]) -> dict[str, Any] | None:
         """ Encodes a frozenset object to a list representation. """
 
         # 1. Checks input...
@@ -515,7 +537,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_frozenset(self, value: dict):
+    def _decode_frozenset(self, value: _CollectionPayload) -> frozenset[Any] | None:
         """ Decodes a list representation back to a frozenset object. """
 
         # 1. Checks input...
@@ -540,7 +562,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_list(self, value: list):
+    def _encode_list(self, value: list[Any]) -> dict[str, Any] | None:
         """ Encodes the List """
 
         # 1. Checks input...
@@ -562,7 +584,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_list(self, value: dict):
+    def _decode_list(self, value: _CollectionPayload) -> list[Any] | None:
         """ Decodes to List """
 
         # 1. Checks input...
@@ -587,7 +609,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_namedtuple(self, value: tuple):
+    def _encode_namedtuple(self, value: tuple[Any, ...]) -> dict[str, Any] | None:
         """ Encodes a namedtuple object to a dictionary representation. """
 
         # 1. Checks input...
@@ -621,7 +643,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_namedtuple(self, value: dict):
+    def _decode_namedtuple(self, value: _CollectionPayload) -> Any | None:
         """ Decodes a dictionary representation back to a namedtuple object. """
 
         # 1. Checks input...
@@ -655,7 +677,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_set(self, value: set):
+    def _encode_set(self, value: set[Any]) -> dict[str, Any] | None:
         """ Encodes the Set """
 
         # 1. Checks input...
@@ -677,7 +699,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_set(self, value: dict):
+    def _decode_set(self, value: _CollectionPayload) -> set[Any] | None:
         """ Decodes to Set """
 
         # 1. Checks input...
@@ -702,7 +724,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_tuple(self, value: tuple):
+    def _encode_tuple(self, value: tuple[Any, ...]) -> dict[str, Any] | None:
         """ Encodes the Tuple """
 
         # 1. Checks input...
@@ -724,7 +746,7 @@ class ColEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_tuple(self, value: dict):
+    def _decode_tuple(self, value: _CollectionPayload) -> tuple[Any, ...] | None:
         """ Decodes to Tuple """
 
         # 1. Checks input...

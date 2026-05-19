@@ -143,7 +143,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode_str(self, pyon_str: str | None) -> Any | None:
+    def decode_str(self, pyon_str: str) -> Any | None:
         """ Imports from pyon string. """
 
         # 1. Prepare output...

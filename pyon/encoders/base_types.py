@@ -6,7 +6,7 @@ import logging
 
 # --------------------------------------------------------------------------------------------- #
 
-from typing import Any
+from typing import Any, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -57,7 +57,7 @@ class BaseEnc():
 
             # 1.1 Decode type...
             if self._is_decode_type(value):
-                decoded = self._decode_type(value)
+                decoded = self._decode_type(cast(dict[str, Any], value))
 
             # 1.2 Keep base value...
             else:
@@ -108,7 +108,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_type(self, value: object | None) -> dict[str, str] | None:
+    def _encode_type(self, value: type[Any]) -> dict[str, str] | None:
         """ Encodes a type object. """
 
         # 1. Checks input...
@@ -130,7 +130,7 @@ class BaseEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_type(self, value: object | None) -> type[Any] | None:
+    def _decode_type(self, value: dict[str, Any]) -> type[Any] | None:
         """ Decodes a type object. """
 
         # 1. Checks input...

@@ -6,7 +6,7 @@ from abc import ABC
 
 # --------------------------------------------------------------------------------------------- #
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -34,22 +34,22 @@ class BaseEncoder(ABC):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_as_dict(self, value: object | None) -> Any | None:
-        return self.__encoder.encode_dict(value)
+    def _encode_as_dict(self, value: object | None) -> dict[str, Any]:
+        return cast(dict[str, Any], self.__encoder.encode_dict(value))
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_from_dict(self, value: object | None) -> Any | None:
+    def _decode_from_dict(self, value: dict[str, Any]) -> Any | None:
         return self.__encoder.decode_dict(value)
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_as_str(self, value: object | None) -> str | None:
-        return self.__encoder.encode_str(value)
+    def _encode_as_str(self, value: object | None) -> str:
+        return cast(str, self.__encoder.encode_str(value))
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_from_str(self, value: str | None) -> Any | None:
+    def _decode_from_str(self, value: str) -> Any | None:
         return self.__encoder.decode_str(value)
 
     # ----------------------------------------------------------------------------------------- #

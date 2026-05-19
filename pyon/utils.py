@@ -9,7 +9,7 @@ from datetime import timedelta, timezone
 
 # --------------------------------------------------------------------------------------------- #
 
-from typing import Any, TypeGuard
+from typing import Any
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -49,7 +49,7 @@ class EConst:  # pylint: disable=too-few-public-methods
 # --------------------------------------------------------------------------------------------- #
 
 
-def is_decode_able(value: object) -> TypeGuard[dict[str, Any]]:
+def is_decode_able(value: object) -> bool:
     """ Checks if `value` can be decoded. """
 
     # 1. Check decode marker...

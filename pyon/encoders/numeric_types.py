@@ -57,7 +57,7 @@ class NumEnc():
         decoded: complex | Decimal | None = None
 
         # 2. Check numeric payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Decode complex...
@@ -94,7 +94,7 @@ class NumEnc():
         is_decode = False
 
         # 2. Check numeric payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Prepare type set...
@@ -111,7 +111,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_complex(self, value: object | None) -> dict[str, Any] | None:
+    def _encode_complex(self, value: complex) -> dict[str, Any] | None:
         """ Encodes the Complex Number """
 
         # 1. Checks input...
@@ -138,7 +138,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_complex(self, value: object | None) -> complex | None:
+    def _decode_complex(self, value: dict[str, Any]) -> complex | None:
         """ Decodes to Complex number """
 
         # 1. Prepare output...
@@ -172,7 +172,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_decimal(self, value: object | None) -> dict[str, str] | None:
+    def _encode_decimal(self, value: Decimal) -> dict[str, str] | None:
         """ Encodes a Decimal object to a string representation. """
 
         # 1. Checks input...
@@ -194,7 +194,7 @@ class NumEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_decimal(self, value: object | None) -> Decimal | None:
+    def _decode_decimal(self, value: dict[str, Any]) -> Decimal | None:
         """ Decodes a string representation back to a Decimal object. """
 
         # 1. Checks input...

@@ -10,7 +10,7 @@ import tempfile
 
 # --------------------------------------------------------------------------------------------- #
 
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -42,7 +42,7 @@ class File:
         path: str | None = None,
         content: bytes | None = None,
         mime: str | None = None,
-        export_mode: ExportMode = "reference",
+        export_mode: Literal["data", "reference"] = "reference",
         export_reset: bool = False
     ) -> None:
         """
