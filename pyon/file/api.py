@@ -10,7 +10,7 @@ import tempfile
 
 # --------------------------------------------------------------------------------------------- #
 
-from typing import Literal
+from typing import Literal, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -74,7 +74,7 @@ class File:
         self.content = content
 
         # 3. It processes block...
-        self._tmp_path = None
+        self._tmp_path: str | None = None
         self.mime = self.__get_mime(mime)
 
         # 4. It processes block...
@@ -349,7 +349,7 @@ class File:
         """ Converts to dictionary. """
 
         # 1. It processes block...
-        output = {
+        output: dict[str, str | bool | bytes | None] = {
             "path": self.path,
             "mime": self.mime,
             "export_mode": self.export_mode,
@@ -382,11 +382,11 @@ class File:
 
             # 1.2 It restores metadata...
             obj.path = data.get("path")
-            obj.mime = data.get("mime")
+            obj.mime = cast(str, data.get("mime"))
 
             # 1.3 It restores export...
-            obj.export_mode = data.get("export_mode")
-            obj.export_reset = data.get("export_reset")
+            obj.export_mode = cast(Literal["data", "reference"], data.get("export_mode"))
+            obj.export_reset = cast(bool, data.get("export_reset"))
 
             # 1.4 It restores content...
             obj.content = File._decode_content(data.get("content"))
