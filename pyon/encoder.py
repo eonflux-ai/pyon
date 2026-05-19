@@ -88,7 +88,7 @@ class PyonEncoder():
         """ Decodes the value """
 
         # 1. Prepare output...
-        decoded = None
+        decoded: Any | None = None
         if ut.is_decode_able(value):
 
             # 1.1 Decode numeric types...

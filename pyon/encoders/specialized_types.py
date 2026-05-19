@@ -10,6 +10,10 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any
+
+# --------------------------------------------------------------------------------------------- #
+
 import numpy
 import pandas
 
@@ -59,7 +63,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode(self, value: object | None) -> dict[str, Any] | None:
         """ Encodes the Entity object """
 
         # 1. Prepare encoded value...
@@ -95,14 +99,14 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode(self, value: object | None) -> Any | None:
         """ Decodes the value """
 
         # 1. Prepare decoded value...
-        decoded = None
+        decoded: Any | None = None
 
         # 2. Check specialized payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Decode bitarray...
@@ -134,7 +138,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_encode(self, value):
+    def is_encode(self, value: object | None) -> bool:
         """ 
             Checks if encode of Specialized Types:
             - `bitarray.bitarray`, `numpy.ndarray`, `pyon.File`, `uuid.UUID`
@@ -156,7 +160,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_decode(self, value):
+    def is_decode(self, value: object | None) -> bool:
         """ 
             Checks if decode of Specialized Types:
             - `bitarray.bitarray`, `numpy.ndarray`, `pyon.File`, `uuid.UUID`
@@ -167,7 +171,7 @@ class SpecEnc(BaseEncoder):
         is_decode = False
 
         # 2. Check specialized payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Prepare type set...
@@ -191,7 +195,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_bitarray(self, value: bitarray):
+    def _encode_bitarray(self, value: bitarray) -> dict[str, str] | None:
         """ Encodes a bitarray object to a dictionary representation. """
 
         # 1. Checks input...
@@ -213,7 +217,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_bitarray(self, value: dict):
+    def _decode_bitarray(self, value: dict[str, Any]) -> bitarray | None:
         """ Decodes a dictionary representation back to a bitarray object. """
 
         # 1. Prepare decoded bitarray...
@@ -238,7 +242,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_file(self, value: File):
+    def _encode_file(self, value: File) -> dict[str, Any] | None:
         """ Encodes the file """
 
         # 1. Checks input...
@@ -260,7 +264,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_file(self, value: dict):
+    def _decode_file(self, value: dict[str, Any]) -> File | None:
         """ Decodes to File """
 
         # 1. Checks input...
@@ -285,7 +289,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_ndarray(self, value: numpy.ndarray):
+    def _encode_ndarray(self, value: numpy.ndarray) -> dict[str, Any] | None:
         """ Encodes the Numpy ndarray """
 
         # 1. Checks input...
@@ -308,7 +312,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_ndarray(self, value: dict):
+    def _decode_ndarray(self, value: dict[str, Any]) -> numpy.ndarray | None:
         """ Decodes to Numpy ndarray """
 
         # 1. Checks input...
@@ -346,7 +350,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_uuid(self, value: UUID):
+    def _encode_uuid(self, value: UUID) -> dict[str, str] | None:
         """ Encodes a UUID object to a string representation. """
 
         # 1. Checks input...
@@ -368,7 +372,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_uuid(self, value: dict):
+    def _decode_uuid(self, value: dict[str, Any]) -> UUID | None:
         """ Decodes a string representation back to a UUID object. """
 
         # 1. Checks input...
@@ -393,7 +397,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_dataframe(self, value: pandas.DataFrame):
+    def _encode_dataframe(self, value: pandas.DataFrame) -> dict[str, Any] | None:
         """ Encodes the DataFrame. """
 
         # 1. Checks input...
@@ -423,7 +427,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_dataframe(self, value: dict):
+    def _decode_dataframe(self, value: dict[str, Any]) -> pandas.DataFrame | None:
         """ Decodes to a DataFrame. """
 
         # 1. Checks input...
@@ -457,7 +461,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_series(self, value: pandas.Series):
+    def _encode_series(self, value: pandas.Series) -> dict[str, Any] | None:
         """ Encodes the Series. """
 
         # 1. Checks input...
@@ -485,7 +489,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_series(self, value: dict):
+    def _decode_series(self, value: dict[str, Any]) -> pandas.Series | None:
         """ Decodes to a Series. """
 
         # 1. Checks input...
@@ -521,7 +525,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __decode_columns(self, value: dict):
+    def __decode_columns(self, value: dict[str, Any]) -> pandas.Index | None:
         """ Decodes to a DataFrame. """
 
         # 1. Checks input...
@@ -574,7 +578,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __decode_index(self, value: dict):
+    def __decode_index(self, value: dict[str, Any]) -> pandas.Index | None:
         """ Decodes to a DataFrame. """
 
         # 1. Checks input...
@@ -614,7 +618,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __is_arithmetic_range(self, seq):
+    def __is_arithmetic_range(self, seq: object) -> bool:
         """Validates whether a sequence represents a regular arithmetic range."""
 
         # 1. Check arithmetic range...
@@ -626,7 +630,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __build_range_index(self, seq, name):
+    def __build_range_index(self, seq: list[Any], name: Any) -> pandas.RangeIndex:
         """Builds a pandas RangeIndex from a valid arithmetic sequence."""
 
         # 1. Calculate step...
@@ -642,8 +646,13 @@ class SpecEnc(BaseEncoder):
     # ----------------------------------------------------------------------------------------- #
 
     def __rebuild_index(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self, index_data, index_names, index_type, freq=None, tz_meta=None
-    ):
+        self,
+        index_data: Any,
+        index_names: Any,
+        index_type: Any,
+        freq: Any = None,
+        tz_meta: Any = None,
+    ) -> pandas.Index | None:
         """ Rebuilds a pandas Index or subclass based on its serialized components. """
 
         # 1. Checks input...
@@ -667,8 +676,14 @@ class SpecEnc(BaseEncoder):
     # ----------------------------------------------------------------------------------------- #
 
     def __rebuild_valid_index(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self, index_data, index_names, index_name, index_type, freq, tz_meta
-    ):
+        self,
+        index_data: Any,
+        index_names: Any,
+        index_name: Any,
+        index_type: Any,
+        freq: Any,
+        tz_meta: Any,
+    ) -> pandas.Index:
         """Builds a supported pandas index type."""
 
         # 1. MultiIndex...
@@ -692,7 +707,9 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __rebuild_datetime_index(self, index_data, index_name, freq, tz_meta):
+    def __rebuild_datetime_index(
+        self, index_data: Any, index_name: Any, freq: Any, tz_meta: Any
+    ) -> pandas.DatetimeIndex:
         """Rebuilds a DatetimeIndex while preserving timezone metadata."""
 
         # 1. Resolve timezone...
@@ -715,7 +732,9 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __rebuild_non_datetime_index(self, index_data, index_name, index_type, freq):
+    def __rebuild_non_datetime_index(
+        self, index_data: Any, index_name: Any, index_type: Any, freq: Any
+    ) -> pandas.Index:
         """Rebuilds non-datetime pandas index variants."""
 
         # 1. PeriodIndex...
@@ -739,14 +758,14 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __pre_encode(self, index):
+    def __pre_encode(self, index: pandas.Index) -> list[Any]:
         """ Converts the index into a JSON-safe list structure for serialization. """
 
         # 1. Checks for MultiIndex...
         if isinstance(index, pandas.MultiIndex):
 
             # 1.1 Converts tuples to lists...
-            output = [list(x) for x in index.to_list()]
+            output: list[Any] = [list(x) for x in index.to_list()]
 
         # 2. Handles pandas-specific temporal types...
         else:
@@ -764,7 +783,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __pre_decode(self, index_data, index_type):
+    def __pre_decode(self, index_data: Any, index_type: Any) -> Any:
         """
         Reconstructs index elements after decoding from JSON-safe format.
 
@@ -801,7 +820,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __index_freq(self, index):
+    def __index_freq(self, index: pandas.Index) -> str | None:
         """ Checks if the index has a frequency attribute. """
 
         # 1. Checks for Frequency...
@@ -819,7 +838,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __index_tz(self, index):
+    def __index_tz(self, index: pandas.Index) -> dict[str, str] | None:
         """ Checks if the index has a timezone attribute. """
 
         # 1. Output...
@@ -834,7 +853,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __build_tz_meta_from_index(self, index: pandas.DatetimeIndex):
+    def __build_tz_meta_from_index(self, index: pandas.DatetimeIndex) -> dict[str, str] | None:
         """Builds timezone metadata dict from a DatetimeIndex (zone or fixed offset)."""
 
         # 1. Prepare metadata...
@@ -873,7 +892,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __format_offset(self, delta):
+    def __format_offset(self, delta: Any) -> str | None:
         """Format a UTC offset timedelta as "+HH:MM" or "-HH:MM"."""
 
         # 1. Read seconds safely...
@@ -907,7 +926,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __parse_offset(self, s: str):
+    def __parse_offset(self, s: str) -> Any | None:
         """Parse a string like "+HH:MM"/"-HH:MM" to a tzinfo (fixed offset)."""
 
         # 1. Parse offset...
@@ -915,7 +934,7 @@ class SpecEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __tzinfo_from_meta(self, tz_meta):
+    def __tzinfo_from_meta(self, tz_meta: Any) -> Any | None:
         """Build tzinfo from serialized tz metadata (zone preferred, else fixed offset)."""
 
         # 1. Prepare timezone...

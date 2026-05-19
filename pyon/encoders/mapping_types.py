@@ -6,9 +6,10 @@ import logging
 
 # --------------------------------------------------------------------------------------------- #
 
+from collections.abc import Iterable
 from dataclasses import is_dataclass
 from enum import Enum
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -26,6 +27,11 @@ from .base_encoder import BaseEncoder
 
 # --------------------------------------------------------------------------------------------- #
 
+if TYPE_CHECKING:
+    from pyon.encoder import PyonEncoder
+
+# --------------------------------------------------------------------------------------------- #
+
 logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------------------------- #
@@ -36,7 +42,9 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __init__(self, encoder, enc_protected: bool = False, enc_private: bool = False):
+    def __init__(
+        self, encoder: "PyonEncoder", enc_protected: bool = False, enc_private: bool = False
+    ) -> None:
         super().__init__(encoder)
 
         # 1. Store export policy...
@@ -45,7 +53,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode(self, value: object | None) -> dict[str, Any] | None:
         """ Encodes the Entity object """
 
         # 1. Prepare encoded value...
@@ -65,14 +73,14 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode(self, value: object | None) -> Any | None:
         """ Decodes the value """
 
         # 1. Prepare decoded value...
         decoded = None
 
         # 2. Check mapping payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Decode enum...
@@ -88,7 +96,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_encode(self, value):
+    def is_encode(self, value: object | None) -> bool:
         """ 
             Checks if Mapping Types:
             - `class` (user defined classes), `dataclasses.dataclass`, `dict`, `Enum`
@@ -99,7 +107,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_decode(self, value):
+    def is_decode(self, value: object | None) -> bool:
         """ 
             Checks if Mapping Types:
             - `class` (user defined classes), `dataclasses.dataclass`, `dict`, `Enum`
@@ -109,7 +117,7 @@ class MapEnc(BaseEncoder):
         is_decode = False
 
         # 2. Check mapping payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Prepare type set...
@@ -131,7 +139,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _is_dict(self, value):
+    def _is_dict(self, value: object | None) -> bool:
         """ Checks if Dict Like Value """
 
         # 1. Check dictionary protocol...
@@ -139,7 +147,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_enum(self, value: Enum):
+    def _encode_enum(self, value: Enum) -> dict[str, Any] | None:
         """ Encodes the Enum """
 
         # 1. Checks input...
@@ -165,7 +173,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_enum(self, value: dict):
+    def _decode_enum(self, value: dict[str, Any]) -> Enum | None:
         """ Decodes to Enum """
 
         # 1. Checks input...
@@ -195,7 +203,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_dict(self, value):
+    def _encode_dict(self, value: object | None) -> dict[str, Any] | None:
         """ Encodes the value """
 
         # 1. Prepare encoded mapping...
@@ -209,13 +217,25 @@ class MapEnc(BaseEncoder):
             enc_private = exp_info[0] or self.enc_private
             enc_protected = exp_info[1] or self.enc_protected
 
-            # 1.3 Serializes items...
+            # 1.3 Select items...
+            dict_items: Iterable[tuple[Any, Any]]
+            if hasattr(value, EConst.DICT):
+
+                # 2.1 Use object variables...
+                dict_items = vars(value).items()
+
+            # 1.4 Use mapping items...
+            else:
+                dict_value = cast(dict[Any, Any], value)
+                dict_items = dict_value.items()
+
+            # 1.5 Serializes items...
             export_policy = (enc_private, enc_protected)
-            serialized_dict = {}
-            for key, val in vars(value).items() if hasattr(value, EConst.DICT) else value.items():
+            serialized_dict: dict[str, Any] = {}
+            for key, val in dict_items:
                 self.__encode_dict_item(serialized_dict, value, (key, val), export_policy)
 
-            # 1.4 Build output...
+            # 1.6 Build output...
             encoded = {
                 EConst.TYPE: self._get_defulat_type(value),
                 EConst.CLASS: ut.get_class_name(value),
@@ -227,7 +247,13 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __encode_dict_item(self, serialized_dict, value, item, export_policy):
+    def __encode_dict_item(
+        self,
+        serialized_dict: dict[str, Any],
+        value: object,
+        item: tuple[Any, Any],
+        export_policy: tuple[bool, bool],
+    ) -> None:
         """Encodes one dictionary/object item according to export visibility."""
 
         # 1. Unpack item...
@@ -249,7 +275,9 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __can_encode_dict_key(self, value, key, enc_private, enc_protected):
+    def __can_encode_dict_key(
+        self, value: object, key: Any, enc_private: bool, enc_protected: bool
+    ) -> bool:
         """Checks whether a dictionary/object key should expose its value."""
 
         # 1. Prepare visible flag...
@@ -264,7 +292,9 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __can_encode_string_key(self, value, key, enc_private, enc_protected):
+    def __can_encode_string_key(
+        self, value: object, key: str, enc_private: bool, enc_protected: bool
+    ) -> bool:
         """Checks string key visibility against private/protected policies."""
 
         # 1. Prepare private marker...
@@ -287,11 +317,11 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_dict(self, value):
+    def _decode_dict(self, value: object | None) -> Any:
         """ Decodes the value """
 
         # 1. Prepare decoded mapping...
-        decoded = {}
+        decoded: dict[Any, Any] = {}
         if isinstance(value, dict) and (EConst.TYPE in value):
 
             # 1.1 Dict Items...
@@ -322,7 +352,7 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _get_defulat_type(self, obj):
+    def _get_defulat_type(self, obj: object | None) -> str | None:
 
         # 1. Prepare type marker...
         tp = None

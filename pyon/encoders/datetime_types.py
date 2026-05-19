@@ -11,6 +11,10 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any
+
+# --------------------------------------------------------------------------------------------- #
+
 from ..utils import EConst
 from ..supported_types import SupportedTypes
 
@@ -30,7 +34,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode(self, value):
+    def encode(self, value: object | None) -> dict[str, Any] | None:
         """ Encodes the Entity object """
 
         # 1. Prepare encoded value...
@@ -54,14 +58,14 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode(self, value):
+    def decode(self, value: object | None) -> date | datetime | time | None:
         """ Decodes the value """
 
         # 1. Prepare decoded value...
-        decoded = None
+        decoded: date | datetime | time | None = None
 
         # 2. Check datetime payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Decode date...
@@ -81,7 +85,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_encode(self, value):
+    def is_encode(self, value: object | None) -> bool:
         """ 
             Checks if Datetime Types:
             - `datetime.date`, `datetime.datetime`, `datetime.time`
@@ -92,7 +96,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def is_decode(self, value):
+    def is_decode(self, value: object | None) -> bool:
         """ 
             Checks if Datetime Types:
             - `datetime.date`, `datetime.datetime`, `datetime.time`
@@ -102,7 +106,7 @@ class DateEnc():
         is_decode = False
 
         # 2. Check datetime payload...
-        if ut.is_decode_able(value):
+        if isinstance(value, dict) and ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
             # 1.1 Prepare type set...
@@ -123,7 +127,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_date(self, value: date):
+    def _encode_date(self, value: date) -> dict[str, str] | None:
         """ Encodes a date object to ISO 8601 format. """
 
         # 1. Checks input...
@@ -145,7 +149,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_date(self, value: dict):
+    def _decode_date(self, value: dict[str, Any]) -> date | None:
         """ Decodes an ISO 8601 string back to a date object. """
 
         # 1. Checks input...
@@ -170,7 +174,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_datetime(self, value: datetime):
+    def _encode_datetime(self, value: datetime) -> dict[str, Any] | None:
         """ Encodes a datetime object to ISO 8601 format. """
 
         # 1. Checks input...
@@ -220,7 +224,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_datetime(self, value: dict):
+    def _decode_datetime(self, value: dict[str, Any]) -> datetime | None:
         """ Decodes an ISO 8601 string back to a datetime object. """
 
         # 1. Checks input...
@@ -250,7 +254,9 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_datetime_tz_meta(self, output, tz_meta):
+    def __apply_datetime_tz_meta(
+        self, output: datetime, tz_meta: dict[str, Any]
+    ) -> datetime:
         """Applies serialized timezone metadata to a decoded datetime."""
 
         # 1. Extract metadata...
@@ -268,7 +274,9 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_datetime_zone_or_offset(self, output, tz_zone, tz_offset_str):
+    def __apply_datetime_zone_or_offset(
+        self, output: datetime, tz_zone: Any, tz_offset_str: Any
+    ) -> datetime:
         """Applies a zone name when possible, otherwise applies a fixed offset."""
 
         # 1. Prefer named zone...
@@ -299,7 +307,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_datetime_offset(self, output, tz_offset_str):
+    def __apply_datetime_offset(self, output: datetime, tz_offset_str: Any) -> datetime:
         """Attaches a fixed offset when the decoded datetime is naive."""
 
         # 1. Apply offset...
@@ -311,7 +319,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_datetime_fold(self, output, tz_fold):
+    def __apply_datetime_fold(self, output: datetime, tz_fold: Any) -> datetime:
         """Applies a valid PEP 495 fold value."""
 
         # 1. Apply valid fold...
@@ -328,7 +336,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_time(self, value: time):
+    def _encode_time(self, value: time) -> dict[str, Any] | None:
         """ Encodes a time object to ISO 8601 format. """
 
         # 1. Checks input...
@@ -371,7 +379,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_time(self, value: dict):
+    def _decode_time(self, value: dict[str, Any]) -> time | None:
         """ Decodes an ISO 8601 string back to a time object. """
 
         # 1. Checks input...
@@ -401,7 +409,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_time_tz_meta(self, output, tz_meta):
+    def __apply_time_tz_meta(self, output: time, tz_meta: dict[str, Any]) -> time:
         """Applies serialized timezone metadata to a decoded time."""
 
         # 1. Extract metadata...
@@ -416,7 +424,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_time_zone_or_offset(self, output, tz_zone, tz_offset_str):
+    def __apply_time_zone_or_offset(self, output: time, tz_zone: Any, tz_offset_str: Any) -> time:
         """Applies a named time zone or an offset fallback to a time value."""
 
         # 1. Prefer named zone...
@@ -437,7 +445,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __apply_time_offset(self, output, tz_offset_str):
+    def __apply_time_offset(self, output: time, tz_offset_str: Any) -> time:
         """Attaches a fixed offset when the decoded time is naive."""
 
         # 1. Apply offset...
@@ -466,7 +474,7 @@ class DateEnc():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __parse_offset(self, s: str):
+    def __parse_offset(self, s: str) -> Any | None:
         """Parse a string like "+HH:MM"/"-HH:MM" to a tzinfo (fixed offset)."""
 
         # 1. Parse offset...
