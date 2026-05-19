@@ -102,7 +102,7 @@ def test_to_dict_data_mode_resets_path_when_export_reset(tmp_path: Path):
 
     # 4. Checks content shape...
     assert data["export_reset"] is True
-    assert isinstance(data["content"], str)
+    assert isinstance(data.get("content"), str)
 
 
 # --------------------------------------------------------------------------------------------- #

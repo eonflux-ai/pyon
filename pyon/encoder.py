@@ -7,6 +7,10 @@ import logging
 
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any
+
+# --------------------------------------------------------------------------------------------- #
+
 from .encoders import BaseEnc, ColEnc, DateEnc, SpecEnc, NumEnc, MapEnc
 
 # --------------------------------------------------------------------------------------------- #
@@ -25,7 +29,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __init__(self, enc_protected: bool = False, enc_private: bool = False):
+    def __init__(self, enc_protected: bool = False, enc_private: bool = False) -> None:
         """ Initializes a Pyon Encoder """
 
         # 1. Prepare core encoders...
@@ -44,7 +48,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode_dict(self, value):
+    def encode_dict(self, value: object | None) -> Any | None:
         """ Encodes the Entity object """
 
         # 1. Prepare output...
@@ -80,7 +84,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode_dict(self, value):
+    def decode_dict(self, value: object | None) -> Any | None:
         """ Decodes the value """
 
         # 1. Prepare output...
@@ -116,7 +120,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def encode_str(self, obj):
+    def encode_str(self, obj: object | None) -> str | None:
         """ Exports to pyon. """
 
         # 1. Prepare output...
@@ -139,7 +143,7 @@ class PyonEncoder():
 
     # ----------------------------------------------------------------------------------------- #
 
-    def decode_str(self, pyon_str: str):
+    def decode_str(self, pyon_str: str | None) -> Any | None:
         """ Imports from pyon string. """
 
         # 1. Prepare output...

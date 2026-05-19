@@ -10,7 +10,7 @@ import tempfile
 
 # --------------------------------------------------------------------------------------------- #
 
-from typing import Literal, cast
+from typing import Any, cast
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -23,16 +23,14 @@ import pyon.utils as ut
 # --------------------------------------------------------------------------------------------- #
 
 from pyon.utils import PYON_MIME, PYON_EXT
-
-# --------------------------------------------------------------------------------------------- #
+from .types import ExportMode, FileDict
 
 logger = logging.getLogger(__name__)
-
-# --------------------------------------------------------------------------------------------- #
 
 TEMP_FOLDER = "pyon_file"
 
 # --------------------------------------------------------------------------------------------- #
+
 
 class File:
     """ File class """
@@ -44,9 +42,9 @@ class File:
         path: str | None = None,
         content: bytes | None = None,
         mime: str | None = None,
-        export_mode: Literal["data", "reference"] = "reference",
+        export_mode: ExportMode = "reference",
         export_reset: bool = False
-    ):
+    ) -> None:
         """
         Initializes a new instance of the class.
 
@@ -77,7 +75,7 @@ class File:
         self.mime = self.__get_mime(mime)
 
         # 4. Store export policy...
-        self.export_mode = export_mode
+        self.export_mode: ExportMode = export_mode
         self.export_reset = export_reset
 
     # ----------------------------------------------------------------------------------------- #
@@ -123,7 +121,7 @@ class File:
     # ----------------------------------------------------------------------------------------- #
 
     @path.setter
-    def path(self, value: str | None):
+    def path(self, value: str | None) -> None:
         """ Sets the main path to be used for the file. """
 
         # 1. Sets path...
@@ -216,7 +214,7 @@ class File:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __str__(self):
+    def __str__(self) -> str:
 
         # 1. Build base text...
         output = f"({self.mime}): ({self.extension}) {self.name} - {self.size}"
@@ -231,7 +229,7 @@ class File:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __repr__(self):
+    def __repr__(self) -> str:
 
         # 1. Build representation data...
         output = {
@@ -344,11 +342,11 @@ class File:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def to_dict(self, encode: bool = True):
+    def to_dict(self, encode: bool = True) -> FileDict:
         """ Converts to dictionary. """
 
         # 1. Build export dictionary...
-        output: dict[str, str | bool | bytes | None] = {
+        output: FileDict = {
             "path": self.path,
             "mime": self.mime,
             "export_mode": self.export_mode,
@@ -369,7 +367,7 @@ class File:
     # ----------------------------------------------------------------------------------------- #
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: FileDict | dict[str, Any]) -> "File | None":
         """ Loads from dictionary. """
 
         # 1. Prepare object...
@@ -384,7 +382,7 @@ class File:
             obj.mime = cast(str, data.get("mime"))
 
             # 1.3 Restores export...
-            obj.export_mode = cast(Literal["data", "reference"], data.get("export_mode"))
+            obj.export_mode = cast(ExportMode, data.get("export_mode"))
             obj.export_reset = cast(bool, data.get("export_reset"))
 
             # 1.4 Restores content...
@@ -764,7 +762,7 @@ class File:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _get_file_name(self, extension: str = 'tmp'):
+    def _get_file_name(self, extension: str = 'tmp') -> str:
         """ 
         Returns the filename if exists, else creates one.
         """
@@ -898,7 +896,7 @@ class File:
     # ----------------------------------------------------------------------------------------- #
 
     @staticmethod
-    def get_mime_from_name(filename: str):
+    def get_mime_from_name(filename: str) -> str:
         """
         Returns the mime of a filename.
         """
@@ -909,7 +907,7 @@ class File:
     # ----------------------------------------------------------------------------------------- #
 
     @staticmethod
-    def get_mime_from_path(filepath: str):
+    def get_mime_from_path(filepath: str) -> str:
         """
         Returns the mime of a filepath.
         """
@@ -921,7 +919,7 @@ class File:
     # ----------------------------------------------------------------------------------------- #
 
     @staticmethod
-    def get_mime_from_content(content: bytes):
+    def get_mime_from_content(content: bytes) -> str:
         """
         Returns the mime of the content.
         """

@@ -6,6 +6,10 @@ import os
 
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any, overload
+
+# --------------------------------------------------------------------------------------------- #
+
 from .encoder import PyonEncoder
 
 # --------------------------------------------------------------------------------------------- #
@@ -15,7 +19,9 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------------------------------------------------- #
 
 
-def encode(obj, enc_protected: bool = False, enc_private: bool = False) -> str | None:
+def encode(
+    obj: object | None, enc_protected: bool = False, enc_private: bool = False
+) -> str | None:
     """Encodes a Python object into a Pyon-formatted string.
 
     Args:
@@ -42,7 +48,7 @@ def encode(obj, enc_protected: bool = False, enc_private: bool = False) -> str |
 # --------------------------------------------------------------------------------------------- #
 
 
-def decode(pyon_str: str | None):
+def decode(pyon_str: str | None) -> Any | None:
     """
     Decodes a Pyon-formatted string into a Python object.
 
@@ -69,12 +75,12 @@ def decode(pyon_str: str | None):
 
 
 def to_file(
-    obj,
+    obj: object,
     file_path: str = "./data.pyon",
     enc_protected: bool = False,
     enc_private: bool = False,
     verbose: bool = True,
-):
+) -> str:
     """ Saves to file """
 
     # 1. Encode object...
@@ -106,7 +112,7 @@ def to_file(
 # --------------------------------------------------------------------------------------------- #
 
 
-def from_file(file_path: str):
+def from_file(file_path: str) -> Any | None:
     """
     Loads and decodes a Pyon-formatted file into a Python object.
 

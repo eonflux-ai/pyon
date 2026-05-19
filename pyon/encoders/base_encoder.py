@@ -5,6 +5,15 @@
 from abc import ABC
 
 # --------------------------------------------------------------------------------------------- #
+
+from typing import TYPE_CHECKING, Any
+
+# --------------------------------------------------------------------------------------------- #
+
+if TYPE_CHECKING:
+    from pyon.encoder import PyonEncoder
+
+# --------------------------------------------------------------------------------------------- #
 # pylint: disable=too-few-public-methods
 # --------------------------------------------------------------------------------------------- #
 
@@ -13,7 +22,7 @@ class BaseEncoder(ABC):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __init__(self, encoder):
+    def __init__(self, encoder: "PyonEncoder | None") -> None:
         """ Initializes a Base Encoder """
 
         # 1. Validate encoder...
@@ -25,22 +34,22 @@ class BaseEncoder(ABC):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_as_dict(self, value) -> dict:
+    def _encode_as_dict(self, value: object | None) -> Any | None:
         return self.__encoder.encode_dict(value)
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_from_dict(self, value: dict):
+    def _decode_from_dict(self, value: object | None) -> Any | None:
         return self.__encoder.decode_dict(value)
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_as_str(self, value) -> str:
+    def _encode_as_str(self, value: object | None) -> str | None:
         return self.__encoder.encode_str(value)
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _decode_from_str(self, value: str):
+    def _decode_from_str(self, value: str | None) -> Any | None:
         return self.__encoder.decode_str(value)
 
     # ----------------------------------------------------------------------------------------- #

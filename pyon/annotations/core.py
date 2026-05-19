@@ -2,8 +2,16 @@
 """ Pyon: Export Policy Annotations """
 # --------------------------------------------------------------------------------------------- #
 
+from typing import Any, Callable, TypeVar
 
-def export(private: bool = False, protected: bool = False):
+# --------------------------------------------------------------------------------------------- #
+
+T = TypeVar("T", bound=type)
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def export(private: bool = False, protected: bool = False) -> Callable[[T], T]:
     """
     Decorator to define export flags for Pyon serialization.
 
@@ -13,11 +21,11 @@ def export(private: bool = False, protected: bool = False):
     """
 
     # 1. Wrapper that sets export attributes...
-    def wrapper(cls):
+    def wrapper(cls: T) -> T:
 
         # 1.1 Set export flags...
-        cls.__pyon_export_private__ = private
-        cls.__pyon_export_protected__ = protected
+        setattr(cls, "__pyon_export_private__", private)
+        setattr(cls, "__pyon_export_protected__", protected)
 
         # 1.2 Return class unchanged...
         return cls
@@ -29,7 +37,7 @@ def export(private: bool = False, protected: bool = False):
 # --------------------------------------------------------------------------------------------- #
 
 
-def get_export_flags(obj) -> tuple[bool, bool]:
+def get_export_flags(obj: Any) -> tuple[bool, bool]:
     """
     Retrieves the export policy for a given object's class.
 
