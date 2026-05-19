@@ -1,4 +1,4 @@
-# --------------------------------------------------------------------------------------------- #
+﻿# --------------------------------------------------------------------------------------------- #
 """ Tests for: pyon/file/api.py """
 # --------------------------------------------------------------------------------------------- #
 
@@ -410,7 +410,7 @@ def test_clean_logs_failure_and_returns_false(monkeypatch):
 
     # 1. Prepares value...
     value = File(content=b"x")
-    value._tmp_path = "/tmp/a.bin"  # pylint: disable=protected-access
+    value._tmp_path = "temp-a.bin"  # pylint: disable=protected-access
     monkeypatch.setattr("pyon.file.api.os.path.isfile", lambda _: True)
     monkeypatch.setattr("pyon.file.api.os.remove", lambda _: (_ for _ in ()).throw(OSError("boom")))
 

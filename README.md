@@ -460,6 +460,7 @@ These identifiers enable consistent copy-paste and drag-and-drop behavior betwee
 - [ROADMAP.md](doc/ROADMAP.md): Detailed plans and future directions for Pyon.  
 - [VERSION.md](doc/VERSION.md): Current version details and key features.  
 - [TASKS.md](doc/TASKS.md): Progress tracking and specific tasks for each version.
+- [PUBLISHING.md](doc/PUBLISHING.md): Standard release, GitHub, and PyPI publication workflow.
 - [CHANGELOG.md](./CHANGELOG.md): History of changes between versions.
 - [FILE.md](pyon/file/README.md): `File` module documentation.
 - [SECURITY.md](doc/SECURITY.md): Analysis of security guarantees and risks.

@@ -1,4 +1,4 @@
-# --------------------------------------------------------------------------------------------- #
+﻿# --------------------------------------------------------------------------------------------- #
 """ Resilience/contract tests for defensive branches across encoders/utils. """
 # --------------------------------------------------------------------------------------------- #
 
@@ -107,7 +107,7 @@ def test_generate_unique_filename_retries_on_collision(monkeypatch):
     monkeypatch.setattr("pyon.utils.os.path.exists", _exists)
 
     # 3. Generates unique name...
-    out = generate_unique_filename(name="base", extension="txt", size=3, folder_path="/tmp")
+    out = generate_unique_filename(name="base", extension="txt", size=3, folder_path="temp")
 
     # 4. Validates retry result...
     assert out == "base_xyz.txt"
