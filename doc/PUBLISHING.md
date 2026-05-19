@@ -153,8 +153,8 @@ PyPI renders the README from the package artifact metadata. If a badge is fixed
 only after upload, GitHub will show the correction but the already-published
 PyPI release page will keep the old README metadata for that version.
 
-The PyPI version badge should use Shields, because it reflected the
-`pyon-core` pre-release correctly during the `0.2.7a0` publication:
+The PyPI version badge should use Shields, because it reflects `pyon-core`
+pre-release versions correctly:
 
 ```md
 [![PyPI version](https://img.shields.io/pypi/v/pyon-core.svg)](https://pypi.org/project/pyon-core/)
