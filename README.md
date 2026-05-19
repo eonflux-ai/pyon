@@ -1,5 +1,5 @@
 # Pyon
-[![PyPI version](https://badge.fury.io/py/pyon-core.svg)](https://pypi.org/project/pyon-core/)
+[![PyPI version](https://img.shields.io/pypi/v/pyon-core.svg)](https://pypi.org/project/pyon-core/)
 [![GitHub stars](https://img.shields.io/github/stars/eonflux-ai/pyon?style=social)](https://github.com/eonflux-ai/pyon)
 [![Media Type: application/vnd.pyon+json](https://img.shields.io/badge/MIME-IANA%20Registered-blue.svg)](https://www.iana.org/assignments/media-types/application/vnd.pyon+json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
