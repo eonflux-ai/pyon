@@ -38,7 +38,7 @@ class MapEnc(BaseEncoder):
     def __init__(self, encoder, enc_protected: bool = False, enc_private: bool = False):
         super().__init__(encoder)
 
-        # 1. ...
+        # 1. It processes block...
         self.enc_protected = enc_protected
         self.enc_private = enc_private
 
@@ -47,7 +47,7 @@ class MapEnc(BaseEncoder):
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if self.is_encode(value):
 
@@ -59,7 +59,7 @@ class MapEnc(BaseEncoder):
             else:
                 encoded = self._encode_dict(value)
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -67,10 +67,10 @@ class MapEnc(BaseEncoder):
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -82,7 +82,7 @@ class MapEnc(BaseEncoder):
             else:
                 decoded = self._decode_dict(value)
 
-        # 3. ...
+        # 3. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -93,7 +93,7 @@ class MapEnc(BaseEncoder):
             - `class` (user defined classes), `dataclasses.dataclass`, `dict`, `Enum`
         """
 
-        # 1. ...
+        # 1. It processes block...
         return self._is_dict(value) or is_dataclass(value) or isinstance(value, Enum)
 
     # ----------------------------------------------------------------------------------------- #
@@ -104,10 +104,10 @@ class MapEnc(BaseEncoder):
             - `class` (user defined classes), `dataclasses.dataclass`, `dict`, `Enum`
         """
 
-        # 1. ...
+        # 1. It processes block...
         is_decode = False
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -122,7 +122,7 @@ class MapEnc(BaseEncoder):
                 # 2.1 It validates type...
                 is_decode = True
 
-        # 3. ...
+        # 3. It processes block...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -130,7 +130,7 @@ class MapEnc(BaseEncoder):
     def _is_dict(self, value):
         """ Checks if Dict Like Value """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(value, dict) or hasattr(value, EConst.DICT)
 
     # ----------------------------------------------------------------------------------------- #
@@ -188,12 +188,12 @@ class MapEnc(BaseEncoder):
 
     # ----------------------------------------------------------------------------------------- #
 
-    def _encode_dict(self, value):
+    def _encode_dict(self, value):  # pylint: disable=too-many-nested-blocks
         """ Encodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
-        if self._is_dict(value):
+        if self._is_dict(value):  # pylint: disable=too-many-nested-blocks
 
             # 1.1 Annotations...
             exp_info = ann.get_export_flags(value)
@@ -242,7 +242,7 @@ class MapEnc(BaseEncoder):
                 EConst.DICT: serialized_dict,
             }
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -250,7 +250,7 @@ class MapEnc(BaseEncoder):
     def _decode_dict(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = {}
         if isinstance(value, dict) and (EConst.TYPE in value):
 
@@ -277,14 +277,14 @@ class MapEnc(BaseEncoder):
                     obj.__dict__.update(decoded)
                     decoded = obj
 
-        # 2. ...
+        # 2. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
 
     def _get_defulat_type(self, obj):
 
-        # 1. ...
+        # 1. It processes block...
         tp = None
         if obj is not None:
 
@@ -300,7 +300,7 @@ class MapEnc(BaseEncoder):
             else:
                 tp = SupportedTypes.CLASS.value
 
-        # 2. ...
+        # 2. It processes block...
         return tp
 
     # ----------------------------------------------------------------------------------------- #

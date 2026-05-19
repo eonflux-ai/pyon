@@ -6,7 +6,7 @@ import logging
 
 # --------------------------------------------------------------------------------------------- #
 
-from datetime import datetime, date, time, timezone, timedelta
+from datetime import datetime, date, time, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # --------------------------------------------------------------------------------------------- #
@@ -33,7 +33,7 @@ class DateEnc():
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if self.is_encode(value):
 
@@ -49,7 +49,7 @@ class DateEnc():
             elif isinstance(value, time):
                 encoded = self._encode_time(value)
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -57,10 +57,10 @@ class DateEnc():
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -76,7 +76,7 @@ class DateEnc():
             elif _type == SupportedTypes.TIME.value:
                 decoded = self._decode_time(value)
 
-        # 3. ...
+        # 3. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -87,7 +87,7 @@ class DateEnc():
             - `datetime.date`, `datetime.datetime`, `datetime.time`
         """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(value, (date, datetime, time))
 
     # ----------------------------------------------------------------------------------------- #
@@ -98,10 +98,10 @@ class DateEnc():
             - `datetime.date`, `datetime.datetime`, `datetime.time`
         """
 
-        # 1. ...
+        # 1. It processes block...
         is_decode = False
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -115,7 +115,7 @@ class DateEnc():
                 # 2.1 It validates type...
                 is_decode = True
 
-        # 3. ...
+        # 3. It processes block...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -391,16 +391,16 @@ class DateEnc():
     def __format_offset(self, delta: timedelta) -> str:
         """Format a UTC offset timedelta as "+HH:MM" or "-HH:MM"."""
 
-        # 1. ...
+        # 1. It processes block...
         total_seconds = int(delta.total_seconds())
         sign = "+" if total_seconds >= 0 else "-"
 
-        # 2. ...
+        # 2. It processes block...
         total_seconds = abs(total_seconds)
         hours, rem = divmod(total_seconds, 3600)
         minutes, _ = divmod(rem, 60)
 
-        # 3. ...
+        # 3. It processes block...
         return f"{sign}{hours:02d}:{minutes:02d}"
 
     # ----------------------------------------------------------------------------------------- #
@@ -408,27 +408,7 @@ class DateEnc():
     def __parse_offset(self, s: str):
         """Parse a string like "+HH:MM"/"-HH:MM" to a tzinfo (fixed offset)."""
 
-        # 1. ...
-        output = None
-        try:
-
-            # 1.1 It parses text...
-            if isinstance(s, str) and (len(s) >= 6) and (s[3] == ":"):
-
-                # 2.1 It reads parts...
-                sign = 1 if s[0] == "+" else -1
-                hours = int(s[1:3])
-                minutes = int(s[4:6])
-                delta = timedelta(hours=hours, minutes=minutes) * sign
-
-                # 2.2 It builds timezone...
-                output = timezone(delta)
-
-        # 2. ...
-        except ValueError:
-            pass
-
-        # 3. ...
-        return output
+        # 1. It parses offset...
+        return ut.parse_utc_offset(s)
 
 # --------------------------------------------------------------------------------------------- #

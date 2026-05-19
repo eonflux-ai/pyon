@@ -37,7 +37,7 @@ class ColEnc(BaseEncoder):
     def encode(self, value):
         """ Encodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if self.is_encode(value):
 
@@ -85,7 +85,7 @@ class ColEnc(BaseEncoder):
             elif isinstance(value, tuple):
                 encoded = self._encode_tuple(value)
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -93,10 +93,10 @@ class ColEnc(BaseEncoder):
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -144,7 +144,7 @@ class ColEnc(BaseEncoder):
             elif _type == SupportedTypes.TUPLE.value:
                 decoded = self._decode_tuple(value)
 
-        # 3. ...
+        # 3. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -156,7 +156,7 @@ class ColEnc(BaseEncoder):
             - `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple` (from collections)
         """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(
             value,
             (
@@ -174,10 +174,10 @@ class ColEnc(BaseEncoder):
             - `ChainMap`, `Counter`, `defaultdict`, `deque`, `namedtuple` (from collections)
         """
 
-        # 1. ...
+        # 1. It processes block...
         is_decode = False
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -199,7 +199,7 @@ class ColEnc(BaseEncoder):
                 # 2.1 It validates class...
                 is_decode = True
 
-        # 3. ...
+        # 3. It processes block...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -207,7 +207,7 @@ class ColEnc(BaseEncoder):
     def _is_named_tuple(self, value):
         """ If `value` is a named tuple """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(value, tuple) and hasattr(value, EConst.FIELDS)
 
     # ----------------------------------------------------------------------------------------- #
@@ -215,7 +215,7 @@ class ColEnc(BaseEncoder):
     def _encode_bytearray(self, value: bytearray):
         """ Encodes a bytearray to a Base64 string """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
         if (value is not None) and isinstance(value, bytearray):
 
@@ -225,11 +225,11 @@ class ColEnc(BaseEncoder):
                 EConst.DATA: base64.b64encode(value).decode('utf-8')
             }
 
-        # 2. ...
+        # 2. It processes block...
         else:
             logger.error("Invalid input. Expected: bytearray. Received: %s", type(value))
 
-        # 3. ...
+        # 3. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -237,14 +237,14 @@ class ColEnc(BaseEncoder):
     def _decode_bytearray(self, value: dict):
         """ Decodes a Base64 string back to bytearray """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 It decodes content...
             output = bytearray(base64.b64decode(value[EConst.DATA]))
 
-        # 2. ...
+        # 2. It processes block...
         else:
 
             # 1.1 It decodes text...
@@ -254,7 +254,7 @@ class ColEnc(BaseEncoder):
                 type(value),
             )
 
-        # 3. ...
+        # 3. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #

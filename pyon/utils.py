@@ -5,6 +5,7 @@ import os
 import random
 import string
 import importlib
+from datetime import timedelta, timezone
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -18,7 +19,7 @@ PYON_EXT = "pyon"
 # --------------------------------------------------------------------------------------------- #
 
 
-class EConst:
+class EConst:  # pylint: disable=too-few-public-methods
     """ Constants used for encoding e decoding data in pyon source. """
 
     AUX1 = "__aux1__"
@@ -65,18 +66,18 @@ def get_class_name(obj):
         str: A string representing the fully qualified class name, including the module name.
     """
 
-    # 1. ...
+    # 1. It processes block...
     module, name = None, None
 
-    # 2. ...
+    # 2. It processes block...
     if isinstance(obj, type):
         module, name = f"{obj.__module__}", f"{obj.__qualname__}"
 
-    # 3. ...
+    # 3. It processes block...
     else:
         module, name = f"{obj.__class__.__module__}", f"{obj.__class__.__name__}"
 
-    # 4. ...
+    # 4. It processes block...
     return f"{module}.{name}"
 
 
@@ -94,7 +95,7 @@ def get_class(obj):
         type or None: The class object if it exists and can be imported; otherwise, None.
     """
 
-    # 1. ...
+    # 1. It processes block...
     cls = None
     if isinstance(obj, dict) and (EConst.CLASS in obj):
 
@@ -160,11 +161,11 @@ def get_mangled_name(obj):
         str: The mangled name prefix (e.g., '_ClassName__').
     """
 
-    # 1. ...
+    # 1. It processes block...
     mangled_name = type(obj).__name__
     mangled_name = lstrip(mangled_name, '_')
 
-    # 2. ...
+    # 2. It processes block...
     return f"_{mangled_name}__"
 
 
@@ -217,6 +218,36 @@ def generate_unique_filename(
 
     # 3. Return result...
     return filename
+
+
+# --------------------------------------------------------------------------------------------- #
+
+
+def parse_utc_offset(s: str):
+    """Parses a string like +HH:MM/-HH:MM into a fixed-offset tzinfo."""
+
+    # 1. It prepares output...
+    output = None
+    try:
+
+        # 1.1 It validates text...
+        if isinstance(s, str) and (len(s) >= 6) and (s[3] == ":"):
+            sign = 1 if s[0] == "+" else -1
+
+            # 2.1 It parses parts...
+            hours = int(s[1:3])
+            minutes = int(s[4:6])
+            delta = timedelta(hours=hours, minutes=minutes) * sign
+
+            # 2.2 It builds timezone...
+            output = timezone(delta)
+
+    # 2. It handles invalid text...
+    except (TypeError, ValueError, IndexError):
+        pass
+
+    # 3. It returns output...
+    return output
 
 
 # --------------------------------------------------------------------------------------------- #

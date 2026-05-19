@@ -27,7 +27,7 @@ class BaseEnc():
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if self.is_encode(value):
 
@@ -39,7 +39,7 @@ class BaseEnc():
             else:
                 encoded = value
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -47,7 +47,7 @@ class BaseEnc():
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
         if self.is_decode(value):
 
@@ -59,7 +59,7 @@ class BaseEnc():
             else:
                 decoded = value
 
-        # 2. ...
+        # 2. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -70,7 +70,7 @@ class BaseEnc():
             - `bool`, `float`, `int`, `str`, `type`, `None`
         """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(value, (int, float, str, bool, type)) or (value is None)
 
     # ----------------------------------------------------------------------------------------- #
@@ -81,14 +81,14 @@ class BaseEnc():
             - `bool`, `float`, `int`, `str`, `type`, `None`
        """
 
-        # 1. ...
+        # 1. It processes block...
         is_decode = False
 
-        # 2. ...
+        # 2. It processes block...
         if self.is_encode(value) or self._is_decode_type(value):
             is_decode = True
 
-        # 3. ...
+        # 3. It processes block...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -99,7 +99,7 @@ class BaseEnc():
             - `bool`, `float`, `int`, `str`, `type`, `None`
        """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(value, dict) and (EConst.CLASS in value) and (len(value) == 1)
 
     # ----------------------------------------------------------------------------------------- #

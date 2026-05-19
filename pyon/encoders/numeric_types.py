@@ -32,7 +32,7 @@ class NumEnc():
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if self.is_encode(value):
 
@@ -44,7 +44,7 @@ class NumEnc():
             elif isinstance(value, Decimal):
                 encoded = self._encode_decimal(value)
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -52,10 +52,10 @@ class NumEnc():
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -67,7 +67,7 @@ class NumEnc():
             elif _type == SupportedTypes.DECIMAL.value:
                 decoded = self._decode_decimal(value)
 
-        # 3. ...
+        # 3. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -78,7 +78,7 @@ class NumEnc():
             - `complex`, `decimal.Decimal`
         """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(value, (Decimal, complex))
 
     # ----------------------------------------------------------------------------------------- #
@@ -89,10 +89,10 @@ class NumEnc():
             - `complex`, `decimal.Decimal`
         """
 
-        # 1. ...
+        # 1. It processes block...
         is_decode = False
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -105,7 +105,7 @@ class NumEnc():
                 # 2.1 It validates type...
                 is_decode = True
 
-        # 3. ...
+        # 3. It processes block...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #

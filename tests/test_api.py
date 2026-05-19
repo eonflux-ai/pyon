@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, date, time
 from decimal import Decimal
 from enum import Enum
-from typing import Literal
+from typing import Literal, cast
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -56,7 +56,7 @@ class Person:
 
 
 # Test Class
-class Cat:
+class Cat:  # pylint: disable=too-few-public-methods
     """ For Dataclass Test """
     name: str
     age: int
@@ -78,7 +78,7 @@ class ComplexEnum(Enum):
 # --------------------------------------------------------------------------------------------- #
 
 
-class _TestClass:
+class _TestClass:  # pylint: disable=too-few-public-methods
     """ Inner test class """
 
     def __init__(self):
@@ -90,7 +90,7 @@ class _TestClass:
 # --------------------------------------------------------------------------------------------- #
 
 
-class ModelConfig:
+class ModelConfig:  # pylint: disable=too-few-public-methods
     """ A class with post-init logic """
 
     def __init__(self, name):
@@ -119,7 +119,7 @@ Named = namedtuple("Named", ["field1", "field2"])
 # --------------------------------------------------------------------------------------------- #
 
 
-class TestPyonEncodeDecode:
+class TestPyonEncodeDecode:  # pylint: disable=too-many-public-methods
     """ Test suite for Pyon's encode and decode functions """
 
     # ----------------------------------------------------------------------------------------- #
@@ -326,7 +326,11 @@ class TestPyonEncodeDecode:
         assert df_out.shape == df_in.shape
 
         # 3.1 Compare data with aligned timezones (UTC) to avoid tz-identity mismatches
-        if isinstance(df_in.index, pd.DatetimeIndex) and (df_in.index.tz is not None):
+        if (
+            isinstance(df_in.index, pd.DatetimeIndex)
+            and isinstance(df_out.index, pd.DatetimeIndex)
+            and (df_in.index.tz is not None)
+        ):
             df_in_aligned = df_in.copy()
             df_out_aligned = df_out.copy()
             df_in_aligned.index = df_in.index.tz_convert("UTC")
@@ -336,13 +340,16 @@ class TestPyonEncodeDecode:
             assert df_out.equals(df_in)
 
         # 3.2 Extra checks: timezone identity when available and frequency preserved
-        tz_key = getattr(df_out.index.tz, "key", None) or getattr(df_out.index.tz, "zone", None)
-        if tz_key is not None:
-            assert tz_key == tz
-        else:
-            assert df_out.index[0].utcoffset() == df_in.index[0].utcoffset()
+        if isinstance(df_out.index, pd.DatetimeIndex) and isinstance(df_in.index, pd.DatetimeIndex):
+            tz_key = getattr(df_out.index.tz, "key", None) or getattr(df_out.index.tz, "zone", None)
+            if tz_key is not None:
+                assert tz_key == tz
+            else:
+                out_ts = cast("pd.Timestamp", df_out.index[0])
+                in_ts = cast("pd.Timestamp", df_in.index[0])
+                assert out_ts.utcoffset() == in_ts.utcoffset()
 
-        assert (df_out.index.freqstr or None) == (df_in.index.freqstr or None)
+            assert (df_out.index.freqstr or None) == (df_in.index.freqstr or None)
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -366,6 +373,8 @@ class TestPyonEncodeDecode:
         # 3.1 Compare data with aligned timezones (UTC) to avoid tz-identity mismatches
         s_in_aligned = s_in.copy()
         s_out_aligned = s_out.copy()
+        assert isinstance(s_in.index, pd.DatetimeIndex)
+        assert isinstance(s_out.index, pd.DatetimeIndex)
         s_in_aligned.index = s_in.index.tz_convert("UTC")
         s_out_aligned.index = s_out.index.tz_convert("UTC")
         assert s_out_aligned.equals(s_in_aligned)
@@ -375,7 +384,9 @@ class TestPyonEncodeDecode:
         if tz_key is not None:
             assert tz_key == tz
         else:
-            assert s_out.index[0].utcoffset() == s_in.index[0].utcoffset()
+            out_ts = cast("pd.Timestamp", s_out.index[0])
+            in_ts = cast("pd.Timestamp", s_in.index[0])
+            assert out_ts.utcoffset() == in_ts.utcoffset()
 
     # ----------------------------------------------------------------------------------------- #
 
@@ -592,7 +603,10 @@ class TestPyonEncodeDecode:
         [
 
             # 1.1 Standard Index, Standard Columns...
-            pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]}, index=["a", "b"]),
+            pd.DataFrame(
+                {"col1": [1, 2], "col2": ["a", "b"]},
+                index=pd.Index(["a", "b"])
+            ),
 
             # 1.2 Range Index, Standard Columns...
             pd.DataFrame({"col1": [1, 2, 3]}, index=pd.RangeIndex(start=10, stop=13, step=1)),
@@ -651,7 +665,7 @@ class TestPyonEncodeDecode:
             # 1.11 Standard Index, MultiIndex Columns...
             pd.DataFrame(
                 [[22.5, 60, 24.1], [23.0, 55, 23.8]],
-                index=["row1", "row2"],
+                index=pd.Index(["row1", "row2"]),
                 columns=pd.MultiIndex.from_tuples(
                     [("sensor1", "temp"), ("sensor1", "humidity"), ("sensor2", "temp")],
                     names=["device", "measurement"]
@@ -661,7 +675,7 @@ class TestPyonEncodeDecode:
             # 1.12 Standard Index, CategoricalIndex Columns...
             pd.DataFrame(
                 [[1, 2]],
-                index=["a"],
+                index=pd.Index(["a"]),
                 columns=pd.CategoricalIndex(["col1", "col2"], name="categorical_col")
             ),
 
@@ -702,7 +716,7 @@ class TestPyonEncodeDecode:
         # 2. None, Other...
         else:
 
-            # 2.1 Encode, Decode, Asserts...
+            # 1.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
             assert decoded == value  # type: ignore
 
@@ -807,7 +821,7 @@ class TestPyonEncodeDecode:
         # 2. None, Other...
         else:
 
-            # 2.1 Encode, Decode, Asserts...
+            # 1.1 Encode, Decode, Asserts...
             decoded = pyon.decode(pyon.encode(value))
             assert decoded == value # type: ignore
 

@@ -33,11 +33,11 @@ class PyonEncoder():
         self.date_enc = DateEnc()
         self.num_enc = NumEnc()
 
-        # 2. ...
+        # 2. It processes block...
         self.spec_enc = SpecEnc(self)
         self.col_enc = ColEnc(self)
 
-        # 3. ...
+        # 3. It processes block...
         self.map_enc = MapEnc(self, enc_protected=enc_protected, enc_private=enc_private)
 
     # ----------------------------------------------------------------------------------------- #
@@ -45,7 +45,7 @@ class PyonEncoder():
     def encode_dict(self, value):
         """ Encodes the Entity object """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if value is not None:
 
@@ -73,7 +73,7 @@ class PyonEncoder():
             elif self.map_enc.is_encode(value):
                 encoded = self.map_enc.encode(value)
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -81,7 +81,7 @@ class PyonEncoder():
     def decode_dict(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
         if ut.is_decode_able(value):
 
@@ -109,7 +109,7 @@ class PyonEncoder():
         elif self.base_enc.is_decode(value):
             decoded = self.base_enc.decode(value)
 
-        # 3. ...
+        # 3. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -117,7 +117,7 @@ class PyonEncoder():
     def encode_str(self, obj):
         """ Exports to pyon. """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
         if obj is not None:
 

@@ -40,7 +40,7 @@ class File:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         path: str | None = None,
         content: bytes | None = None,
@@ -65,19 +65,19 @@ class File:
             ValueError: If both `path` and `content` are None.
         """
 
-        # 1. ...
+        # 1. It processes block...
         if (path is None) and (content is None):
             raise ValueError("Path or Content must be provided")
 
-        # 2. ...
+        # 2. It processes block...
         self._path = self.__clean_path(path) if path else None
         self.content = content
 
-        # 3. ...
+        # 3. It processes block...
         self._tmp_path = None
         self.mime = self.__get_mime(mime)
 
-        # 4. ...
+        # 4. It processes block...
         self.export_mode = export_mode
         self.export_reset = export_reset
 
@@ -99,10 +99,10 @@ class File:
             (str | None): The selected file path or None if no valid path is available.
         """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
 
-        # 2. ...
+        # 2. It processes block...
         if (
             self._path and (
                 self._tmp_path is None
@@ -114,11 +114,11 @@ class File:
             # 1.1 It updates path...
             output = self._path
 
-        # 3. ...
+        # 3. It processes block...
         elif self._tmp_path:
             output = self._tmp_path
 
-        # 4. ...
+        # 4. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -136,7 +136,7 @@ class File:
     def size(self) -> str:
         """ Returns the size of the file content """
 
-        # 1. ...
+        # 1. It processes block...
         return File.get_size(len(self))
 
     # ----------------------------------------------------------------------------------------- #
@@ -145,14 +145,14 @@ class File:
     def name(self) -> str:
         """ Returns the file name with extension """
 
-        # 1. ...
+        # 1. It processes block...
         output = ''
         if self.path:
 
             # 1.1 It resets path...
             output = os.path.basename(self.path)
 
-        # 2. ...
+        # 2. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -168,14 +168,14 @@ class File:
     def directory(self) -> str:
         """ Returns the folder where the file is located """
 
-        # 1. ...
+        # 1. It processes block...
         output = ''
         if self.path:
 
             # 1.1 It resets path...
             output = os.path.dirname(self.path)
 
-        # 2. ...
+        # 2. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -184,7 +184,7 @@ class File:
     def loaded(self) -> bool:
         """ If the content is loaded into memory """
 
-        # 1. ...
+        # 1. It processes block...
         return hasattr(self, "content") and self.content is not None
 
     # ----------------------------------------------------------------------------------------- #
@@ -193,7 +193,7 @@ class File:
     def temp(self) -> bool:
         """ If a temp file """
 
-        # 1. ...
+        # 1. It processes block...
         return hasattr(self, "_tmp_path") and self._tmp_path is not None
 
     # ----------------------------------------------------------------------------------------- #
@@ -201,40 +201,40 @@ class File:
     def __len__(self) -> int:
         """ Returns the len of the file content in bytes """
 
-        # 1. ...
+        # 1. It processes block...
         output = 0
 
-        # 2. ...
+        # 2. It processes block...
         if self.content:
             output = len(self.content)
 
-        # 3. ...
+        # 3. It processes block...
         elif self.path:
             output = os.path.getsize(self.path)
 
-        # 4. ...
+        # 4. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
 
     def __str__(self):
 
-        # 1. ...
+        # 1. It processes block...
         output = f"({self.mime}): ({self.extension}) {self.name} - {self.size}"
         status = self._status()
 
-        # 2. ...
+        # 2. It processes block...
         if status:
             output += f" ({status})"
 
-        # 3. ...
+        # 3. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
 
     def __repr__(self):
 
-        # 1. ...
+        # 1. It processes block...
         output = {
             "mime": self.mime,
             "extension": self.extension,
@@ -247,7 +247,7 @@ class File:
             "temp": self.temp
         }
 
-        # 2. ...
+        # 2. It processes block...
         return f"{output}"
 
     # ----------------------------------------------------------------------------------------- #
@@ -332,11 +332,11 @@ class File:
         result = False
         if isinstance(other, File):
 
-            # 2.1 Path-based identity...
+            # 1.1 Path-based identity...
             if self.path and other.path:
                 result = self.path == other.path
 
-            # 2.2 Content-based fallback...
+            # 1.2 Content-based fallback...
             elif self.loaded and other.loaded:
                 result = self.content == other.content
 
@@ -348,7 +348,7 @@ class File:
     def to_dict(self, encode: bool = True):
         """ Converts to dictionary. """
 
-        # 1. ...
+        # 1. It processes block...
         output = {
             "path": self.path,
             "mime": self.mime,
@@ -356,7 +356,7 @@ class File:
             "export_reset": self.export_reset
         }
 
-        # 2. ...
+        # 2. It processes block...
         if self.export_mode == "data":
             output["content"] = self._encode() if encode else self._get_content()
 
@@ -364,7 +364,7 @@ class File:
             if self.export_reset:
                 output["path"] = None
 
-        # 3. ...
+        # 3. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -373,7 +373,7 @@ class File:
     def from_dict(cls, data: dict):
         """ Loads from dictionary. """
 
-        # 1. ...
+        # 1. It processes block...
         obj = None
         if data:
 
@@ -394,7 +394,7 @@ class File:
             # 1.5 It resets temp...
             obj._tmp_path = None
 
-        # 2. ...
+        # 2. It processes block...
         return obj
 
     # ----------------------------------------------------------------------------------------- #
@@ -407,7 +407,7 @@ class File:
             bool: True if the content is successfully loaded or already present, False otherwise.
         """
 
-        # 1. ...
+        # 1. It processes block...
         if not self.content:
             self.content = self._get_content()
 
@@ -415,7 +415,7 @@ class File:
             if self.temp and self.content:
                 self.clean()
 
-        # 2. ...
+        # 2. It processes block...
         return self.content is not None
 
     # ----------------------------------------------------------------------------------------- #
@@ -443,7 +443,7 @@ class File:
             If written to a new `file_path` updates the file `self.path`.
         """
 
-        # 1. ...
+        # 1. It processes block...
         if self.content:
             done = False
 
@@ -484,7 +484,7 @@ class File:
             if done:
                 self.content = None
 
-        # 2. ...
+        # 2. It processes block...
         return self.content is None
 
     # ----------------------------------------------------------------------------------------- #
@@ -500,7 +500,7 @@ class File:
             An error message if the file could not be deleted due to an OSError.
         """
 
-        # 1. ...
+        # 1. It processes block...
         clean = True
         if self._tmp_path:
 
@@ -537,11 +537,11 @@ class File:
             except OSError as e:
                 logger.error("Error deleting temp file '%s': %s", path, e)
 
-        # 2. ...
+        # 2. It processes block...
         if clean and self._tmp_path:
             self._tmp_path = None
 
-        # 3. ...
+        # 3. It processes block...
         return clean
 
     # ----------------------------------------------------------------------------------------- #
@@ -554,17 +554,17 @@ class File:
                 it copies the file from 'filepath' to 'outpath'.
         """
 
-        # 1. ...
+        # 1. It processes block...
         output = False
 
-        # 2. ...
+        # 2. It processes block...
         path: str = (
             outpath.strip()
             if isinstance(outpath, str)
             else (self.path.strip() if self.path else "")
         )
 
-        # 3. ...
+        # 3. It processes block...
         if len(path) > 0:
             check = False
 
@@ -612,7 +612,7 @@ class File:
             if check:
                 output = os.path.isfile(path)
 
-        # 4. ...
+        # 4. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -664,14 +664,14 @@ class File:
         Returns the file content as bytes.
         """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
 
-        # 2. ...
+        # 2. It processes block...
         if self.content:
             output = self.content
 
-        # 3. ...
+        # 3. It processes block...
         else:
             load_path = None
 
@@ -690,7 +690,7 @@ class File:
                 with open(load_path, 'rb') as file:
                     output = file.read()
 
-        # 4. ...
+        # 4. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -698,22 +698,22 @@ class File:
     def _status(self) -> str:
         """ Content loaded or not; if temp file or not """
 
-        # 1. ...
+        # 1. It processes block...
         status = []
 
-        # 2. ...
+        # 2. It processes block...
         if self.loaded:
             status.append("memory")
 
-        # 3. ...
+        # 3. It processes block...
         if self.path and os.path.isfile(self.path):
             status.append("filesystem")
 
-        # 4. ...
+        # 4. It processes block...
         if self.temp:
             status.append("temp")
 
-        # 5. ...
+        # 5. It processes block...
         return ', '.join(status) if status else ""
 
     # ----------------------------------------------------------------------------------------- #
@@ -723,7 +723,7 @@ class File:
         Returns the filename if exists, else creates one.
         """
 
-        # 1. ...
+        # 1. It processes block...
         return (
             self.name
             if self.name
@@ -735,14 +735,14 @@ class File:
     def _encode(self) -> str | None:
         """ Encodes the content. """
 
-        # 1. ...
+        # 1. It processes block...
         encoded_content = None
         if (self.export_mode == "data") or (not self.path and self.content):
 
             # 1.1 It encodes content...
             encoded_content = File._encode_content(self._get_content())
 
-        # 2. ...
+        # 2. It processes block...
         return encoded_content
 
     # ----------------------------------------------------------------------------------------- #
@@ -750,7 +750,7 @@ class File:
     def __get_mime(self, mime: str | None) -> str:
         """ Returns the mime value """
 
-        # 1. ...
+        # 1. It processes block...
         output = mime.strip() if mime else ''
         if not output:
 
@@ -777,7 +777,7 @@ class File:
             if not output:
                 output = "application/octet-stream"
 
-        # 2. ...
+        # 2. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -791,14 +791,14 @@ class File:
             str: The normalized file path.
         """
 
-        # 1. ...
+        # 1. It processes block...
         output = ''
 
-        # 2. ...
+        # 2. It processes block...
         if path:
             output = str(path).strip().replace("\\", "/")
 
-        # 3. ...
+        # 3. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -817,7 +817,7 @@ class File:
             str: The normalized file extension.
         """
 
-        # 1. ...
+        # 1. It processes block...
         ext = value.strip().lower() if value else None
         if not ext:
 
@@ -828,7 +828,7 @@ class File:
                 # 2.1 It uses fallback...
                 ext = 'tmp'
 
-        # 2. ...
+        # 2. It processes block...
         return ext
 
     # ----------------------------------------------------------------------------------------- #
@@ -842,11 +842,11 @@ class File:
             str: Absolute path to the 'pyon-file' temp directory.
         """
 
-        # 1. ...
+        # 1. It processes block...
         path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER)
         os.makedirs(path, exist_ok=True)
 
-        # 2. ...
+        # 2. It processes block...
         return path
 
     # ----------------------------------------------------------------------------------------- #
@@ -857,7 +857,7 @@ class File:
         Returns the mime of a filename.
         """
 
-        # 1. ...
+        # 1. It processes block...
         return mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
     # ----------------------------------------------------------------------------------------- #
@@ -868,7 +868,7 @@ class File:
         Returns the mime of a filepath.
         """
 
-        # 1. ...
+        # 1. It processes block...
         mime = magic.Magic(mime=True)
         return mime.from_file(filepath)
 
@@ -880,7 +880,7 @@ class File:
         Returns the mime of the content.
         """
 
-        # 1. ...
+        # 1. It processes block...
         mime = magic.Magic(mime=True)
         return mime.from_buffer(content)
 
@@ -893,7 +893,7 @@ class File:
         with the appropriate size unit (KB, MB, GB, etc.).
         """
 
-        # 1. ...
+        # 1. It processes block...
         output = ''
         if isinstance(bytes_size, int) and (bytes_size >= 0):
 
@@ -911,7 +911,7 @@ class File:
             # 1.3 Formats...
             output = f"{bytes_size:.1f} {units[unit_index]}"
 
-        # 2. ...
+        # 2. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -920,14 +920,14 @@ class File:
     def _encode_content(content: bytes | None) -> str | None:
         """ Encodes the content. """
 
-        # 1. ...
+        # 1. It processes block...
         encoded_content = None
         if content:
 
             # 1.1 It encodes bytes...
             encoded_content = base64.b64encode(content).decode('utf-8')
 
-        # 2. ...
+        # 2. It processes block...
         return encoded_content
 
     # ----------------------------------------------------------------------------------------- #
@@ -936,18 +936,18 @@ class File:
     def _decode_content(content: str | bytes | None) -> bytes | None:
         """ Decodes the content. """
 
-        # 1. ...
+        # 1. It processes block...
         decoded_content = None
 
-        # 2. ...
+        # 2. It processes block...
         if isinstance(content, bytes):
             decoded_content = content
 
-        # 3. ...
+        # 3. It processes block...
         elif isinstance(content, str):
             decoded_content = base64.b64decode(content)
 
-        # 4. ...
+        # 4. It processes block...
         return decoded_content
 
     # ----------------------------------------------------------------------------------------- #

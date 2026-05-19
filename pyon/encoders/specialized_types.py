@@ -1,14 +1,12 @@
 # --------------------------------------------------------------------------------------------- #
 """ Pyon: Specialized Encoder """
 # --------------------------------------------------------------------------------------------- #
-
 import logging
 
 # --------------------------------------------------------------------------------------------- #
 
 from uuid import UUID
-from zoneinfo import ZoneInfo
-from datetime import timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -64,7 +62,7 @@ class SpecEnc(BaseEncoder):
     def encode(self, value):
         """ Encodes the Entity object """
 
-        # 1. ...
+        # 1. It processes block...
         encoded = None
         if self.is_encode(value):
 
@@ -92,7 +90,7 @@ class SpecEnc(BaseEncoder):
             elif isinstance(value, pandas.Series):
                 encoded = self._encode_series(value)
 
-        # 2. ...
+        # 2. It processes block...
         return encoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -100,10 +98,10 @@ class SpecEnc(BaseEncoder):
     def decode(self, value):
         """ Decodes the value """
 
-        # 1. ...
+        # 1. It processes block...
         decoded = None
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -131,7 +129,7 @@ class SpecEnc(BaseEncoder):
             elif _type == SupportedTypes.SERIES.value:
                 decoded = self._decode_series(value)
 
-        # 3. ...
+        # 3. It processes block...
         return decoded
 
     # ----------------------------------------------------------------------------------------- #
@@ -143,7 +141,7 @@ class SpecEnc(BaseEncoder):
             - `pandas.DataFrame`, `pandas.Series`
         """
 
-        # 1. ...
+        # 1. It processes block...
         return isinstance(
             value,
             (
@@ -165,10 +163,10 @@ class SpecEnc(BaseEncoder):
             - `pandas.DataFrame`, `pandas.Series`
         """
 
-        # 1. ...
+        # 1. It processes block...
         is_decode = False
 
-        # 2. ...
+        # 2. It processes block...
         if ut.is_decode_able(value):
             _type = value.get(EConst.TYPE)
 
@@ -185,7 +183,7 @@ class SpecEnc(BaseEncoder):
                 # 2.1 It validates type...
                 is_decode = True
 
-        # 3. ...
+        # 3. It processes block...
         return is_decode
 
     # ----------------------------------------------------------------------------------------- #
@@ -215,14 +213,14 @@ class SpecEnc(BaseEncoder):
     def _decode_bitarray(self, value: dict):
         """ Decodes a dictionary representation back to a bitarray object. """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
         if (value is not None) and isinstance(value, dict) and (EConst.DATA in value):
 
             # 1.1 It encodes bits...
             output = bitarray(value[EConst.DATA])
 
-        # 2. ...
+        # 2. It processes block...
         else:
 
             # 1.1 It decodes bits...
@@ -232,7 +230,7 @@ class SpecEnc(BaseEncoder):
                 type(value),
             )
 
-        # 3. ...
+        # 3. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -616,7 +614,7 @@ class SpecEnc(BaseEncoder):
     def __is_arithmetic_range(self, seq):
         """Validates whether a sequence represents a regular arithmetic range."""
 
-        # 1. ...
+        # 1. It processes block...
         return (
             isinstance(seq, list)
             and len(seq) >= 2
@@ -628,19 +626,21 @@ class SpecEnc(BaseEncoder):
     def __build_range_index(self, seq, name):
         """Builds a pandas RangeIndex from a valid arithmetic sequence."""
 
-        # 1. ...
+        # 1. It processes block...
         step = seq[1] - seq[0]
 
-        # 2. ...
+        # 2. It processes block...
         start = seq[0]
         stop = seq[-1] + step
 
-        # 3. ...
+        # 3. It processes block...
         return pandas.RangeIndex(start=start, stop=stop, step=step, name=name)
 
     # ----------------------------------------------------------------------------------------- #
 
-    def __rebuild_index(self, index_data, index_names, index_type, freq=None, tz_meta=None):
+    def __rebuild_index(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        self, index_data, index_names, index_type, freq=None, tz_meta=None
+    ):
         """ Rebuilds a pandas Index or subclass based on its serialized components. """
 
         # 1. Checks input...
@@ -735,7 +735,7 @@ class SpecEnc(BaseEncoder):
         force UTC unification early to avoid pandas errors with mixed tz-aware inputs.
         """
 
-        # 1. ...
+        # 1. It processes block...
         output = None
 
         # 2. MultiIndex elements are tuples...
@@ -776,7 +776,7 @@ class SpecEnc(BaseEncoder):
             # 1.1 Outputs...
             output = index.freq.freqstr
 
-        # 3. Returns...
+        # 2. Returns...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -799,14 +799,14 @@ class SpecEnc(BaseEncoder):
     def __build_tz_meta_from_index(self, index: pandas.DatetimeIndex):
         """Builds timezone metadata dict from a DatetimeIndex (zone or fixed offset)."""
 
-        # 1. ...
+        # 1. It processes block...
         tz_meta = {}
 
         # 2. Zone identity when available (ZoneInfo/pytz)...
         tz = getattr(index, "tz", None)
         tz_zone = getattr(tz, "key", None) or getattr(tz, "zone", None)
 
-        # 3. ...
+        # 3. It processes block...
         if tz_zone:
             tz_meta[EConst.TZ_ZONE] = tz_zone
 
@@ -815,7 +815,8 @@ class SpecEnc(BaseEncoder):
 
             # 1.1 It reads offset...
             try:
-                off = index[0].utcoffset()
+                first_item = index[0]
+                off = first_item.utcoffset() if isinstance(first_item, pandas.Timestamp) else None
 
                 # 2.1 It formats offset...
                 if off is not None:
@@ -826,7 +827,7 @@ class SpecEnc(BaseEncoder):
                         tz_meta[EConst.TZ_OFFSET] = offset_str
 
             # 1.2 It ignores failure...
-            except Exception:  # pylint: disable=broad-except
+            except (TypeError, ValueError, AttributeError):
                 pass
 
         # 5. Return only if any metadata present...
@@ -837,18 +838,18 @@ class SpecEnc(BaseEncoder):
     def __format_offset(self, delta):
         """Format a UTC offset timedelta as "+HH:MM" or "-HH:MM"."""
 
-        # 1. ...
+        # 1. It processes block...
         total_seconds = None
         try:
 
             # 1.1 It reads seconds...
             total_seconds = int(delta.total_seconds())
 
-        # 2. ...
-        except Exception:  # pylint: disable=broad-except
+        # 2. It processes block...
+        except (TypeError, ValueError, AttributeError, OverflowError):
             pass
 
-        # 3. ...
+        # 3. It processes block...
         output = None
         if total_seconds is not None:
 
@@ -863,7 +864,7 @@ class SpecEnc(BaseEncoder):
             # 1.3 It formats offset...
             output = f"{sign}{hours:02d}:{minutes:02d}"
 
-        # 4. ...
+        # 4. It processes block...
         return output
 
     # ----------------------------------------------------------------------------------------- #
@@ -871,35 +872,15 @@ class SpecEnc(BaseEncoder):
     def __parse_offset(self, s: str):
         """Parse a string like "+HH:MM"/"-HH:MM" to a tzinfo (fixed offset)."""
 
-        # 1. ...
-        output = None
-        try:
-
-            # 1.1 It parses text...
-            if isinstance(s, str) and (len(s) >= 6) and (s[3] == ":"):
-                sign = 1 if s[0] == "+" else -1
-
-                # 2.1 It reads parts...
-                hours = int(s[1:3])
-                minutes = int(s[4:6])
-
-                # 2.2 It builds timezone...
-                delta = timedelta(hours=hours, minutes=minutes) * sign
-                output = timezone(delta)
-
-        # 2. ...
-        except Exception:  # pylint: disable=broad-except
-            pass
-
-        # 3. ...
-        return output
+        # 1. It parses offset...
+        return ut.parse_utc_offset(s)
 
     # ----------------------------------------------------------------------------------------- #
 
     def __tzinfo_from_meta(self, tz_meta):
         """Build tzinfo from serialized tz metadata (zone preferred, else fixed offset)."""
 
-        # 1. ...
+        # 1. It processes block...
         tzinfo = None
         if isinstance(tz_meta, dict):
 
@@ -914,14 +895,14 @@ class SpecEnc(BaseEncoder):
                     # 3.1 It loads zone...
                     tzinfo = ZoneInfo(tz_zone)
 
-                except Exception:  # pylint: disable=broad-except
+                except (ZoneInfoNotFoundError, ValueError):
                     tzinfo = None
 
             # 1.3 Fallback to fixed offset...
             if (tzinfo is None) and tz_offset:
                 tzinfo = self.__parse_offset(tz_offset)
 
-        # 4. ...
+        # 2. Returns...
         return tzinfo
 
 
