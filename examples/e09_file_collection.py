@@ -51,17 +51,18 @@ decoded = pyon.from_file(FILE)
 
 # ----------------------------------------------------------------------------------------- #
 
-# 5. Iterate over the dictionary, encoding and decoding each item...
-for key, value in example_data.items():
+# 5. Iterate over the decoded dictionary...
+if isinstance(decoded, dict):
+    for key, value in example_data.items():
 
-    # 1.1 Display the type...
-    print('\n----------------')
-    print(f"Type: {key}\n")
+        # 1.1 Display the type...
+        print('\n----------------')
+        print(f"Type: {key}\n")
 
-    # 1.2 Print the results...
-    print(f"Original: {value}")
-    print(f" Decoded: {decoded[key]}")
-    print('----------------\n')
+        # 1.2 Print the results...
+        print(f"Original: {value}")
+        print(f" Decoded: {decoded[key]}")
+        print('----------------\n')
 
 # ----------------------------------------------------------------------------------------- #
 

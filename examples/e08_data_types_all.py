@@ -8,6 +8,7 @@ from uuid import uuid4
 from collections import deque, defaultdict, ChainMap, namedtuple, Counter
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 # ----------------------------------------------------------------------------------------- #
 
@@ -23,6 +24,10 @@ import pyon
 # ----------------------------------------------------------------------------------------- #
 
 from pyon import File
+
+# ----------------------------------------------------------------------------------------- #
+
+FILE_PATH = str(Path(__file__).resolve().parent / "data" / "img.jpg")
 
 # ----------------------------------------------------------------------------------------- #
 
@@ -151,7 +156,7 @@ example_data = {
     "dataclass": Person("John", 30),
 
     # 1.11 Testing files...
-    "File": File("./data/img.jpg")
+    "File": File(FILE_PATH)
 
 }
 

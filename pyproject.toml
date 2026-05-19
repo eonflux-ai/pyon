@@ -56,7 +56,7 @@ packages = { find = { where = ["."] } }
 include-package-data = true
 
 [tool.pyright]
-include = ["pyon", "tests"]
+include = ["pyon", "tests", "examples"]
 exclude = ["**/__pycache__", ".venv", "build"]
 venvPath = "."
 venv = ".venv"

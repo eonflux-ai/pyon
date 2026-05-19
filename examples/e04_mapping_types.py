@@ -5,6 +5,7 @@
 from dataclasses import dataclass
 from collections import defaultdict, ChainMap, Counter
 from enum import Enum
+from typing import Any
 
 # ----------------------------------------------------------------------------------------- #
 
@@ -40,7 +41,7 @@ example_data = {
         "z": Person("Michael", 30),
     },
     "defaultdict": defaultdict(int, a=1, b=2),
-    "chainmap": ChainMap(
+    "chainmap": ChainMap[str, Any](
         {"r": Color.RED, "g": Color.GREEN, "b": Color.BLUE},
         {"w": Person("William", 20), "c": Person("Charles", 25)}
     ),
